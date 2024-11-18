@@ -2,15 +2,54 @@
 name = "django-mongodb-cli"
 version = "0.1.0"
 dependencies = [
+    "GitPython",  # For git integration
+    "Sphinx",  # For django-mongodb-backend documentation
+    "black",
     "click",
-    "django>5,<5.1",
+    "django-extensions",  # <3 django-extensions
     "django-debug-toolbar",
-    "django-extensions",
-    "python-webpack-boilerplate",
+    "django-ninja",  # For django-allauth
+    "dj-database-url",  # For startproject and testing with postgres
+    "fido2",  # For django-allauth
+    "html5lib",  # Required by django-debug-toolbar
+    "lxml==5.2.1",  # For django-allauth
+    "psycopg2",  # For django-allauth
+    "python3-openid",  # For django-allauth
+    "python3-saml",  # For django-allauth
+    "pyjwt[crypto]",  # For django-allauth
+    "pytest",
+    "pytest-html",
+    "pytest-django",  # For django-rest-framework and django-debug-toolbar
+    "python-webpack-boilerplate",  # For startproject
+    "pytz",  # For django-filter
+    "requests-oauthlib",  # For django-allauth
+    "rich",
+    "setuptools",  # For django-rest-framework
+    "toml",
 ]
 
 [tool.setuptools]
 packages = ["django_mongodb_cli"]
 
+[tool.django_mongodb_cli]
+dev = [
+    "django-allauth @ git+ssh://git@github.com/pennersr/django-allauth@main",
+    "django-debug-toolbar @ git+ssh://git@github.com/django-commons/django-debug-toolbar@main",
+    "django-filter @ git+ssh://git@github.com/aclark4life/django-filter@main # upstream: carltongibson",
+    "django-mongodb-app @ git+ssh://git@github.com/aclark4life/django-mongodb-app@5.1.x # upstream: mongodb-labs",
+    "django-mongodb-backend @ git+ssh://git@github.com/aclark4life/django-mongodb-backend@main # upstream: mongodb",
+    "django-mongodb-extensions @ git+ssh://git@github.com/aclark4life/django-mongodb-extensions@main",
+    "django-mongodb-project @ git+ssh://git@github.com/aclark4life/django-mongodb-project@5.1.x # upstream: mongodb-labs",
+    "django-mongodb-templates @ git+ssh://git@github.com/aclark4life/django-mongodb-templates@main",
+    "django-rest-framework @ git+ssh://git@github.com/encode/django-rest-framework@main",
+    "django @ git+ssh://git@github.com/mongodb-forks/django@mongodb-5.1.x",
+    "docs @ git+ssh://git@github.com/mongodb/docs@master",
+    "langchain-mongodb @ git+ssh://git@github.com/langchain-ai/langchain-mongodb@main",
+    "mongo-python-driver @ git+ssh://git@github.com/aclark4life/mongo-python-driver@master # upstream: mongodb",
+    "wagtail-mongodb-project @ git+ssh://git@github.com/aclark4life/wagtail-mongodb-project@main",
+    "wagtail @ git+ssh://git@github.com/aclark4life/wagtail@main # upstream: mongodb-forks",
+    "xmlsec @ git+ssh://git@github.com/xmlsec/python-xmlsec@main",
+]
+
 [project.scripts]
-dj-m = "dj_m:cli"
+dm = "django_mongodb_cli:cli"

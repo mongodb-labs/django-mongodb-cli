@@ -1,0 +1,16 @@
+[project]
+name = "django-mongodb-cli"
+version = "0.1.0"
+dependencies = [
+    "click",
+    "django>5,<5.1",
+    "django-debug-toolbar",
+    "django-extensions",
+    "python-webpack-boilerplate",
+]
+
+[tool.setuptools]
+packages = ["django_mongodb_cli"]
+
+[project.scripts]
+dj-m = "dj_m:cli"

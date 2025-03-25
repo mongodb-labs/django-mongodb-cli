@@ -25,11 +25,11 @@ test_settings_map = {
         },
         "settings": {
             "test": {
-                "source": join("config", "django_settings.py"),
+                "source": join("config", "django", "django_settings.py"),
                 "target": join("src", "django", "tests", "mongo_settings.py"),
             },
             "migrations": {
-                "source": join("config", "django_settings.py"),
+                "source": join("config", "django", "django_settings.py"),
                 "target": join("src", "django", "tests", "mongo_settings.py"),
             },
             "module": {
@@ -44,7 +44,7 @@ test_settings_map = {
     },
     "django-filter": {
         "apps_file": {
-            "source": join("config", "filter_apps.py"),
+            "source": join("config", "filter", "filter_apps.py"),
             "target": join("src", "django-filter", "tests", "mongo_apps.py"),
         },
         "test_command": "./runtests.py",
@@ -61,11 +61,11 @@ test_settings_map = {
         "clone_dir": join("src", "django-filter"),
         "settings": {
             "test": {
-                "source": join("config", "filter_settings.py"),
+                "source": join("config", "filter", "filter_settings.py"),
                 "target": join("src", "django-filter", "tests", "settings.py"),
             },
             "migrations": {
-                "source": join("config", "filter_settings.py"),
+                "source": join("config", "filter", "filter_settings.py"),
                 "target": join("src", "django-filter", "tests", "settings.py"),
             },
             "module": {
@@ -77,11 +77,13 @@ test_settings_map = {
     },
     "django-rest-framework": {
         "apps_file": {
-            "source": join("config", "rest_framework_apps.py"),
+            "source": join("config", "rest_framework", "rest_framework_apps.py"),
             "target": join("src", "django-rest-framework", "tests", "mongo_apps.py"),
         },
         "migrations_dir": {
-            "source": join("src", "django-mongodb-project", "mongo_migrations"),
+            "source": join(
+                "src", "rest_framework", "django-mongodb-project", "mongo_migrations"
+            ),
             "target": join("src", "django-rest-framework", "tests", "mongo_migrations"),
         },
         "test_command": "./runtests.py",
@@ -89,11 +91,13 @@ test_settings_map = {
         "clone_dir": join("src", "django-rest-framework"),
         "settings": {
             "test": {
-                "source": join("config", "rest_framework_settings.py"),
+                "source": join(
+                    "config", "rest_framework", "rest_framework_settings.py"
+                ),
                 "target": join("src", "django-rest-framework", "tests", "conftest.py"),
             },
             "migrations": {
-                "source": join("config", "rest_framework_migrate.py"),
+                "source": join("config", "rest_framework", "rest_framework_migrate.py"),
                 "target": join("src", "django-rest-framework", "tests", "conftest.py"),
             },
             "module": {
@@ -105,7 +109,7 @@ test_settings_map = {
     },
     "wagtail": {
         "apps_file": {
-            "source": join("config", "wagtail_apps.py"),
+            "source": join("config", "wagtail", "wagtail_apps.py"),
             "target": join("src", "wagtail", "wagtail", "test", "mongo_apps.py"),
         },
         "migrations_dir": {
@@ -122,13 +126,13 @@ test_settings_map = {
         "clone_dir": join("src", "wagtail"),
         "settings": {
             "test": {
-                "source": join("config", "wagtail_settings.py"),
+                "source": join("config", "wagtail", "wagtail_settings.py"),
                 "target": join(
                     "src", "wagtail", "wagtail", "test", "mongo_settings.py"
                 ),
             },
             "migrations": {
-                "source": join("config", "settings_wagtail.py"),
+                "source": join("config", "wagtail", "settings_wagtail.py"),
                 "target": join(
                     "src", "wagtail", "wagtail", "test", "mongo_settings.py"
                 ),
@@ -145,7 +149,7 @@ test_settings_map = {
     },
     "django-debug-toolbar": {
         "apps_file": {
-            "source": join("config", "debug_toolbar_apps.py"),
+            "source": join("config", "debug_toolbar", "debug_toolbar_apps.py"),
             "target": join(
                 "src", "django-debug-toolbar", "debug_toolbar", "mongo_apps.py"
             ),
@@ -155,13 +159,13 @@ test_settings_map = {
         "clone_dir": join("src", "django-debug-toolbar"),
         "settings": {
             "test": {
-                "source": join("config", "debug_toolbar_settings.py"),
+                "source": join("config", "debug_toolbar", "debug_toolbar_settings.py"),
                 "target": join(
                     "src", "django-debug-toolbar", "debug_toolbar", "mongo_settings.py"
                 ),
             },
             "migrations": {
-                "source": join("config", "debug_toolbar_settings.py"),
+                "source": join("config", "debug_toolbar", "debug_toolbar_settings.py"),
                 "target": join(
                     "src", "django-debug-toolbar", "debug_toolbar", "mongo_settings.py"
                 ),
@@ -180,16 +184,16 @@ test_settings_map = {
         "test_dir": join("src", "django-allauth"),
         "clone_dir": join("src", "django-allauth"),
         "apps_file": {
-            "source": join("config", "allauth_apps.py"),
+            "source": join("config", "allauth", "allauth_apps.py"),
             "target": join("src", "django-allauth", "allauth", "mongo_apps.py"),
         },
         "settings": {
             "test": {
-                "source": join("config", "allauth_settings.py"),
+                "source": join("config", "allauth", "allauth_settings.py"),
                 "target": join("src", "django-allauth", "allauth", "mongo_settings.py"),
             },
             "migrations": {
-                "source": join("config", "allauth_settings.py"),
+                "source": join("config", "allauth", "allauth_settings.py"),
                 "target": join("src", "django-allauth", "allauth", "mongo_settings.py"),
             },
             "module": {

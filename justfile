@@ -36,9 +36,9 @@ django-open:
 alias o := django-open
 
 [group('django')]
-django-serve:
+django-runserver:
     dm runserver
-alias s := django-serve
+alias s := django-runserver
 
 [group('django')]
 django-migrate:

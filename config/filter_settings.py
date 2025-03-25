@@ -4,13 +4,6 @@ from django_filters.conf import DEFAULTS
 import django_mongodb_backend
 import os
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": ":memory:",
-#     },
-# }
-
 DATABASES = {}
 DATABASE_URL = os.environ.get("MONGODB_URI", "mongodb://localhost:27017/djangotests")
 DATABASES["default"] = django_mongodb_backend.parse_uri(DATABASE_URL)

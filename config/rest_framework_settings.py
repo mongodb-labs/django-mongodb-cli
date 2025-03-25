@@ -23,16 +23,6 @@ def pytest_configure(config):
 
     settings.configure(
         DEBUG_PROPAGATE_EXCEPTIONS=True,
-        # DATABASES={
-        #     'default': {
-        #         'ENGINE': 'django.db.backends.sqlite3',
-        #         'NAME': ':memory:'
-        #     },
-        #     'secondary': {
-        #         'ENGINE': 'django.db.backends.sqlite3',
-        #         'NAME': ':memory:'
-        #     }
-        # },
         DATABASES={
             "default": django_mongodb_backend.parse_uri(DATABASE_URL),
         },

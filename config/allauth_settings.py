@@ -18,17 +18,6 @@ ALLOWED_HOSTS = (
 USE_I18N = False
 USE_TZ = True
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": ":memory:",
-#         "USER": "",
-#         "PASSWORD": "",
-#         "HOST": "",
-#         "PORT": "",
-#     }
-# }
-
 DATABASES = {
     "default": django_mongodb_backend.parse_uri(DATABASE_URL),
 }
@@ -262,10 +251,6 @@ SOCIALACCOUNT_PROVIDERS = {
 
 ACCOUNT_LOGIN_BY_CODE_ENABLED = True
 
-# MFA_SUPPORTED_TYPES = ["totp", "webauthn", "recovery_codes"]
-# MFA_PASSKEY_LOGIN_ENABLED = True
-# MFA_PASSKEY_SIGNUP_ENABLED = True
-
 HEADLESS_SERVE_SPECIFICATION = True
 DEFAULT_AUTO_FIELD = "django_mongodb_backend.fields.ObjectIdAutoField"
 MIGRATION_MODULES = {
@@ -283,22 +268,3 @@ MIGRATION_MODULES = {
 SILENCED_SYSTEM_CHECKS = [
     "sites.E101",  # SITE_ID must be an ObjectId for MongoDB.
 ]
-
-# INSTALLED_APPS = [
-#     "allauth",
-#     "allauth.mongo_apps.MongoContentTypesConfig",
-#     "allauth.mongo_apps.MongoAuthConfig",
-#     "allauth.mongo_apps.MongoAccountConfig",
-#     "allauth.mongo_apps.MongoAdminConfig",
-#     "allauth.mongo_apps.MongoUserSessionsConfig",
-#     "allauth.mongo_apps.MongoHeadlessConfig",
-#     "allauth.mongo_apps.MongoSocialAccountConfig",
-#     "allauth.mongo_apps.MongoMFAConfig",
-#     "django.contrib.humanize",
-#     "django.contrib.messages",
-#     "django.contrib.sessions",
-#     "django.contrib.sites",
-#     "allauth.socialaccount.providers.openid",
-#     "allauth.socialaccount.providers.openid_connect",
-#     "allauth.socialaccount.providers.agave",
-# ]

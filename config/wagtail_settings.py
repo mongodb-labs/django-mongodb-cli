@@ -183,12 +183,12 @@ INSTALLED_APPS = [
 # Using DatabaseCache to make sure that the cache is cleared between tests.
 # This prevents false-positives in some wagtail core tests where we are
 # changing the 'wagtail_root_paths' key which may cause future tests to fail.
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django.core.cache.backends.db.DatabaseCache",
-#         "LOCATION": "cache",
-#     }
-# }
+CACHES = {
+    "default": {
+        "BACKEND": "django_mongodb_backend.cache.MongoDBCache",
+        "LOCATION": "cache",
+    }
+}
 
 PASSWORD_HASHERS = (
     "django.contrib.auth.hashers.MD5PasswordHasher",  # don't use the intentionally slow default password hasher
@@ -286,27 +286,6 @@ MESSAGE_TAGS = {
 MONGODB_URI = os.environ.get("MONGODB_URI", "mongodb://localhost:27017/wagtail")
 DATABASES["default"] = django_mongodb_backend.parse_uri(MONGODB_URI)
 
-# MIGRATION_MODULES = {
-#     "admin": "wagtail.test.mongo_migrations.admin",
-#     "auth": "wagtail.test.mongo_migrations.auth",
-#     "contenttypes": "wagtail.test.mongo_migrations.contenttypes",
-#     "demosite": "wagtail.test.mongo_migrations.demosite",
-#     "earlypage": "wagtail.test.mongo_migrations.earlypage",
-#     "i18n": "wagtail.test.mongo_migrations.i18n",
-#     "routablepagetests": "wagtail.test.mongo_migrations.routablepagetests",
-#     "taggit": "wagtail.test.mongo_migrations.taggit",
-#     "tests": "wagtail.test.mongo_migrations.tests",
-#     "wagtaildocs": "wagtail.test.mongo_migrations.wagtaildocs",
-#     "wagtailredirects": "wagtail.test.mongo_migrations.wagtailredirects",
-#     "wagtailimages": "wagtail.test.mongo_migrations.wagtailimages",
-#     "wagtailsearch": "wagtail.test.mongo_migrations.wagtailsearch",
-#     "wagtailsearchpromotions": "wagtail.test.mongo_migrations.wagtailsearchpromotions",
-#     "wagtailadmin": "wagtail.test.mongo_migrations.wagtailadmin",
-#     "wagtailcore": "wagtail.test.mongo_migrations.wagtailcore",
-#     "wagtailforms": "wagtail.test.mongo_migrations.wagtailforms",
-#     "wagtailembeds": "wagtail.test.mongo_migrations.wagtailembeds",
-#     "wagtailusers": "wagtail.test.mongo_migrations.wagtailusers",
-# }
 MIGRATION_MODULES = {
     "admin": None,
     "auth": None,

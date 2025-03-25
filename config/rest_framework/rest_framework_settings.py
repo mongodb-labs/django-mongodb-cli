@@ -1,11 +1,10 @@
 import os
 
 import django
-import django_mongodb_backend
 from bson import ObjectId
 from django.core import management
 
-DATABASE_URL = os.environ.get("MONGODB_URI", "mongodb://localhost:27017/djangotests")
+from django_mongodb_cli.utils import get_databases
 
 
 def pytest_addoption(parser):
@@ -23,10 +22,8 @@ def pytest_configure(config):
 
     settings.configure(
         DEBUG_PROPAGATE_EXCEPTIONS=True,
-        DATABASES={
-            "default": django_mongodb_backend.parse_uri(DATABASE_URL),
-        },
-        SITE_ID=ObjectId(),
+        DATABASES=get_databases("rest_framework"),
+        SITE_ID=ObjectId("000000000000000000000001"),
         SECRET_KEY="not very secret in tests",
         USE_I18N=True,
         STATIC_URL="/static/",

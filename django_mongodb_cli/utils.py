@@ -1,4 +1,5 @@
 import click
+import django_mongodb_backend
 import git
 import os
 import shutil
@@ -106,6 +107,16 @@ def get_management_command(command=None):
         return full_command
 
     return base_command
+
+
+def get_databases(app):
+    """Get the databases configuration for the specified app."""
+
+    DATABASE_URL = os.environ.get(
+        "MONGODB_URI", f"mongodb://localhost:27017/{app}_tests"
+    )
+    DATABASES = {"default": django_mongodb_backend.parse_uri(DATABASE_URL)}
+    return DATABASES
 
 
 def get_repos(pyproject_path):

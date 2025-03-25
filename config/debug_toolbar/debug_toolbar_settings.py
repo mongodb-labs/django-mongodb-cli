@@ -1,6 +1,10 @@
 """Django settings for tests."""
 
 import os
+from django_mongodb_cli.utils import get_databases
+
+
+DATABASES = get_databases("debug_toolbar")
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -91,37 +95,7 @@ CACHES = {
     "second": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},
 }
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.{}db.backends.{}".format(
-            "contrib.gis." if USE_GIS else "", os.getenv("DB_BACKEND", "sqlite3")
-        ),
-        "NAME": os.getenv("DB_NAME", ":memory:"),
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": os.getenv("DB_HOST", ""),
-        "PORT": os.getenv("DB_PORT", ""),
-        "TEST": {
-            "USER": "default_test",
-        },
-    },
-    "replica": {
-        "ENGINE": "django.{}db.backends.{}".format(
-            "contrib.gis." if USE_GIS else "", os.getenv("DB_BACKEND", "sqlite3")
-        ),
-        "NAME": os.getenv("DB_NAME", ":memory:"),
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": os.getenv("DB_HOST", ""),
-        "PORT": os.getenv("DB_PORT", ""),
-        "TEST": {
-            "USER": "default_test",
-            "MIRROR": "default",
-        },
-    },
-}
-
-DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+DEFAULT_AUTO_FIELD = "django_mongodb_backend.fields.ObjectIdAutoField"
 
 # Debug Toolbar configuration
 

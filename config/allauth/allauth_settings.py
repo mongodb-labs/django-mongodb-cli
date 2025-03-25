@@ -1,13 +1,12 @@
-import django_mongodb_backend
-import os
-
 from bson import ObjectId
 from pathlib import Path
 
 from django.contrib.auth.hashers import PBKDF2PasswordHasher
 
-DATABASE_URL = os.environ.get("MONGODB_URI", "mongodb://localhost:27017/djangotests")
+from django_mongodb_cli.utils import get_databases
 
+
+DATABASES = get_databases("allauth")
 
 SECRET_KEY = "psst"
 SITE_ID = ObjectId()
@@ -17,10 +16,6 @@ ALLOWED_HOSTS = (
 )
 USE_I18N = False
 USE_TZ = True
-
-DATABASES = {
-    "default": django_mongodb_backend.parse_uri(DATABASE_URL),
-}
 
 ROOT_URLCONF = "tests.regular.urls"
 LOGIN_URL = "/accounts/login/"

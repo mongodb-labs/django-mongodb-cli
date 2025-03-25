@@ -1,11 +1,8 @@
-import django_mongodb_backend
-import os
+from django_mongodb_cli.utils import get_databases
 
 
-MONGODB_URI = os.environ.get("MONGODB_URI", "mongodb://localhost:27017/djangotests")
-DATABASES = {
-    "default": django_mongodb_backend.parse_uri(MONGODB_URI),
-}
+DATABASES = get_databases("django")
+
 DEFAULT_AUTO_FIELD = "django_mongodb_backend.fields.ObjectIdAutoField"
 PASSWORD_HASHERS = ("django.contrib.auth.hashers.MD5PasswordHasher",)
 SECRET_KEY = "django_tests_secret_key"

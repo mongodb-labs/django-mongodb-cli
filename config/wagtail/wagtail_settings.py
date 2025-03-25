@@ -6,6 +6,7 @@ from django.contrib.messages import constants as message_constants
 from django.utils.translation import gettext_lazy as _
 
 from wagtail.test.numberformat import patch_number_formats
+from django_mongodb_cli.utils import get_databases
 
 WAGTAIL_CHECK_TEMPLATE_NUMBER_FORMAT = (
     os.environ.get("WAGTAIL_CHECK_TEMPLATE_NUMBER_FORMAT", "0") == "1"
@@ -24,36 +25,7 @@ MEDIA_URL = "/media/"
 
 TIME_ZONE = "Asia/Tokyo"
 
-DATABASES = {
-    "default": {
-        "ENGINE": os.environ.get("DATABASE_ENGINE", "django.db.backends.sqlite3"),
-        "NAME": os.environ.get("DATABASE_NAME", ":memory:"),
-        "USER": os.environ.get("DATABASE_USER", ""),
-        "PASSWORD": os.environ.get("DATABASE_PASSWORD", ""),
-        "HOST": os.environ.get("DATABASE_HOST", ""),
-        "PORT": os.environ.get("DATABASE_PORT", ""),
-        "TEST": {"NAME": os.environ.get("DATABASE_NAME", "")},
-    }
-}
-
-# Set regular database name when a non-SQLite db is used
-if DATABASES["default"]["ENGINE"] != "django.db.backends.sqlite3":
-    DATABASES["default"]["NAME"] = os.environ.get("DATABASE_NAME", "wagtail")
-
-# Add extra options when mssql is used (on for example appveyor)
-if DATABASES["default"]["ENGINE"] == "sql_server.pyodbc":
-    DATABASES["default"]["OPTIONS"] = {
-        "driver": os.environ.get("DATABASE_DRIVER", "SQL Server Native Client 11.0"),
-        "MARS_Connection": "True",
-        "host_is_server": True,  # Applies to FreeTDS driver only
-    }
-
-
-# explicitly set charset / collation to utf8 on mysql
-if DATABASES["default"]["ENGINE"] == "django.db.backends.mysql":
-    DATABASES["default"]["TEST"]["CHARSET"] = "utf8"
-    DATABASES["default"]["TEST"]["COLLATION"] = "utf8_general_ci"
-
+DATABASES = get_databases("wagtail")
 
 SECRET_KEY = "not needed"
 

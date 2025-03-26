@@ -1,5 +1,5 @@
-Django allauth
-==============
+Django debug toolbar
+====================
 
 Settings
 --------

@@ -1,0 +1,1636 @@
+Copying config/debug_toolbar/debug_toolbar_settings.py to src/django-debug-toolbar/debug_toolbar/mongo_settings.py
+No migrations to copy
+Copying config/debug_toolbar/debug_toolbar_apps.py to src/django-debug-toolbar/debug_toolbar/mongo_apps.py
+DJANGO_SETTINGS_MODULE=debug_toolbar.mongo_settings
+Running pytest --continue-on-collection-errors --html=report.html --self-contained-html
+============================= test session starts ==============================
+platform darwin -- Python 3.13.2, pytest-8.3.5, pluggy-1.5.0
+django: version: 5.1.8.dev20250308005428, settings: debug_toolbar.mongo_settings (from env)
+rootdir: /Users/alex.clark/Developer/django-mongodb-cli/src/django-debug-toolbar
+configfile: pyproject.toml
+plugins: html-4.1.1, metadata-3.1.1, django-4.10.0
+collected 262 items
+
+example/test_views.py F                                                  [  0%]
+tests/commands/test_debugsqlshell.py F                                   [  0%]
+tests/panels/test_alerts.py .........                                    [  4%]
+tests/panels/test_async_panel_compatibility.py ..                        [  4%]
+tests/panels/test_cache.py .......                                       [  7%]
+tests/panels/test_custom.py .                                            [  8%]
+tests/panels/test_history.py ............                                [ 12%]
+tests/panels/test_profiling.py ....s..                                   [ 15%]
+tests/panels/test_redirects.py .........                                 [ 18%]
+tests/panels/test_request.py ...............                             [ 24%]
+tests/panels/test_settings.py .                                          [ 24%]
+tests/panels/test_sql.py FsFFFFF.ssFFFFFsFF.FFFFFsFFFFFs                 [ 36%]
+tests/panels/test_staticfiles.py .......                                 [ 39%]
+tests/panels/test_template.py .......F..x                                [ 43%]
+tests/panels/test_versions.py ....                                       [ 45%]
+tests/test_csp_rendering.py FF.FF                                        [ 46%]
+tests/test_decorators.py ......                                          [ 49%]
+tests/test_forms.py ....                                                 [ 50%]
+tests/test_integration.py F..F.................F.............FFss.F....  [ 67%]
+tests/test_integration_async.py F...............F.........FssFF...       [ 80%]
+tests/test_middleware.py ....                                            [ 82%]
+tests/test_toolbar.py ...                                                [ 83%]
+tests/panels/test_sql.py EE                                              [ 84%]
+tests/test_integration.py sssssssssssssss                                [ 90%]
+tests/test_checks.py ............                                        [ 94%]
+tests/test_login_not_required.py ..                                      [ 95%]
+tests/test_utils.py ............                                         [100%]
+
+==================================== ERRORS ====================================
+____________ ERROR at setup of SQLPanelMultiDBTestCase.test_aliases ____________
+
+cls = <class 'tests.panels.test_sql.SQLPanelMultiDBTestCase'>
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        if cls._overridden_settings:
+            cls.enterClassContext(override_settings(**cls._overridden_settings))
+        if cls._modified_settings:
+            cls.enterClassContext(modify_settings(cls._modified_settings))
+>       cls._add_databases_failures()
+
+../django/django/test/testcases.py:230:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+../django/django/test/testcases.py:256: in _add_databases_failures
+    cls.databases = cls._validate_databases()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+cls = <class 'tests.panels.test_sql.SQLPanelMultiDBTestCase'>
+
+    @classmethod
+    def _validate_databases(cls):
+        if cls.databases == "__all__":
+            return frozenset(connections)
+        for alias in cls.databases:
+            if alias not in connections:
+                message = (
+                    "%s.%s.databases refers to %r which is not defined in "
+                    "settings.DATABASES."
+                    % (
+                        cls.__module__,
+                        cls.__qualname__,
+                        alias,
+                    )
+                )
+                close_matches = get_close_matches(alias, list(connections))
+                if close_matches:
+                    message += " Did you mean %r?" % close_matches[0]
+>               raise ImproperlyConfigured(message)
+E               django.core.exceptions.ImproperlyConfigured: tests.panels.test_sql.SQLPanelMultiDBTestCase.databases refers to 'replica' which is not defined in settings.DATABASES.
+
+../django/django/test/testcases.py:251: ImproperlyConfigured
+______ ERROR at setup of SQLPanelMultiDBTestCase.test_transaction_status _______
+
+cls = <class 'tests.panels.test_sql.SQLPanelMultiDBTestCase'>
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        if cls._overridden_settings:
+            cls.enterClassContext(override_settings(**cls._overridden_settings))
+        if cls._modified_settings:
+            cls.enterClassContext(modify_settings(cls._modified_settings))
+>       cls._add_databases_failures()
+
+../django/django/test/testcases.py:230:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+../django/django/test/testcases.py:256: in _add_databases_failures
+    cls.databases = cls._validate_databases()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+cls = <class 'tests.panels.test_sql.SQLPanelMultiDBTestCase'>
+
+    @classmethod
+    def _validate_databases(cls):
+        if cls.databases == "__all__":
+            return frozenset(connections)
+        for alias in cls.databases:
+            if alias not in connections:
+                message = (
+                    "%s.%s.databases refers to %r which is not defined in "
+                    "settings.DATABASES."
+                    % (
+                        cls.__module__,
+                        cls.__qualname__,
+                        alias,
+                    )
+                )
+                close_matches = get_close_matches(alias, list(connections))
+                if close_matches:
+                    message += " Did you mean %r?" % close_matches[0]
+>               raise ImproperlyConfigured(message)
+E               django.core.exceptions.ImproperlyConfigured: tests.panels.test_sql.SQLPanelMultiDBTestCase.databases refers to 'replica' which is not defined in settings.DATABASES.
+
+../django/django/test/testcases.py:251: ImproperlyConfigured
+=================================== FAILURES ===================================
+___________________________ ViewTestCase.test_index ____________________________
+
+self = <example.test_views.ViewTestCase testMethod=test_index>
+
+    def test_index(self):
+>       response = self.client.get(reverse("home"))
+
+example/test_views.py:11:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+../django/django/urls/base.py:88: in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <URLResolver 'tests.urls' (None:None) '^/'>, lookup_view = 'home'
+_prefix = '/', args = (), kwargs = {}, possibilities = []
+
+    def _reverse_with_prefix(self, lookup_view, _prefix, *args, **kwargs):
+        if args and kwargs:
+            raise ValueError("Don't mix *args and **kwargs in call to reverse()!")
+
+        if not self._populated:
+            self._populate()
+
+        possibilities = self.reverse_dict.getlist(lookup_view)
+
+        for possibility, pattern, defaults, converters in possibilities:
+            for result, params in possibility:
+                if args:
+                    if len(args) != len(params):
+                        continue
+                    candidate_subs = dict(zip(params, args))
+                else:
+                    if set(kwargs).symmetric_difference(params).difference(defaults):
+                        continue
+                    matches = True
+                    for k, v in defaults.items():
+                        if k in params:
+                            continue
+                        if kwargs.get(k, v) != v:
+                            matches = False
+                            break
+                    if not matches:
+                        continue
+                    candidate_subs = kwargs
+                # Convert the candidate subs to text using Converter.to_url().
+                text_candidate_subs = {}
+                match = True
+                for k, v in candidate_subs.items():
+                    if k in converters:
+                        try:
+                            text_candidate_subs[k] = converters[k].to_url(v)
+                        except ValueError:
+                            match = False
+                            break
+                    else:
+                        text_candidate_subs[k] = str(v)
+                if not match:
+                    continue
+                # WSGI provides decoded URLs, without %xx escapes, and the URL
+                # resolver operates on such URLs. First substitute arguments
+                # without quoting to build a decoded URL and look for a match.
+                # Then, if we have a match, redo the substitution with quoted
+                # arguments in order to return a properly encoded URL.
+                candidate_pat = _prefix.replace("%", "%%") + result
+                if re.search(
+                    "^%s%s" % (re.escape(_prefix), pattern),
+                    candidate_pat % text_candidate_subs,
+                ):
+                    # safe characters from `pchar` definition of RFC 3986
+                    url = quote(
+                        candidate_pat % text_candidate_subs,
+                        safe=RFC3986_SUBDELIMS + "/~:@",
+                    )
+                    # Don't allow construction of scheme relative urls.
+                    return escape_leading_slashes(url)
+        # lookup_view can be URL name or callable, but callables are not
+        # friendly in error messages.
+        m = getattr(lookup_view, "__module__", None)
+        n = getattr(lookup_view, "__name__", None)
+        if m is not None and n is not None:
+            lookup_view_s = "%s.%s" % (m, n)
+        else:
+            lookup_view_s = lookup_view
+
+        patterns = [pattern for (_, pattern, _, _) in possibilities]
+        if patterns:
+            if args:
+                arg_msg = "arguments '%s'" % (args,)
+            elif kwargs:
+                arg_msg = "keyword arguments '%s'" % kwargs
+            else:
+                arg_msg = "no arguments"
+            msg = "Reverse for '%s' with %s not found. %d pattern(s) tried: %s" % (
+                lookup_view_s,
+                arg_msg,
+                len(patterns),
+                patterns,
+            )
+        else:
+            msg = (
+                "Reverse for '%(view)s' not found. '%(view)s' is not "
+                "a valid view function or pattern name." % {"view": lookup_view_s}
+            )
+>       raise NoReverseMatch(msg)
+E       django.urls.exceptions.NoReverseMatch: Reverse for 'home' not found. 'home' is not a valid view function or pattern name.
+
+../django/django/urls/resolvers.py:831: NoReverseMatch
+______________________ DebugSQLShellTestCase.test_command ______________________
+
+self = <tests.commands.test_debugsqlshell.DebugSQLShellTestCase testMethod=test_command>
+
+    def test_command(self):
+        original_stdout, sys.stdout = sys.stdout, io.StringIO()
+        try:
+            User.objects.count()
+>           self.assertIn("SELECT COUNT", sys.stdout.getvalue())
+E           AssertionError: 'SELECT COUNT' not found in ''
+
+tests/commands/test_debugsqlshell.py:34: AssertionError
+________________ SQLPanelTestCase.test_binary_param_force_text _________________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_binary_param_force_text>
+
+    def test_binary_param_force_text(self):
+        self.assertEqual(len(self.panel._queries), 0)
+
+>       with connection.cursor() as cursor:
+
+tests/panels/test_sql.py:347:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (), kwargs = {}
+logger = <debug_toolbar.panels.sql.panel.SQLPanel object at 0x10723b6d0>
+cursor = <django_mongodb_backend.base.Cursor object at 0x1071a6250>
+mixin = <class 'debug_toolbar.panels.sql.tracking.NormalCursorMixin'>
+
+    def cursor(*args, **kwargs):
+        # Per the DB API cursor() does not accept any arguments. There's
+        # some code in the wild which does not follow that convention,
+        # so we pass on the arguments even though it's not clean.
+        # See:
+        # https://github.com/django-commons/django-debug-toolbar/pull/615
+        # https://github.com/django-commons/django-debug-toolbar/pull/896
+        logger = connection._djdt_logger
+        cursor = connection._djdt_cursor(*args, **kwargs)
+        if logger is None:
+            return cursor
+        mixin = NormalCursorMixin if allow_sql.get() else ExceptionCursorMixin
+        return patch_cursor_wrapper_with_mixin(cursor.__class__, mixin)(
+>           cursor.cursor, connection, logger
+        )
+E       AttributeError: 'Cursor' object has no attribute 'cursor'
+
+debug_toolbar/panels/sql/tracking.py:64: AttributeError
+____________ SQLPanelTestCase.test_chunked_cursor_wrapper_singleton ____________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_chunked_cursor_wrapper_singleton>
+mock_patch_cursor_wrapper = <MagicMock name='patch_cursor_wrapper_with_mixin' id='4391553072'>
+
+    @patch(
+        "debug_toolbar.panels.sql.tracking.patch_cursor_wrapper_with_mixin",
+        wraps=sql_tracking.patch_cursor_wrapper_with_mixin,
+    )
+    def test_chunked_cursor_wrapper_singleton(self, mock_patch_cursor_wrapper):
+        sql_call(use_iterator=True)
+
+        # ensure that cursor wrapping is applied only once
+>       self.assertIn(
+            mock_patch_cursor_wrapper.mock_calls,
+            [
+                [call(CursorWrapper, sql_tracking.NormalCursorMixin)],
+                # CursorDebugWrapper is used if the test is called with `--debug-sql`
+                [call(CursorDebugWrapper, sql_tracking.NormalCursorMixin)],
+            ],
+        )
+E       AssertionError: [] not found in [[call(<class 'django.db.backends.utils.CursorWrapper'>, <class 'debug_toolbar.panels.sql.tracking.NormalCursorMixin'>)], [call(<class 'django.db.backends.utils.CursorDebugWrapper'>, <class 'debug_toolbar.panels.sql.tracking.NormalCursorMixin'>)]]
+
+tests/panels/test_sql.py:141: AssertionError
+__________________ SQLPanelTestCase.test_cursor_wrapper_async __________________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_cursor_wrapper_async>
+mock_patch_cursor_wrapper = <MagicMock name='patch_cursor_wrapper_with_mixin' id='4389927776'>
+
+    @patch(
+        "debug_toolbar.panels.sql.tracking.patch_cursor_wrapper_with_mixin",
+        wraps=sql_tracking.patch_cursor_wrapper_with_mixin,
+    )
+    async def test_cursor_wrapper_async(self, mock_patch_cursor_wrapper):
+        await sync_to_async(sql_call)()
+
+>       self.assertIn(
+            mock_patch_cursor_wrapper.mock_calls,
+            [
+                [call(CursorWrapper, sql_tracking.NormalCursorMixin)],
+                # CursorDebugWrapper is used if the test is called with `--debug-sql`
+                [call(CursorDebugWrapper, sql_tracking.NormalCursorMixin)],
+            ],
+        )
+E       AssertionError: [] not found in [[call(<class 'django.db.backends.utils.CursorWrapper'>, <class 'debug_toolbar.panels.sql.tracking.NormalCursorMixin'>)], [call(<class 'django.db.backends.utils.CursorDebugWrapper'>, <class 'debug_toolbar.panels.sql.tracking.NormalCursorMixin'>)]]
+
+tests/panels/test_sql.py:157: AssertionError
+_______________ SQLPanelTestCase.test_cursor_wrapper_asyncio_ctx _______________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_cursor_wrapper_asyncio_ctx>
+mock_patch_cursor_wrapper = <MagicMock name='patch_cursor_wrapper_with_mixin' id='4389925088'>
+
+    @patch(
+        "debug_toolbar.panels.sql.tracking.patch_cursor_wrapper_with_mixin",
+        wraps=sql_tracking.patch_cursor_wrapper_with_mixin,
+    )
+    async def test_cursor_wrapper_asyncio_ctx(self, mock_patch_cursor_wrapper):
+        self.assertTrue(sql_tracking.allow_sql.get())
+        await sync_to_async(sql_call)()
+
+        async def task():
+            sql_tracking.allow_sql.set(False)
+            # By disabling sql_tracking.allow_sql, we are indicating that any
+            # future SQL queries should be stopped. If SQL query occurs,
+            # it raises an exception.
+            with self.assertRaises(sql_tracking.SQLQueryTriggered):
+                await sync_to_async(sql_call)()
+
+        # Ensure this is called in another context
+>       await asyncio.create_task(task())
+
+tests/panels/test_sql.py:183:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests/panels/test_sql.py:179: in task
+    with self.assertRaises(sql_tracking.SQLQueryTriggered):
+E   AssertionError: SQLQueryTriggered not raised
+________________ SQLPanelTestCase.test_cursor_wrapper_singleton ________________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_cursor_wrapper_singleton>
+mock_patch_cursor_wrapper = <MagicMock name='patch_cursor_wrapper_with_mixin' id='4386287168'>
+
+    @patch(
+        "debug_toolbar.panels.sql.tracking.patch_cursor_wrapper_with_mixin",
+        wraps=sql_tracking.patch_cursor_wrapper_with_mixin,
+    )
+    def test_cursor_wrapper_singleton(self, mock_patch_cursor_wrapper):
+        sql_call()
+        # ensure that cursor wrapping is applied only once
+>       self.assertIn(
+            mock_patch_cursor_wrapper.mock_calls,
+            [
+                [call(CursorWrapper, sql_tracking.NormalCursorMixin)],
+                # CursorDebugWrapper is used if the test is called with `--debug-sql`
+                [call(CursorDebugWrapper, sql_tracking.NormalCursorMixin)],
+            ],
+        )
+E       AssertionError: [] not found in [[call(<class 'django.db.backends.utils.CursorWrapper'>, <class 'debug_toolbar.panels.sql.tracking.NormalCursorMixin'>)], [call(<class 'django.db.backends.utils.CursorDebugWrapper'>, <class 'debug_toolbar.panels.sql.tracking.NormalCursorMixin'>)]]
+
+tests/panels/test_sql.py:124: AssertionError
+__________________ SQLPanelTestCase.test_disable_stacktraces ___________________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_disable_stacktraces>
+
+    def test_disable_stacktraces(self):
+        self.assertEqual(len(self.panel._queries), 0)
+
+        with self.settings(DEBUG_TOOLBAR_CONFIG={"ENABLE_STACKTRACES": False}):
+            sql_call()
+
+        # ensure query was logged
+>       self.assertEqual(len(self.panel._queries), 1)
+E       AssertionError: 0 != 1
+
+tests/panels/test_sql.py:512: AssertionError
+___________________ SQLPanelTestCase.test_explain_with_union ___________________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_explain_with_union>
+
+    def test_explain_with_union(self):
+>       list(User.objects.filter(id__lt=20).union(User.objects.filter(id__gt=10)))
+
+tests/panels/test_sql.py:733:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+../django/django/db/models/manager.py:87: in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+../django/django/db/models/query.py:1476: in filter
+    return self._filter_or_exclude(False, args, kwargs)
+../django/django/db/models/query.py:1494: in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+../django/django/db/models/query.py:1501: in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+../django/django/db/models/sql/query.py:1609: in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+../django/django/db/models/sql/query.py:1641: in _add_q
+    child_clause, needed_inner = self.build_filter(
+../django/django/db/models/sql/query.py:1555: in build_filter
+    condition = self.build_lookup(lookups, col, value)
+../django/django/db/models/sql/query.py:1385: in build_lookup
+    lookup = lookup_class(lhs, rhs)
+../django/django/db/models/lookups.py:30: in __init__
+    self.rhs = self.get_prep_lookup()
+../django/django/db/models/lookups.py:447: in get_prep_lookup
+    return super().get_prep_lookup()
+../django/django/db/models/lookups.py:88: in get_prep_lookup
+    return self.lhs.output_field.get_prep_value(self.rhs)
+../django-mongodb-backend/django_mongodb_backend/fields/auto.py:25: in get_prep_value
+    return self.to_python(value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <django_mongodb_backend.fields.auto.ObjectIdAutoField: id>, value = 20
+
+    def to_python(self, value):
+        if value is None:
+            return value
+        try:
+            return ObjectId(value)
+        except (errors.InvalidId, TypeError):
+>           raise exceptions.ValidationError(
+                self.error_messages["invalid"],
+                code="invalid",
+                params={"value": value},
+            ) from None
+E           django.core.exceptions.ValidationError: ['“20” is not a valid Object Id.']
+
+../django-mongodb-backend/django_mongodb_backend/fields/objectid.py:31: ValidationError
+_______________ SQLPanelTestCase.test_flat_template_information ________________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_flat_template_information>
+
+    @override_settings(
+        DEBUG=True,
+    )
+    def test_flat_template_information(self):
+        """
+        Test case for when the query is used in a flat template hierarchy
+        (without included templates).
+        """
+        self.assertEqual(len(self.panel._queries), 0)
+
+        users = User.objects.all()
+        render(self.request, "sql/flat.html", {"users": users})
+
+>       self.assertEqual(len(self.panel._queries), 1)
+E       AssertionError: 0 != 1
+
+tests/panels/test_sql.py:652: AssertionError
+_________________ SQLPanelTestCase.test_generate_server_timing _________________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_generate_server_timing>
+
+    def test_generate_server_timing(self):
+        self.assertEqual(len(self.panel._queries), 0)
+
+        sql_call()
+
+        response = self.panel.process_request(self.request)
+        self.panel.generate_stats(self.request, response)
+        self.panel.generate_server_timing(self.request, response)
+
+        # ensure query was logged
+>       self.assertEqual(len(self.panel._queries), 1)
+E       AssertionError: 0 != 1
+
+tests/panels/test_sql.py:212: AssertionError
+_____________________ SQLPanelTestCase.test_insert_content _____________________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_insert_content>
+
+    def test_insert_content(self):
+        """
+        Test that the panel only inserts content after generate_stats and
+        not the process_request.
+        """
+        list(User.objects.filter(username="café"))
+        response = self.panel.process_request(self.request)
+        # ensure the panel does not have content yet.
+        self.assertNotIn("café", self.panel.content)
+        self.panel.generate_stats(self.request, response)
+        # ensure the panel renders correctly.
+        content = self.panel.content
+>       self.assertIn("café", content)
+E       AssertionError: 'café' not found in '\n<ul>\n  \n</ul>\n\n\n  <p>No SQL queries were recorded during this request.</p>\n\n'
+
+tests/panels/test_sql.py:437: AssertionError
+_____________________ SQLPanelTestCase.test_insert_locals ______________________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_insert_locals>
+
+    @override_settings(DEBUG_TOOLBAR_CONFIG={"ENABLE_STACKTRACES_LOCALS": True})
+    def test_insert_locals(self):
+        """
+        Test that the panel inserts locals() content.
+        """
+        local_var = "<script>alert('test');</script>"  # noqa: F841
+        list(User.objects.filter(username="café"))
+        response = self.panel.process_request(self.request)
+        self.panel.generate_stats(self.request, response)
+>       self.assertIn("local_var", self.panel.content)
+E       AssertionError: 'local_var' not found in '\n<ul>\n  \n</ul>\n\n\n  <p>No SQL queries were recorded during this request.</p>\n\n'
+
+tests/panels/test_sql.py:449: AssertionError
+______________ SQLPanelTestCase.test_nested_template_information _______________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_nested_template_information>
+
+    @override_settings(
+        DEBUG=True,
+    )
+    def test_nested_template_information(self):
+        """
+        Test case for when the query is used in a nested template
+        hierarchy (with included templates).
+        """
+        self.assertEqual(len(self.panel._queries), 0)
+
+        users = User.objects.all()
+        render(self.request, "sql/nested.html", {"users": users})
+
+>       self.assertEqual(len(self.panel._queries), 1)
+E       AssertionError: 0 != 1
+
+tests/panels/test_sql.py:674: AssertionError
+____________________ SQLPanelTestCase.test_non_ascii_query _____________________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_non_ascii_query>
+
+    def test_non_ascii_query(self):
+        self.assertEqual(len(self.panel._queries), 0)
+
+        # non-ASCII text query
+>       list(User.objects.extra(where=["username = 'apéro'"]))
+
+tests/panels/test_sql.py:225:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+../django/django/db/models/query.py:400: in __iter__
+    self._fetch_all()
+../django/django/db/models/query.py:1928: in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+../django/django/db/models/query.py:91: in __iter__
+    results = compiler.execute_sql(
+../django-mongodb-backend/django_mongodb_backend/compiler.py:245: in execute_sql
+    query = self.build_query(
+../django-mongodb-backend/django_mongodb_backend/compiler.py:386: in build_query
+    expr = where.as_mql(self, self.connection) if where else {}
+../django-mongodb-backend/django_mongodb_backend/query.py:268: in where_node
+    mql = child.as_mql(compiler, connection)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <django.db.models.sql.where.ExtraWhere object at 0x105a8d940>
+compiler = <SQLCompiler model=User connection=<DatabaseWrapper vendor='mongodb' alias='default'> using='default'>
+connection = <DatabaseWrapper vendor='mongodb' alias='default'>
+
+    def extra_where(self, compiler, connection):  # noqa: ARG001
+>       raise NotSupportedError("QuerySet.extra() is not supported on MongoDB.")
+E       django.db.utils.NotSupportedError: QuerySet.extra() is not supported on MongoDB.
+
+../django-mongodb-backend/django_mongodb_backend/query.py:123: NotSupportedError
+____________________ SQLPanelTestCase.test_param_conversion ____________________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_param_conversion>
+
+    def test_param_conversion(self):
+        self.assertEqual(len(self.panel._queries), 0)
+
+        list(
+            User.objects.filter(first_name="Foo")
+            .filter(is_staff=True)
+            .filter(is_superuser=False)
+        )
+        list(
+            User.objects.annotate(group_count=Count("groups__id"))
+            .filter(group_count__lt=10)
+            .filter(group_count__gt=1)
+        )
+        list(
+            User.objects.filter(
+                date_joined=datetime.datetime(
+                    2017, 12, 22, 16, 7, 1, tzinfo=datetime.timezone.utc
+                )
+            )
+        )
+
+        response = self.panel.process_request(self.request)
+        self.panel.generate_stats(self.request, response)
+
+        # ensure query was logged
+>       self.assertEqual(len(self.panel._queries), 3)
+E       AssertionError: 0 != 3
+
+tests/panels/test_sql.py:278: AssertionError
+______________________ SQLPanelTestCase.test_prettify_sql ______________________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_prettify_sql>
+
+    def test_prettify_sql(self):
+        """
+        Test case to validate that the PRETTIFY_SQL setting changes the output
+        of the sql when it's toggled. It does not validate what it does
+        though.
+        """
+        with override_settings(DEBUG_TOOLBAR_CONFIG={"PRETTIFY_SQL": True}):
+            list(User.objects.filter(username__istartswith="spam"))
+            response = self.panel.process_request(self.request)
+            self.panel.generate_stats(self.request, response)
+>           pretty_sql = self.panel._queries[-1]["sql"]
+E           IndexError: list index out of range
+
+tests/panels/test_sql.py:562: IndexError
+_______________ SQLPanelTestCase.test_raw_query_param_conversion _______________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_raw_query_param_conversion>
+
+    @unittest.skipUnless(connection.vendor != "sqlite", "Test invalid for SQLite")
+    def test_raw_query_param_conversion(self):
+        self.assertEqual(len(self.panel._queries), 0)
+
+>       list(
+            User.objects.raw(
+                " ".join(
+                    [
+                        "SELECT *",
+                        "FROM auth_user",
+                        "WHERE first_name = %s",
+                        "AND is_staff = %s",
+                        "AND is_superuser = %s",
+                        "AND date_joined = %s",
+                    ]
+                ),
+                params=["Foo", True, False, datetime.datetime(2017, 12, 22, 16, 7, 1)],
+            )
+        )
+
+tests/panels/test_sql.py:367:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+../django/django/db/models/query.py:2127: in __iter__
+    self._fetch_all()
+../django/django/db/models/query.py:2114: in _fetch_all
+    self._result_cache = list(self.iterator())
+../django/django/db/models/query.py:2141: in iterator
+    yield from RawModelIterable(self)
+../django/django/db/models/query.py:160: in __iter__
+    query_iterator = iter(query)
+../django/django/db/models/sql/query.py:173: in __iter__
+    self._execute_query()
+../django/django/db/models/sql/query.py:212: in _execute_query
+    self.cursor = connection.cursor()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (), kwargs = {}
+logger = <debug_toolbar.panels.sql.panel.SQLPanel object at 0x105ce1750>
+cursor = <django_mongodb_backend.base.Cursor object at 0x105c63550>
+mixin = <class 'debug_toolbar.panels.sql.tracking.NormalCursorMixin'>
+
+    def cursor(*args, **kwargs):
+        # Per the DB API cursor() does not accept any arguments. There's
+        # some code in the wild which does not follow that convention,
+        # so we pass on the arguments even though it's not clean.
+        # See:
+        # https://github.com/django-commons/django-debug-toolbar/pull/615
+        # https://github.com/django-commons/django-debug-toolbar/pull/896
+        logger = connection._djdt_logger
+        cursor = connection._djdt_cursor(*args, **kwargs)
+        if logger is None:
+            return cursor
+        mixin = NormalCursorMixin if allow_sql.get() else ExceptionCursorMixin
+        return patch_cursor_wrapper_with_mixin(cursor.__class__, mixin)(
+>           cursor.cursor, connection, logger
+        )
+E       AttributeError: 'Cursor' object has no attribute 'cursor'
+
+debug_toolbar/panels/sql/tracking.py:64: AttributeError
+_______________________ SQLPanelTestCase.test_recording ________________________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_recording>
+
+    def test_recording(self):
+        self.assertEqual(len(self.panel._queries), 0)
+
+        sql_call()
+
+        # ensure query was logged
+>       self.assertEqual(len(self.panel._queries), 1)
+E       AssertionError: 0 != 1
+
+tests/panels/test_sql.py:64: AssertionError
+____________________ SQLPanelTestCase.test_recording_async _____________________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_recording_async>
+
+    async def test_recording_async(self):
+        self.assertEqual(len(self.panel._queries), 0)
+
+        await async_sql_call()
+
+        # ensure query was logged
+>       self.assertEqual(len(self.panel._queries), 1)
+E       AssertionError: 0 != 1
+
+tests/panels/test_sql.py:80: AssertionError
+_______________ SQLPanelTestCase.test_recording_concurrent_async _______________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_recording_concurrent_async>
+
+    async def test_recording_concurrent_async(self):
+        self.assertEqual(len(self.panel._queries), 0)
+
+        await concurrent_async_sql_call()
+
+        # ensure query was logged
+>       self.assertEqual(len(self.panel._queries), 2)
+E       AssertionError: 0 != 2
+
+tests/panels/test_sql.py:96: AssertionError
+_____________ SQLPanelTestCase.test_regression_infinite_recursion ______________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_regression_infinite_recursion>
+
+    @override_settings(
+        DEBUG=True,
+        TEMPLATES=[
+            {
+                "BACKEND": "django.template.backends.django.DjangoTemplates",
+                "OPTIONS": {"debug": True, "loaders": ["tests.loaders.LoaderWithSQL"]},
+            }
+        ],
+    )
+    def test_regression_infinite_recursion(self):
+        """
+        Test case for when the template loader runs a SQL query that causes
+        an infinite recursion in the SQL panel.
+        """
+        self.assertEqual(len(self.panel._queries), 0)
+
+        render(self.request, "basic.html", {})
+
+        # Two queries are logged because the loader runs SQL every time a
+        # template is loaded and basic.html extends base.html.
+>       self.assertEqual(len(self.panel._queries), 2)
+E       AssertionError: 0 != 2
+
+tests/panels/test_sql.py:542: AssertionError
+_____________ SQLPanelTestCase.test_similar_and_duplicate_grouping _____________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_similar_and_duplicate_grouping>
+
+    def test_similar_and_duplicate_grouping(self):
+        self.assertEqual(len(self.panel._queries), 0)
+
+>       User.objects.filter(id=1).count()
+
+tests/panels/test_sql.py:686:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+../django/django/db/models/manager.py:87: in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+../django/django/db/models/query.py:1476: in filter
+    return self._filter_or_exclude(False, args, kwargs)
+../django/django/db/models/query.py:1494: in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+../django/django/db/models/query.py:1501: in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+../django/django/db/models/sql/query.py:1609: in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+../django/django/db/models/sql/query.py:1641: in _add_q
+    child_clause, needed_inner = self.build_filter(
+../django/django/db/models/sql/query.py:1555: in build_filter
+    condition = self.build_lookup(lookups, col, value)
+../django/django/db/models/sql/query.py:1385: in build_lookup
+    lookup = lookup_class(lhs, rhs)
+../django/django/db/models/lookups.py:30: in __init__
+    self.rhs = self.get_prep_lookup()
+../django/django/db/models/lookups.py:369: in get_prep_lookup
+    return super().get_prep_lookup()
+../django/django/db/models/lookups.py:88: in get_prep_lookup
+    return self.lhs.output_field.get_prep_value(self.rhs)
+../django-mongodb-backend/django_mongodb_backend/fields/auto.py:25: in get_prep_value
+    return self.to_python(value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <django_mongodb_backend.fields.auto.ObjectIdAutoField: id>, value = 1
+
+    def to_python(self, value):
+        if value is None:
+            return value
+        try:
+            return ObjectId(value)
+        except (errors.InvalidId, TypeError):
+>           raise exceptions.ValidationError(
+                self.error_messages["invalid"],
+                code="invalid",
+                params={"value": value},
+            ) from None
+E           django.core.exceptions.ValidationError: ['“1” is not a valid Object Id.']
+
+../django-mongodb-backend/django_mongodb_backend/fields/objectid.py:31: ValidationError
+_____________________ SQLPanelTestCase.test_simplification _____________________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_simplification>
+
+    def test_simplification(self):
+        """
+        Test case to validate that select lists for .count() and .exist() queries do not
+        get elided, but other select lists do.
+        """
+        User.objects.count()
+        User.objects.exists()
+        list(User.objects.values_list("id"))
+        response = self.panel.process_request(self.request)
+        self.panel.generate_stats(self.request, response)
+>       self.assertEqual(len(self.panel._queries), 3)
+E       AssertionError: 0 != 3
+
+tests/panels/test_sql.py:596: AssertionError
+________________ SQLPanelTestCase.test_top_level_simplification ________________
+
+self = <tests.panels.test_sql.SQLPanelTestCase testMethod=test_top_level_simplification>
+
+    def test_top_level_simplification(self):
+        """
+        Test case to validate that top-level select lists get elided, but other select
+        lists for subselects do not.
+        """
+        list(User.objects.filter(id__in=User.objects.filter(is_staff=True)))
+>       list(User.objects.filter(id__lt=20).union(User.objects.filter(id__gt=10)))
+
+tests/panels/test_sql.py:607:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+../django/django/db/models/manager.py:87: in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+../django/django/db/models/query.py:1476: in filter
+    return self._filter_or_exclude(False, args, kwargs)
+../django/django/db/models/query.py:1494: in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+../django/django/db/models/query.py:1501: in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+../django/django/db/models/sql/query.py:1609: in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+../django/django/db/models/sql/query.py:1641: in _add_q
+    child_clause, needed_inner = self.build_filter(
+../django/django/db/models/sql/query.py:1555: in build_filter
+    condition = self.build_lookup(lookups, col, value)
+../django/django/db/models/sql/query.py:1385: in build_lookup
+    lookup = lookup_class(lhs, rhs)
+../django/django/db/models/lookups.py:30: in __init__
+    self.rhs = self.get_prep_lookup()
+../django/django/db/models/lookups.py:447: in get_prep_lookup
+    return super().get_prep_lookup()
+../django/django/db/models/lookups.py:88: in get_prep_lookup
+    return self.lhs.output_field.get_prep_value(self.rhs)
+../django-mongodb-backend/django_mongodb_backend/fields/auto.py:25: in get_prep_value
+    return self.to_python(value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <django_mongodb_backend.fields.auto.ObjectIdAutoField: id>, value = 20
+
+    def to_python(self, value):
+        if value is None:
+            return value
+        try:
+            return ObjectId(value)
+        except (errors.InvalidId, TypeError):
+>           raise exceptions.ValidationError(
+                self.error_messages["invalid"],
+                code="invalid",
+                params={"value": value},
+            ) from None
+E           django.core.exceptions.ValidationError: ['“20” is not a valid Object Id.']
+
+../django-mongodb-backend/django_mongodb_backend/fields/objectid.py:31: ValidationError
+__________________ TemplatesPanelTestCase.test_queryset_hook ___________________
+
+self = <tests.panels.test_template.TemplatesPanelTestCase testMethod=test_queryset_hook>
+
+    def test_queryset_hook(self):
+        response = self.panel.process_request(self.request)
+        t = Template("No context variables here!")
+        c = Context(
+            {
+                "queryset": User.objects.all(),
+                "deep_queryset": {"queryset": User.objects.all()},
+            }
+        )
+        t.render(c)
+        self.panel.generate_stats(self.request, response)
+
+        # ensure the query was NOT logged
+        self.assertEqual(len(self.sql_panel._queries), 0)
+
+>       self.assertEqual(
+            self.panel.templates[0]["context_list"],
+            [
+                "{'False': False, 'None': None, 'True': True}",
+                "{'deep_queryset': '<<triggers database query>>',\n"
+                " 'queryset': '<<queryset of auth.User>>'}",
+            ],
+        )
+E       AssertionError: Lists differ: ["{'F[58 chars]et': {'queryset': <QuerySet []>},\n 'queryset'[27 chars]>'}"] != ["{'F[58 chars]et': '<<triggers database query>>',\n 'queryse[29 chars]>'}"]
+E
+E       First differing element 1:
+E       "{'deep_queryset': {'queryset': <QuerySet []>},\n 'queryset'[26 chars]>>'}"
+E       "{'deep_queryset': '<<triggers database query>>',\n 'queryse[28 chars]>>'}"
+E
+E         ["{'False': False, 'None': None, 'True': True}",
+E       -  "{'deep_queryset': {'queryset': <QuerySet []>},\n"
+E       +  "{'deep_queryset': '<<triggers database query>>',\n"
+E          " 'queryset': '<<queryset of auth.User>>'}"]
+
+tests/panels/test_template.py:41: AssertionError
+__________ CspRenderingTestCase.test_does_not_exist_nonce_wasnt_used ___________
+
+self = <tests.test_csp_rendering.CspRenderingTestCase testMethod=test_does_not_exist_nonce_wasnt_used>
+
+    def test_does_not_exist_nonce_wasnt_used(self):
+        """
+        A `nonce` should not exist even when using the `CSPMiddleware`
+        if the view didn't access the request.csp_nonce attribute.
+        """
+        for middleware in [MIDDLEWARE_CSP_BEFORE, MIDDLEWARE_CSP_LAST]:
+            with self.settings(MIDDLEWARE=middleware):
+>               response = cast(HttpResponse, self.client.get(path="/regular/basic/"))
+
+tests/test_csp_rendering.py:101:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+../django/django/test/client.py:1129: in get
+    response = super().get(
+../django/django/test/client.py:479: in get
+    return self.generic(
+../django/django/test/client.py:676: in generic
+    return self.request(**r)
+../django/django/test/client.py:1087: in request
+    response = self.handler(environ)
+../django/django/test/client.py:173: in __call__
+    self.load_middleware()
+../django/django/core/handlers/base.py:40: in load_middleware
+    middleware = import_string(middleware_path)
+../django/django/utils/module_loading.py:30: in import_string
+    return cached_import(module_path, class_name)
+../django/django/utils/module_loading.py:15: in cached_import
+    module = import_module(module_path)
+../../../../.pyenv/versions/3.13.2/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1310: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:488: in _call_with_frames_removed
+    ???
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'csp', import_ = <function _gcd_import at 0x1008f44a0>
+
+>   ???
+E   ModuleNotFoundError: No module named 'csp'
+
+<frozen importlib._bootstrap>:1324: ModuleNotFoundError
+_______________________ CspRenderingTestCase.test_exists _______________________
+
+self = <tests.test_csp_rendering.CspRenderingTestCase testMethod=test_exists>
+
+    def test_exists(self):
+        """A `nonce` should exist when using the `CSPMiddleware`."""
+        for middleware in [MIDDLEWARE_CSP_BEFORE, MIDDLEWARE_CSP_LAST]:
+            with self.settings(MIDDLEWARE=middleware):
+>               response = cast(HttpResponse, self.client.get(path="/csp_view/"))
+
+tests/test_csp_rendering.py:77:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+../django/django/test/client.py:1129: in get
+    response = super().get(
+../django/django/test/client.py:479: in get
+    return self.generic(
+../django/django/test/client.py:676: in generic
+    return self.request(**r)
+../django/django/test/client.py:1087: in request
+    response = self.handler(environ)
+../django/django/test/client.py:173: in __call__
+    self.load_middleware()
+../django/django/core/handlers/base.py:40: in load_middleware
+    middleware = import_string(middleware_path)
+../django/django/utils/module_loading.py:30: in import_string
+    return cached_import(module_path, class_name)
+../django/django/utils/module_loading.py:15: in cached_import
+    module = import_module(module_path)
+../../../../.pyenv/versions/3.13.2/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1310: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:488: in _call_with_frames_removed
+    ???
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'csp', import_ = <function _gcd_import at 0x1008f44a0>
+
+>   ???
+E   ModuleNotFoundError: No module named 'csp'
+
+<frozen importlib._bootstrap>:1324: ModuleNotFoundError
+_____________ CspRenderingTestCase.test_panel_content_nonce_exists _____________
+
+self = <tests.test_csp_rendering.CspRenderingTestCase testMethod=test_panel_content_nonce_exists>
+
+    def test_panel_content_nonce_exists(self):
+        for middleware in [MIDDLEWARE_CSP_BEFORE, MIDDLEWARE_CSP_LAST]:
+            with self.settings(MIDDLEWARE=middleware):
+>               response = cast(HttpResponse, self.client.get(path="/csp_view/"))
+
+tests/test_csp_rendering.py:142:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+../django/django/test/client.py:1129: in get
+    response = super().get(
+../django/django/test/client.py:479: in get
+    return self.generic(
+../django/django/test/client.py:676: in generic
+    return self.request(**r)
+../django/django/test/client.py:1087: in request
+    response = self.handler(environ)
+../django/django/test/client.py:173: in __call__
+    self.load_middleware()
+../django/django/core/handlers/base.py:40: in load_middleware
+    middleware = import_string(middleware_path)
+../django/django/utils/module_loading.py:30: in import_string
+    return cached_import(module_path, class_name)
+../django/django/utils/module_loading.py:15: in cached_import
+    module = import_module(module_path)
+../../../../.pyenv/versions/3.13.2/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1310: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:488: in _call_with_frames_removed
+    ???
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'csp', import_ = <function _gcd_import at 0x1008f44a0>
+
+>   ???
+E   ModuleNotFoundError: No module named 'csp'
+
+<frozen importlib._bootstrap>:1324: ModuleNotFoundError
+__________________ CspRenderingTestCase.test_redirects_exists __________________
+
+self = <tests.test_csp_rendering.CspRenderingTestCase testMethod=test_redirects_exists>
+
+    @override_settings(
+        DEBUG_TOOLBAR_CONFIG={"DISABLE_PANELS": set()},
+    )
+    def test_redirects_exists(self):
+        for middleware in [MIDDLEWARE_CSP_BEFORE, MIDDLEWARE_CSP_LAST]:
+            with self.settings(MIDDLEWARE=middleware):
+>               response = cast(HttpResponse, self.client.get(path="/csp_view/"))
+
+tests/test_csp_rendering.py:122:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+../django/django/test/client.py:1129: in get
+    response = super().get(
+../django/django/test/client.py:479: in get
+    return self.generic(
+../django/django/test/client.py:676: in generic
+    return self.request(**r)
+../django/django/test/client.py:1087: in request
+    response = self.handler(environ)
+../django/django/test/client.py:173: in __call__
+    self.load_middleware()
+../django/django/core/handlers/base.py:40: in load_middleware
+    middleware = import_string(middleware_path)
+../django/django/utils/module_loading.py:30: in import_string
+    return cached_import(module_path, class_name)
+../django/django/utils/module_loading.py:15: in cached_import
+    module = import_module(module_path)
+../../../../.pyenv/versions/3.13.2/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1310: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:488: in _call_with_frames_removed
+    ???
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'csp', import_ = <function _gcd_import at 0x1008f44a0>
+
+>   ???
+E   ModuleNotFoundError: No module named 'csp'
+
+<frozen importlib._bootstrap>:1324: ModuleNotFoundError
+___________________ DebugToolbarTestCase.test_async_sql_page ___________________
+
+self = <tests.test_integration.DebugToolbarTestCase testMethod=test_async_sql_page>
+
+    def test_async_sql_page(self):
+        response = self.client.get("/async_execute_sql/")
+>       self.assertEqual(
+            len(response.toolbar.get_panel_by_id("SQLPanel").get_stats()["queries"]), 2
+        )
+E       AssertionError: 0 != 2
+
+tests/test_integration.py:290: AssertionError
+_____________ DebugToolbarTestCase.test_concurrent_async_sql_page ______________
+
+self = <tests.test_integration.DebugToolbarTestCase testMethod=test_concurrent_async_sql_page>
+
+    def test_concurrent_async_sql_page(self):
+        response = self.client.get("/async_execute_sql_concurrently/")
+>       self.assertEqual(
+            len(response.toolbar.get_panel_by_id("SQLPanel").get_stats()["queries"]), 2
+        )
+E       AssertionError: 0 != 2
+
+tests/test_integration.py:296: AssertionError
+______________________ DebugToolbarTestCase.test_sql_page ______________________
+
+self = <tests.test_integration.DebugToolbarTestCase testMethod=test_sql_page>
+
+    def test_sql_page(self):
+        response = self.client.get("/execute_sql/")
+>       self.assertEqual(
+            len(response.toolbar.get_panel_by_id("SQLPanel").get_stats()["queries"]), 1
+        )
+E       AssertionError: 0 != 1
+
+tests/test_integration.py:284: AssertionError
+__________ DebugToolbarIntegrationTestCase.test_server_timing_headers __________
+
+self = <tests.test_integration.DebugToolbarIntegrationTestCase testMethod=test_server_timing_headers>
+
+    def test_server_timing_headers(self):
+        response = self.client.get("/execute_sql/")
+        server_timing = response["Server-Timing"]
+        expected_partials = [
+            r'TimerPanel_utime;dur=(\d)*(\.(\d)*)?;desc="User CPU time", ',
+            r'TimerPanel_stime;dur=(\d)*(\.(\d)*)?;desc="System CPU time", ',
+            r'TimerPanel_total;dur=(\d)*(\.(\d)*)?;desc="Total CPU time", ',
+            r'TimerPanel_total_time;dur=(\d)*(\.(\d)*)?;desc="Elapsed time", ',
+            r'SQLPanel_sql_time;dur=(\d)*(\.(\d)*)?;desc="SQL 1 queries", ',
+            r'CachePanel_total_time;dur=0;desc="Cache 0 Calls"',
+        ]
+        for expected in expected_partials:
+>           self.assertTrue(re.compile(expected).search(server_timing))
+E           AssertionError: None is not true
+
+tests/test_integration.py:612: AssertionError
+_____ DebugToolbarIntegrationTestCase.test_sql_explain_checks_show_toolbar _____
+
+self = <tests.test_integration.DebugToolbarIntegrationTestCase testMethod=test_sql_explain_checks_show_toolbar>
+
+    def test_sql_explain_checks_show_toolbar(self):
+        url = "/__debug__/sql_explain/"
+        data = {
+            "signed": SignedDataForm.sign(
+                {
+                    "sql": "SELECT * FROM auth_user",
+                    "raw_sql": "SELECT * FROM auth_user",
+                    "params": "{}",
+                    "alias": "default",
+                    "duration": "0",
+                }
+            )
+        }
+
+>       response = self.client.post(url, data)
+
+tests/test_integration.py:450:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+../django/django/test/client.py:1158: in post
+    response = super().post(
+../django/django/test/client.py:503: in post
+    return self.generic(
+../django/django/test/client.py:676: in generic
+    return self.request(**r)
+../django/django/test/client.py:1092: in request
+    self.check_exception(response)
+../django/django/test/client.py:805: in check_exception
+    raise exc_value
+../django/django/core/handlers/exception.py:55: in inner
+    response = get_response(request)
+../django/django/core/handlers/base.py:197: in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+../django/django/views/decorators/csrf.py:65: in _view_wrapper
+    return view_func(request, *args, **kwargs)
+debug_toolbar/decorators.py:34: in inner
+    return view(request, *args, **kwargs)
+debug_toolbar/decorators.py:46: in inner
+    return view(request, *args, **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+request = <WSGIRequest: POST '/__debug__/sql_explain/'>
+
+    @csrf_exempt
+    @login_not_required
+    @require_show_toolbar
+    @render_with_toolbar_language
+    def sql_explain(request):
+        """Returns the output of the SQL EXPLAIN on the given query"""
+        verified_data = get_signed_data(request)
+        if not verified_data:
+            return HttpResponseBadRequest("Invalid signature")
+        form = SQLSelectForm(verified_data)
+
+        if form.is_valid():
+            sql = form.cleaned_data["raw_sql"]
+            params = form.cleaned_data["params"]
+            vendor = form.connection.vendor
+            with form.cursor as cursor:
+                if vendor == "sqlite":
+                    # SQLite's EXPLAIN dumps the low-level opcodes generated for a query;
+                    # EXPLAIN QUERY PLAN dumps a more human-readable summary
+                    # See https://www.sqlite.org/lang_explain.html for details
+                    cursor.execute(f"EXPLAIN QUERY PLAN {sql}", params)
+                elif vendor == "postgresql":
+                    cursor.execute(f"EXPLAIN ANALYZE {sql}", params)
+                else:
+>                   cursor.execute(f"EXPLAIN {sql}", params)
+E                   AttributeError: 'NoneType' object has no attribute 'execute'
+
+debug_toolbar/panels/sql/views.py:75: AttributeError
+_____ DebugToolbarIntegrationTestCase.test_sql_select_checks_show_toolbar ______
+
+self = <tests.test_integration.DebugToolbarIntegrationTestCase testMethod=test_sql_select_checks_show_toolbar>
+
+    def test_sql_select_checks_show_toolbar(self):
+        url = "/__debug__/sql_select/"
+        data = {
+            "signed": SignedDataForm.sign(
+                {
+                    "sql": "SELECT * FROM auth_user",
+                    "raw_sql": "SELECT * FROM auth_user",
+                    "params": "{}",
+                    "alias": "default",
+                    "duration": "0",
+                }
+            )
+        }
+
+>       response = self.client.post(url, data)
+
+tests/test_integration.py:422:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+../django/django/test/client.py:1158: in post
+    response = super().post(
+../django/django/test/client.py:503: in post
+    return self.generic(
+../django/django/test/client.py:676: in generic
+    return self.request(**r)
+../django/django/test/client.py:1092: in request
+    self.check_exception(response)
+../django/django/test/client.py:805: in check_exception
+    raise exc_value
+../django/django/core/handlers/exception.py:55: in inner
+    response = get_response(request)
+../django/django/core/handlers/base.py:197: in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+../django/django/views/decorators/csrf.py:65: in _view_wrapper
+    return view_func(request, *args, **kwargs)
+debug_toolbar/decorators.py:34: in inner
+    return view(request, *args, **kwargs)
+debug_toolbar/decorators.py:46: in inner
+    return view(request, *args, **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+request = <WSGIRequest: POST '/__debug__/sql_select/'>
+
+    @csrf_exempt
+    @login_not_required
+    @require_show_toolbar
+    @render_with_toolbar_language
+    def sql_select(request):
+        """Returns the output of the SQL SELECT statement"""
+        verified_data = get_signed_data(request)
+        if not verified_data:
+            return HttpResponseBadRequest("Invalid signature")
+        form = SQLSelectForm(verified_data)
+
+        if form.is_valid():
+            sql = form.cleaned_data["raw_sql"]
+            params = form.cleaned_data["params"]
+            with form.cursor as cursor:
+>               cursor.execute(sql, params)
+E               AttributeError: 'NoneType' object has no attribute 'execute'
+
+debug_toolbar/panels/sql/views.py:35: AttributeError
+___________________ DebugToolbarTestCase.test_async_sql_page ___________________
+
+self = <tests.test_integration_async.DebugToolbarTestCase testMethod=test_async_sql_page>
+
+    async def test_async_sql_page(self):
+        response = await self.async_client.get("/async_execute_sql/")
+>       self.assertEqual(
+            len(response.toolbar.get_panel_by_id("SQLPanel").get_stats()["queries"]), 2
+        )
+E       AssertionError: 0 != 2
+
+tests/test_integration_async.py:201: AssertionError
+______________________ DebugToolbarTestCase.test_sql_page ______________________
+
+self = <tests.test_integration_async.DebugToolbarTestCase testMethod=test_sql_page>
+
+    async def test_sql_page(self):
+        response = await self.async_client.get("/execute_sql/")
+>       self.assertEqual(
+            len(response.toolbar.get_panel_by_id("SQLPanel").get_stats()["queries"]), 1
+        )
+E       AssertionError: 0 != 1
+
+tests/test_integration_async.py:195: AssertionError
+_____ DebugToolbarIntegrationTestCase.test_sql_explain_checks_show_toolbar _____
+
+self = <tests.test_integration_async.DebugToolbarIntegrationTestCase testMethod=test_sql_explain_checks_show_toolbar>
+
+    async def test_sql_explain_checks_show_toolbar(self):
+        url = "/__debug__/sql_explain/"
+        data = {
+            "signed": SignedDataForm.sign(
+                {
+                    "sql": "SELECT * FROM auth_user",
+                    "raw_sql": "SELECT * FROM auth_user",
+                    "params": "{}",
+                    "alias": "default",
+                    "duration": "0",
+                }
+            )
+        }
+
+>       response = await self.async_client.post(url, data)
+
+tests/test_integration_async.py:352:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+../django/django/test/client.py:1515: in post
+    response = await super().post(
+../django/django/test/client.py:1449: in request
+    self.check_exception(response)
+../django/django/test/client.py:805: in check_exception
+    raise exc_value
+../../.venv/lib/python3.13/site-packages/asgiref/sync.py:518: in thread_handler
+    raise exc_info[1]
+../django/django/core/handlers/exception.py:42: in inner
+    response = await get_response(request)
+../../.venv/lib/python3.13/site-packages/asgiref/sync.py:518: in thread_handler
+    raise exc_info[1]
+../django/django/core/handlers/base.py:253: in _get_response_async
+    response = await wrapped_callback(
+../../.venv/lib/python3.13/site-packages/asgiref/sync.py:468: in __call__
+    ret = await asyncio.shield(exec_coro)
+../../.venv/lib/python3.13/site-packages/asgiref/current_thread_executor.py:40: in run
+    result = self.fn(*self.args, **self.kwargs)
+../../.venv/lib/python3.13/site-packages/asgiref/sync.py:522: in thread_handler
+    return func(*args, **kwargs)
+../django/django/views/decorators/csrf.py:65: in _view_wrapper
+    return view_func(request, *args, **kwargs)
+debug_toolbar/decorators.py:34: in inner
+    return view(request, *args, **kwargs)
+debug_toolbar/decorators.py:46: in inner
+    return view(request, *args, **kwargs)
+debug_toolbar/panels/sql/views.py:66: in sql_explain
+    with form.cursor as cursor:
+../django/django/utils/functional.py:47: in __get__
+    res = instance.__dict__[self.name] = self.func(instance)
+debug_toolbar/panels/sql/forms.py:60: in cursor
+    return self.connection.cursor()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (), kwargs = {}
+logger = <debug_toolbar.panels.sql.panel.SQLPanel object at 0x111175bd0>
+cursor = <django_mongodb_backend.base.Cursor object at 0x11114f690>
+mixin = <class 'debug_toolbar.panels.sql.tracking.NormalCursorMixin'>
+
+    def cursor(*args, **kwargs):
+        # Per the DB API cursor() does not accept any arguments. There's
+        # some code in the wild which does not follow that convention,
+        # so we pass on the arguments even though it's not clean.
+        # See:
+        # https://github.com/django-commons/django-debug-toolbar/pull/615
+        # https://github.com/django-commons/django-debug-toolbar/pull/896
+        logger = connection._djdt_logger
+        cursor = connection._djdt_cursor(*args, **kwargs)
+        if logger is None:
+            return cursor
+        mixin = NormalCursorMixin if allow_sql.get() else ExceptionCursorMixin
+        return patch_cursor_wrapper_with_mixin(cursor.__class__, mixin)(
+>           cursor.cursor, connection, logger
+        )
+E       AttributeError: 'Cursor' object has no attribute 'cursor'
+
+debug_toolbar/panels/sql/tracking.py:64: AttributeError
+_____ DebugToolbarIntegrationTestCase.test_sql_profile_checks_show_toolbar _____
+
+self = <tests.test_integration_async.DebugToolbarIntegrationTestCase testMethod=test_sql_profile_checks_show_toolbar>
+
+    async def test_sql_profile_checks_show_toolbar(self):
+        url = "/__debug__/sql_profile/"
+        data = {
+            "signed": SignedDataForm.sign(
+                {
+                    "sql": "SELECT * FROM auth_user",
+                    "raw_sql": "SELECT * FROM auth_user",
+                    "params": "{}",
+                    "alias": "default",
+                    "duration": "0",
+                }
+            )
+        }
+
+>       response = await self.async_client.post(url, data)
+
+tests/test_integration_async.py:421:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+../django/django/test/client.py:1515: in post
+    response = await super().post(
+../django/django/test/client.py:1449: in request
+    self.check_exception(response)
+../django/django/test/client.py:805: in check_exception
+    raise exc_value
+../../.venv/lib/python3.13/site-packages/asgiref/sync.py:518: in thread_handler
+    raise exc_info[1]
+../django/django/core/handlers/exception.py:42: in inner
+    response = await get_response(request)
+../../.venv/lib/python3.13/site-packages/asgiref/sync.py:518: in thread_handler
+    raise exc_info[1]
+../django/django/core/handlers/base.py:253: in _get_response_async
+    response = await wrapped_callback(
+../../.venv/lib/python3.13/site-packages/asgiref/sync.py:468: in __call__
+    ret = await asyncio.shield(exec_coro)
+../../.venv/lib/python3.13/site-packages/asgiref/current_thread_executor.py:40: in run
+    result = self.fn(*self.args, **self.kwargs)
+../../.venv/lib/python3.13/site-packages/asgiref/sync.py:522: in thread_handler
+    return func(*args, **kwargs)
+../django/django/views/decorators/csrf.py:65: in _view_wrapper
+    return view_func(request, *args, **kwargs)
+debug_toolbar/decorators.py:34: in inner
+    return view(request, *args, **kwargs)
+debug_toolbar/decorators.py:46: in inner
+    return view(request, *args, **kwargs)
+debug_toolbar/panels/sql/views.py:108: in sql_profile
+    with form.cursor as cursor:
+../django/django/utils/functional.py:47: in __get__
+    res = instance.__dict__[self.name] = self.func(instance)
+debug_toolbar/panels/sql/forms.py:60: in cursor
+    return self.connection.cursor()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (), kwargs = {}
+logger = <debug_toolbar.panels.sql.panel.SQLPanel object at 0x111175bd0>
+cursor = <django_mongodb_backend.base.Cursor object at 0x11145e750>
+mixin = <class 'debug_toolbar.panels.sql.tracking.NormalCursorMixin'>
+
+    def cursor(*args, **kwargs):
+        # Per the DB API cursor() does not accept any arguments. There's
+        # some code in the wild which does not follow that convention,
+        # so we pass on the arguments even though it's not clean.
+        # See:
+        # https://github.com/django-commons/django-debug-toolbar/pull/615
+        # https://github.com/django-commons/django-debug-toolbar/pull/896
+        logger = connection._djdt_logger
+        cursor = connection._djdt_cursor(*args, **kwargs)
+        if logger is None:
+            return cursor
+        mixin = NormalCursorMixin if allow_sql.get() else ExceptionCursorMixin
+        return patch_cursor_wrapper_with_mixin(cursor.__class__, mixin)(
+>           cursor.cursor, connection, logger
+        )
+E       AttributeError: 'Cursor' object has no attribute 'cursor'
+
+debug_toolbar/panels/sql/tracking.py:64: AttributeError
+_____ DebugToolbarIntegrationTestCase.test_sql_select_checks_show_toolbar ______
+
+self = <tests.test_integration_async.DebugToolbarIntegrationTestCase testMethod=test_sql_select_checks_show_toolbar>
+
+    async def test_sql_select_checks_show_toolbar(self):
+        url = "/__debug__/sql_select/"
+        data = {
+            "signed": SignedDataForm.sign(
+                {
+                    "sql": "SELECT * FROM auth_user",
+                    "raw_sql": "SELECT * FROM auth_user",
+                    "params": "{}",
+                    "alias": "default",
+                    "duration": "0",
+                }
+            )
+        }
+
+>       response = await self.async_client.post(url, data)
+
+tests/test_integration_async.py:332:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+../django/django/test/client.py:1515: in post
+    response = await super().post(
+../django/django/test/client.py:1449: in request
+    self.check_exception(response)
+../django/django/test/client.py:805: in check_exception
+    raise exc_value
+../../.venv/lib/python3.13/site-packages/asgiref/sync.py:518: in thread_handler
+    raise exc_info[1]
+../django/django/core/handlers/exception.py:42: in inner
+    response = await get_response(request)
+../../.venv/lib/python3.13/site-packages/asgiref/sync.py:518: in thread_handler
+    raise exc_info[1]
+../django/django/core/handlers/base.py:253: in _get_response_async
+    response = await wrapped_callback(
+../../.venv/lib/python3.13/site-packages/asgiref/sync.py:468: in __call__
+    ret = await asyncio.shield(exec_coro)
+../../.venv/lib/python3.13/site-packages/asgiref/current_thread_executor.py:40: in run
+    result = self.fn(*self.args, **self.kwargs)
+../../.venv/lib/python3.13/site-packages/asgiref/sync.py:522: in thread_handler
+    return func(*args, **kwargs)
+../django/django/views/decorators/csrf.py:65: in _view_wrapper
+    return view_func(request, *args, **kwargs)
+debug_toolbar/decorators.py:34: in inner
+    return view(request, *args, **kwargs)
+debug_toolbar/decorators.py:46: in inner
+    return view(request, *args, **kwargs)
+debug_toolbar/panels/sql/views.py:34: in sql_select
+    with form.cursor as cursor:
+../django/django/utils/functional.py:47: in __get__
+    res = instance.__dict__[self.name] = self.func(instance)
+debug_toolbar/panels/sql/forms.py:60: in cursor
+    return self.connection.cursor()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (), kwargs = {}
+logger = <debug_toolbar.panels.sql.panel.SQLPanel object at 0x111175bd0>
+cursor = <django_mongodb_backend.base.Cursor object at 0x105cd3710>
+mixin = <class 'debug_toolbar.panels.sql.tracking.NormalCursorMixin'>
+
+    def cursor(*args, **kwargs):
+        # Per the DB API cursor() does not accept any arguments. There's
+        # some code in the wild which does not follow that convention,
+        # so we pass on the arguments even though it's not clean.
+        # See:
+        # https://github.com/django-commons/django-debug-toolbar/pull/615
+        # https://github.com/django-commons/django-debug-toolbar/pull/896
+        logger = connection._djdt_logger
+        cursor = connection._djdt_cursor(*args, **kwargs)
+        if logger is None:
+            return cursor
+        mixin = NormalCursorMixin if allow_sql.get() else ExceptionCursorMixin
+        return patch_cursor_wrapper_with_mixin(cursor.__class__, mixin)(
+>           cursor.cursor, connection, logger
+        )
+E       AttributeError: 'Cursor' object has no attribute 'cursor'
+
+debug_toolbar/panels/sql/tracking.py:64: AttributeError
+- Generated html report: file:///Users/alex.clark/Developer/django-mongodb-cli/src/django-debug-toolbar/report.html -
+=========================== short test summary info ============================
+FAILED example/test_views.py::ViewTestCase::test_index - django.urls.exceptio...
+FAILED tests/commands/test_debugsqlshell.py::DebugSQLShellTestCase::test_command
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_binary_param_force_text
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_chunked_cursor_wrapper_singleton
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_cursor_wrapper_async
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_cursor_wrapper_asyncio_ctx
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_cursor_wrapper_singleton
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_disable_stacktraces
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_explain_with_union - ...
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_flat_template_information
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_generate_server_timing
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_insert_content - Asse...
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_insert_locals - Asser...
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_nested_template_information
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_non_ascii_query - dja...
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_param_conversion - As...
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_prettify_sql - IndexE...
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_raw_query_param_conversion
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_recording - Assertion...
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_recording_async - Ass...
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_recording_concurrent_async
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_regression_infinite_recursion
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_similar_and_duplicate_grouping
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_simplification - Asse...
+FAILED tests/panels/test_sql.py::SQLPanelTestCase::test_top_level_simplification
+FAILED tests/panels/test_template.py::TemplatesPanelTestCase::test_queryset_hook
+FAILED tests/test_csp_rendering.py::CspRenderingTestCase::test_does_not_exist_nonce_wasnt_used
+FAILED tests/test_csp_rendering.py::CspRenderingTestCase::test_exists - Modul...
+FAILED tests/test_csp_rendering.py::CspRenderingTestCase::test_panel_content_nonce_exists
+FAILED tests/test_csp_rendering.py::CspRenderingTestCase::test_redirects_exists
+FAILED tests/test_integration.py::DebugToolbarTestCase::test_async_sql_page
+FAILED tests/test_integration.py::DebugToolbarTestCase::test_concurrent_async_sql_page
+FAILED tests/test_integration.py::DebugToolbarTestCase::test_sql_page - Asser...
+FAILED tests/test_integration.py::DebugToolbarIntegrationTestCase::test_server_timing_headers
+FAILED tests/test_integration.py::DebugToolbarIntegrationTestCase::test_sql_explain_checks_show_toolbar
+FAILED tests/test_integration.py::DebugToolbarIntegrationTestCase::test_sql_select_checks_show_toolbar
+FAILED tests/test_integration_async.py::DebugToolbarTestCase::test_async_sql_page
+FAILED tests/test_integration_async.py::DebugToolbarTestCase::test_sql_page
+FAILED tests/test_integration_async.py::DebugToolbarIntegrationTestCase::test_sql_explain_checks_show_toolbar
+FAILED tests/test_integration_async.py::DebugToolbarIntegrationTestCase::test_sql_profile_checks_show_toolbar
+FAILED tests/test_integration_async.py::DebugToolbarIntegrationTestCase::test_sql_select_checks_show_toolbar
+ERROR tests/panels/test_sql.py::SQLPanelMultiDBTestCase::test_aliases - djang...
+ERROR tests/panels/test_sql.py::SQLPanelMultiDBTestCase::test_transaction_status
+======= 41 failed, 192 passed, 26 skipped, 1 xfailed, 2 errors in 18.06s =======

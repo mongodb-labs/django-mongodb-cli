@@ -24,9 +24,9 @@ LOGGING = {  # avoids spurious output in tests
 # Application definition
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
+    "debug_toolbar.mongo_apps.MongoAdminConfig",
+    "debug_toolbar.mongo_apps.MongoAuthConfig",
+    "debug_toolbar.mongo_apps.MongoContentTypesConfig",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
@@ -95,8 +95,6 @@ CACHES = {
     "second": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},
 }
 
-DEFAULT_AUTO_FIELD = "django_mongodb_backend.fields.ObjectIdAutoField"
-
 # Debug Toolbar configuration
 
 DEBUG_TOOLBAR_CONFIG = {
@@ -104,4 +102,10 @@ DEBUG_TOOLBAR_CONFIG = {
     "RENDER_PANELS": False,
     # IS_RUNNING_TESTS must be False even though we're running tests because we're running the toolbar's own tests.
     "IS_RUNNING_TESTS": False,
+}
+DEFAULT_AUTO_FIELD = "django_mongodb_backend.fields.ObjectIdAutoField"
+MIGRATION_MODULES = {
+    "admin": None,
+    "auth": None,
+    "contenttypes": None,
 }

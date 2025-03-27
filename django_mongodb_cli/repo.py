@@ -4,7 +4,6 @@ import subprocess
 import click
 from .config import test_settings_map
 from .utils import (
-    apply_patches,
     copy_mongo_apps,
     copy_mongo_migrations,
     copy_mongo_settings,
@@ -368,7 +367,6 @@ def test(
                             )
                             return
                     command = [test_settings_map[repo_name]["test_command"]]
-                    apply_patches(repo_name)
                     copy_mongo_migrations(repo_name)
                     copy_mongo_apps(repo_name)
 

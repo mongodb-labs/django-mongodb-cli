@@ -12,35 +12,6 @@ import subprocess
 from .config import test_settings_map
 
 
-def apply_patches(repo_name):
-    """Apply a patch file to the specified project directory."""
-    repo_dir = test_settings_map[repo_name]["clone_dir"]
-    patch_dir = os.path.join("patches", repo_name)
-    if os.path.exists(patch_dir):
-        for patch_file in os.listdir(patch_dir):
-            shutil.copyfile(
-                os.path.join(patch_dir, patch_file),
-                os.path.join(repo_dir, patch_file),
-            )
-            click.echo(click.style(f"Applying patch {patch_file}", fg="blue"))
-            # Ensure the repository is valid
-            repo = git.Repo(repo_dir)
-            if not repo.bare:
-                try:
-                    # Apply the patch
-                    repo.git.apply(patch_file)
-                    click.echo(
-                        f"Patch {os.path.basename(patch_file)} applied successfully."
-                    )
-                except Exception as e:
-                    click.echo(f"Failed to apply patch: {e}")
-                    return
-            else:
-                click.echo("Not a valid Git repository.")
-                return
-            click.echo(click.style("Patch applied", fg="green"))
-
-
 def copy_mongo_apps(repo_name):
     """Copy the appropriate mongo_apps file based on the repo name."""
     if "apps_file" in test_settings_map[repo_name] and repo_name != "django":

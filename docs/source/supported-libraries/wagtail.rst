@@ -4,7 +4,7 @@ Wagtail
 Settings
 --------
 
-Via ``dm repo test django-filter --show``
+Via ``dm repo test wagtail --show``
 
 ::
 
@@ -40,7 +40,7 @@ Via ``dm repo test django-filter --show``
 Tests
 -----
 
-Via ``dm repo test django-filter -l``
+Via ``dm repo test wagtail -l``
 
 ::
 
@@ -118,11 +118,11 @@ Via ``dm repo test django-filter -l``
 Results
 -------
 
+Via ``dm repo test wagtail``
+
 .. note::
 
-    Prior to https://github.com/mongodb/django-mongodb-backend/pull/256
-
-Via ``dm repo test django-filter``
+    Test results prior to merging https://github.com/mongodb/django-mongodb-backend/pull/256
 
 +------------+-----------+-----------+----------------+--------------+----------------------------+------------------+---------------------------+
 | **TOTAL**  |  **PASS** | **FAIL**  |  **SKIPPED**   |   **ERROR**  | **EXPECTED FAILURES**      |  **WARNING**     |  **PERCENTAGE PASSED**    |

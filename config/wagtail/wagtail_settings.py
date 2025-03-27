@@ -155,12 +155,12 @@ INSTALLED_APPS = [
 # Using DatabaseCache to make sure that the cache is cleared between tests.
 # This prevents false-positives in some wagtail core tests where we are
 # changing the 'wagtail_root_paths' key which may cause future tests to fail.
-CACHES = {
-    "default": {
-        "BACKEND": "django_mongodb_backend.cache.MongoDBCache",
-        "LOCATION": "cache",
-    }
-}
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django_mongodb_backend.cache.MongoDBCache",
+#         "LOCATION": "cache",
+#     }
+# }
 
 PASSWORD_HASHERS = (
     "django.contrib.auth.hashers.MD5PasswordHasher",  # don't use the intentionally slow default password hasher

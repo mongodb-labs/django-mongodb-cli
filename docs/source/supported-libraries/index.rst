@@ -6,3 +6,4 @@ Supported libraries
    django-debug-toolbar
    django-filter
    django-rest-framework
+   wagtail

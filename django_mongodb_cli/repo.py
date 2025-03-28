@@ -293,10 +293,6 @@ def test(
     """
     repos, url_pattern, branch_pattern, upstream_pattern = get_repos("pyproject.toml")
     if repo_name:
-        # Setup only for pymongo
-        if setup and not repo_name == "mongo-python-driver":
-            click.echo(click.style("Setup only for use with pymongo", fg="red"))
-            return
         # Show test settings
         if show:
             if repo_name in test_settings_map.keys():
@@ -406,11 +402,8 @@ def test(
                                 "--self-contained-html",
                             ]
                         )
-
-                    if repo_name == "mongo-python-driver" and setup:
-                        command.extend(["setup-tests"])
                     elif repo_name == "mongo-python-driver":
-                        command.extend(["run-tests"])
+                        command.extend(["test"])
 
                     command.extend(modules)
                     if os.environ.get("DJANGO_SETTINGS_MODULE"):

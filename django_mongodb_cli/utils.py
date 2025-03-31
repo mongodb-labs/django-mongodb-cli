@@ -1,5 +1,4 @@
 import click
-import django_mongodb_backend
 import git
 import os
 import shutil
@@ -82,6 +81,7 @@ def get_management_command(command=None):
 
 def get_databases(app):
     """Get the databases configuration for the specified app."""
+    import django_mongodb_backend
 
     DATABASE_URL = os.environ.get(
         "MONGODB_URI", f"mongodb://localhost:27017/{app}_tests"
@@ -210,6 +210,8 @@ def repo_update(repo_entry, url_pattern, repo):
             click.echo(click.style(repo.git.pull(), fg="blue"))
         except git.exc.NoSuchPathError:
             click.echo("Not a valid Git repository.")
+        except git.exc.GitCommandError:
+            click.echo(click.style(f"Failed to update {repo_name}", fg="red"))
     else:
         click.echo(f"Skipping {repo_name}: Repository not found at {clone_path}")
 
@@ -225,13 +227,26 @@ def repo_status(repo_entry, url_pattern, repo, reset=False):
     clone_path = os.path.join(repo.home, repo_name)
 
     if os.path.exists(clone_path):
-        click.echo(f"Status of {repo_name}...")
         try:
             repo = git.Repo(clone_path)
+            click.echo(click.style(f"Status for {repo_name}:", fg="blue"))
             if reset:
                 click.echo(click.style(repo.git.reset("--hard"), fg="blue"))
             else:
+                click.echo()
+                click.echo(
+                    click.style(
+                        "".join(
+                            [f"{remote.name}:{remote.url}" for remote in repo.remotes]
+                        ),
+                        fg="blue",
+                    )
+                )
+                click.echo()
                 click.echo(click.style(repo.git.status(), fg="blue"))
+                click.echo()
+                click.echo()
+                click.echo()
         except git.exc.NoSuchPathError:
             click.echo("Not a valid Git repository.")
     else:

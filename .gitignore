@@ -31,3 +31,4 @@ requirements.txt
 search/
 uv.lock
 docs/_build/
+config/wagtail/wagtail_settings.py

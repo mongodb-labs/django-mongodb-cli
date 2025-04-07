@@ -94,3 +94,8 @@ alias b := sphinx-build
 sphinx-serve:
     cd docs/_build && python -m http.server
 alias ss := sphinx-serve
+
+[group('sphinx')]
+sphinx-clean:
+    rm -rvf docs/_build
+alias sc := sphinx-clean

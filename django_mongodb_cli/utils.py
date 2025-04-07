@@ -100,8 +100,7 @@ def get_repos(pyproject_path):
     branch_pattern = re.compile(
         r"git\+ssh://git@github\.com/[^/]+/[^@]+@([a-zA-Z0-9_\-\.]+)\b"
     )
-    upstream_pattern = re.compile(r"#\s*upstream:\s*([\w-]+)")
-    return repos, url_pattern, branch_pattern, upstream_pattern
+    return repos, url_pattern, branch_pattern
 
 
 def repo_clone(repo_entry, url_pattern, branch_pattern, repo):
@@ -152,45 +151,6 @@ def repo_install(clone_path):
                 f"No valid installation method found for {clone_path}", fg="red"
             )
         )
-
-
-def repo_fetch(repo_entry, upstream_pattern, url_pattern, repo):
-    """Helper function to fetch upstream remotes for a repository."""
-    url_match = url_pattern.search(repo_entry)
-    upstream_match = upstream_pattern.search(repo_entry)
-
-    if not url_match or not upstream_match:
-        return
-
-    repo_url = url_match.group(0)
-    repo_name = os.path.basename(repo_url)
-    clone_path = os.path.join(repo.home, repo_name)
-
-    if os.path.exists(clone_path):
-        click.echo(f"Adding upstream remote for {repo_name}...")
-        remote = f"https://github.com/{upstream_match.group(1)}/{repo_name}"
-        if os.path.exists(clone_path):
-            repo = git.Repo(clone_path)
-            try:
-                repo.create_remote("upstream", remote)
-                click.echo(click.style(f"Added remote {remote}", fg="green"))
-            except git.exc.GitCommandError:
-                click.echo(
-                    click.style(
-                        f"Remote {repo.remotes.upstream.name} exists! {repo.remotes.upstream.url}",
-                        fg="yellow",
-                    )
-                )
-            repo.remotes.upstream.fetch()
-            try:
-                repo.git.rebase("upstream/main")
-                click.echo(click.style(f"Rebased {repo_name}", fg="green"))
-            except git.exc.GitCommandError:
-                click.echo(click.style(f"Failed to rebase {repo_name}", fg="red"))
-        else:
-            click.echo(click.style(f"Skipping {remote}", fg="yellow"))
-    else:
-        click.echo(f"Skipping {repo_name}: Repository not found at {clone_path}")
 
 
 def repo_update(repo_entry, url_pattern, repo):

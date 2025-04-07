@@ -10,7 +10,6 @@ from .utils import (
     get_management_command,
     get_repos,
     repo_clone,
-    repo_fetch,
     repo_install,
     repo_status,
     repo_update,
@@ -45,7 +44,7 @@ def repo(ctx, list_repos):
     Run Django fork and third-party library tests.
     """
     ctx.obj = Repo()
-    repos, url_pattern, branch_pattern, upstream_pattern = get_repos("pyproject.toml")
+    repos, url_pattern, branch_pattern = get_repos("pyproject.toml")
     if list_repos:
         for repo_entry in repos:
             click.echo(repo_entry)
@@ -70,7 +69,7 @@ def repo(ctx, list_repos):
 @pass_repo
 def clone(repo, ctx, repo_names, all_repos, install):
     """Clone repositories from `pyproject.toml`."""
-    repos, url_pattern, branch_pattern, upstream_pattern = get_repos("pyproject.toml")
+    repos, url_pattern, branch_pattern = get_repos("pyproject.toml")
 
     if repo_names:
         for repo_name in repo_names:
@@ -123,9 +122,7 @@ def install(repo, ctx, repo_names, all_repos):
         return
 
     if all_repos:
-        repos, url_pattern, branch_pattern, upstream_pattern = get_repos(
-            "pyproject.toml"
-        )
+        repos, url_pattern, branch_pattern = get_repos("pyproject.toml")
         for repo_entry in repos:
             url_match = url_pattern.search(repo_entry)
             if url_match:
@@ -134,40 +131,6 @@ def install(repo, ctx, repo_names, all_repos):
                 clone_path = os.path.join(ctx.obj.home, repo_name)
                 if os.path.exists(clone_path):
                     repo_install(clone_path)
-        return
-
-    if ctx.args == []:
-        click.echo(ctx.get_help())
-
-
-@repo.command()
-@click.argument("repo_names", nargs=-1)
-@click.option(
-    "-a",
-    "--all-repos",
-    is_flag=True,
-)
-@click.pass_context
-@pass_repo
-def fetch(repo, ctx, repo_names, all_repos):
-    """Add and fetch upstream remotes for cloned repositories."""
-    repos, url_pattern, _, upstream_pattern = get_repos("pyproject.toml")
-    if repo_names:
-        for repo_name in repo_names:
-            click.echo(f"Fetching upstream for {repo_name}...")
-            for repo_entry in repos:
-                if (
-                    os.path.basename(url_pattern.search(repo_entry).group(0))
-                    == repo_name
-                ):
-                    repo_fetch(repo_entry, upstream_pattern, url_pattern, repo)
-            click.echo(f"Repository '{repo_name}' not found.")
-        return
-
-    if all_repos:
-        click.echo(f"Fetching upstream remotes for {len(repos)} repositories...")
-        for repo_entry in repos:
-            repo_fetch(repo_entry, upstream_pattern, url_pattern, repo)
         return
 
     if ctx.args == []:
@@ -218,7 +181,7 @@ def makemigrations(
 ):
     """Run `makemigrations` for cloned repositories."""
 
-    repos, url_pattern, branch_pattern, upstream_pattern = get_repos("pyproject.toml")
+    repos, url_pattern, branch_pattern = get_repos("pyproject.toml")
     if repo_name:
         for repo_entry in repos:
             url_match = url_pattern.search(repo_entry)
@@ -291,7 +254,7 @@ def test(
     """
     Run tests for Django fork and third-party libraries.
     """
-    repos, url_pattern, branch_pattern, upstream_pattern = get_repos("pyproject.toml")
+    repos, url_pattern, branch_pattern = get_repos("pyproject.toml")
     if repo_name:
         # Show test settings
         if show:

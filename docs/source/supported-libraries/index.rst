@@ -1,3 +1,6 @@
+
+.. _third-party-libraries:
+
 Supported libraries
 ===================
 

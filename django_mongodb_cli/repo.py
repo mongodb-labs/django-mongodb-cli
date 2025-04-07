@@ -444,13 +444,16 @@ def status(repo, ctx, repo_names, all_repos, reset):
     repos, url_pattern, _, _ = get_repos("pyproject.toml")
     if repo_names:
         for repo_name in repo_names:
+            not_found = set()
             for repo_entry in repos:
                 if (
                     os.path.basename(url_pattern.search(repo_entry).group(0))
                     == repo_name
                 ):
                     repo_status(repo_entry, url_pattern, repo, reset=reset)
-            click.echo(f"Repository '{repo_name}' not found.")
+                else:
+                    not_found.add(repo_name)
+            click.echo(f"Repository '{not_found.pop()}' not found.")
         return
 
     if all_repos:

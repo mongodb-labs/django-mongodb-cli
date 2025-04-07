@@ -4,7 +4,7 @@ Third party library support
 Support for third party libraries is determined via the following:
 
 - Test suites
-- Project integrations
+- Project examples
 - Known limitations
 
 Test suites
@@ -36,9 +36,8 @@ For each third party library that is supported, the following tasks are performe
 
   - Replace static primary key references with dynamic references or static ``ObjectId`` references
 
-
-Project integrations
---------------------
+Project examples
+----------------
 
 Known limitations
 -----------------

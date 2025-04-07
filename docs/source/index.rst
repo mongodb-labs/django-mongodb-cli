@@ -11,6 +11,8 @@ For testing Django MongoDB Backend with MongoDB's Django fork and third party li
     MongoDB Backend.
 
 .. toctree::
+   :maxdepth: 2
+
    installation
    third-party-library-support
    supported-libraries/index

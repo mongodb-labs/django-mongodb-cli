@@ -148,7 +148,7 @@ def install(repo, ctx, repo_names, all_repos):
 @pass_repo
 def update(repo, ctx, repo_names, all_repos):
     """Update cloned repositories with `git pull`."""
-    repos, url_pattern, _, _ = get_repos("pyproject.toml")
+    repos, url_pattern, _ = get_repos("pyproject.toml")
     if repo_names:
         for repo_name in repo_names:
             for repo_entry in repos:

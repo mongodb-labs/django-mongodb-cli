@@ -404,7 +404,7 @@ def test(
 @pass_repo
 def status(repo, ctx, repo_names, all_repos, reset):
     """Repository status."""
-    repos, url_pattern, _, _ = get_repos("pyproject.toml")
+    repos, url_pattern, _ = get_repos("pyproject.toml")
     if repo_names:
         for repo_name in repo_names:
             not_found = set()

@@ -148,7 +148,7 @@ def install(repo, ctx, repo_names, all_repos):
 @pass_repo
 def update(repo, ctx, repo_names, all_repos):
     """Update cloned repositories with `git pull`."""
-    repos, url_pattern, _, _ = get_repos("pyproject.toml")
+    repos, url_pattern, _ = get_repos("pyproject.toml")
     if repo_names:
         for repo_name in repo_names:
             for repo_entry in repos:
@@ -404,7 +404,7 @@ def test(
 @pass_repo
 def status(repo, ctx, repo_names, all_repos, reset):
     """Repository status."""
-    repos, url_pattern, _, _ = get_repos("pyproject.toml")
+    repos, url_pattern, _ = get_repos("pyproject.toml")
     if repo_names:
         for repo_name in repo_names:
             not_found = set()
@@ -414,6 +414,7 @@ def status(repo, ctx, repo_names, all_repos, reset):
                     == repo_name
                 ):
                     repo_status(repo_entry, url_pattern, repo, reset=reset)
+                    return
                 else:
                     not_found.add(repo_name)
             click.echo(f"Repository '{not_found.pop()}' not found.")

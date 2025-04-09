@@ -414,6 +414,7 @@ def status(repo, ctx, repo_names, all_repos, reset):
                     == repo_name
                 ):
                     repo_status(repo_entry, url_pattern, repo, reset=reset)
+                    return
                 else:
                     not_found.add(repo_name)
             click.echo(f"Repository '{not_found.pop()}' not found.")

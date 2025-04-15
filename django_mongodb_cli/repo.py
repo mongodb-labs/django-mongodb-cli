@@ -353,6 +353,7 @@ def test(
                     if (
                         repo_name == "django-debug-toolbar"
                         or repo_name == "django-allauth"
+                        or repo_name == "django-mongodb-extensions"
                     ):
                         os.environ["DJANGO_SETTINGS_MODULE"] = test_settings_map[
                             repo_name

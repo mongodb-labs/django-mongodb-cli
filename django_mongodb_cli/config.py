@@ -179,6 +179,49 @@ test_settings_map = {
             join("src", "django-debug-toolbar", "tests"),
         ],
     },
+    "django-mongodb-extensions": {
+        "apps_file": {
+            "source": join("config", "extensions", "debug_toolbar_apps.py"),
+            "target": join(
+                "src",
+                "django-mongodb-extensions",
+                "django_mongodb_extensions",
+                "mongo_apps.py",
+            ),
+        },
+        "test_command": "pytest",
+        "test_dir": join("src", "django-mongodb-extensions"),
+        "clone_dir": join("src", "django-mongodb-extensions"),
+        "settings": {
+            "test": {
+                "source": join("config", "extensions", "debug_toolbar_settings.py"),
+                "target": join(
+                    "src",
+                    "django-mongodb-extensions",
+                    "django_mongodb_extensions",
+                    "mongo_settings.py",
+                ),
+            },
+            "migrations": {
+                "source": join("config", "debug_toolbar", "debug_toolbar_settings.py"),
+                "target": join(
+                    "src",
+                    "django-mongodb-extensions",
+                    "django_mongodb_extensions",
+                    "mongo_settings.py",
+                ),
+            },
+            "module": {
+                "test": "django_mongodb_extensions.mongo_settings",
+                "migrations": "django_mongodb_extensions.mongo_settings",
+            },
+        },
+        "test_dirs": [
+            join(
+                "src", "django-mongodb-extensions", "django_mongodb_extensions", "tests"
+            ),
+        ],
+    },
     "django-allauth": {
         "test_command": "pytest",
         "test_dir": join("src", "django-allauth"),

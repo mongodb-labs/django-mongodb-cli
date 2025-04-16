@@ -157,6 +157,7 @@ def update(repo, ctx, repo_names, all_repos):
                     == repo_name
                 ):
                     repo_update(repo_entry, url_pattern, repo)
+                    return
             click.echo(f"Repository '{repo_name}' not found.")
         return
 

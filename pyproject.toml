@@ -33,6 +33,8 @@ packages = ["django_mongodb_cli"]
 
 [tool.django_mongodb_cli]
 dev = [
+    "DublinCityCenterPubFinder @ git+ssh://git@github.com/anaiyaraisin/DublinCityCenterPubFinder",
+    "django @ git+ssh://git@github.com/mongodb-forks/django@mongodb-5.1.x",
     "django-allauth @ git+ssh://git@github.com/pennersr/django-allauth@main",
     "django-debug-toolbar @ git+ssh://git@github.com/django-commons/django-debug-toolbar@main",
     "django-filter @ git+ssh://git@github.com/carltongibson/django-filter@main",
@@ -42,14 +44,13 @@ dev = [
     "django-mongodb-project @ git+ssh://git@github.com/mongodb-labs/django-mongodb-project@5.1.x",
     "django-mongodb-templates @ git+ssh://git@github.com/aclark4life/django-mongodb-templates@main",
     "django-rest-framework @ git+ssh://git@github.com/encode/django-rest-framework@main",
-    "django @ git+ssh://git@github.com/mongodb-forks/django@mongodb-5.1.x",
     "docs @ git+ssh://git@github.com/mongodb/docs@master",
     "flask-pymongo @ git+ssh://git@github.com/mongodb-labs/flask-pymongo",
-    "DublinCityCenterPubFinder @ git+ssh://git@github.com/anaiyaraisin/DublinCityCenterPubFinder",
     "langchain-mongodb @ git+ssh://git@github.com/langchain-ai/langchain-mongodb@main",
     "mongo-python-driver @ git+ssh://git@github.com/mongodb/mongo-python-driver@master",
-    "wagtail-mongodb-project @ git+ssh://git@github.com/mongodb-labs/wagtail-mongodb-project@main",
+    "specifications @ git+ssh://git@github.com:mongodb/specifications@master",
     "wagtail @ git+ssh://git@github.com/mongodb-forks/wagtail@main",
+    "wagtail-mongodb-project @ git+ssh://git@github.com/mongodb-labs/wagtail-mongodb-project@main",
     "xmlsec @ git+ssh://git@github.com/xmlsec/python-xmlsec@main",
 ]
 

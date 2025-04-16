@@ -48,6 +48,7 @@ dev = [
     "DublinCityCenterPubFinder @ git+ssh://git@github.com/anaiyaraisin/DublinCityCenterPubFinder",
     "langchain-mongodb @ git+ssh://git@github.com/langchain-ai/langchain-mongodb@main",
     "mongo-python-driver @ git+ssh://git@github.com/mongodb/mongo-python-driver@master",
+    "specifications @ git+ssh://git@github.com/mongodb/specifications@master",
     "wagtail-mongodb-project @ git+ssh://git@github.com/mongodb-labs/wagtail-mongodb-project@main",
     "wagtail @ git+ssh://git@github.com/mongodb-forks/wagtail@main",
     "xmlsec @ git+ssh://git@github.com/xmlsec/python-xmlsec@main",

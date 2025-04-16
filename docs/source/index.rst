@@ -21,7 +21,7 @@ Table of Contents
    :maxdepth: 2
 
    installation/index
-   third-party-library-support
+   third-party-library-support/index
    supported-libraries/index
 
 .. _`Django MongoDB Backend`: https://github.com/mongodb/django-mongodb-backend

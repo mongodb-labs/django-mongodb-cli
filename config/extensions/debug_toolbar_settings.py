@@ -24,9 +24,9 @@ LOGGING = {  # avoids spurious output in tests
 # Application definition
 
 INSTALLED_APPS = [
-    "django_mongodb_extensions.debug_toolbar.mongo_apps.MongoAdminConfig",
-    "django_mongodb_extensions.debug_toolbar.mongo_apps.MongoAuthConfig",
-    "django_mongodb_extensions.debug_toolbar.mongo_apps.MongoContentTypesConfig",
+    "django_mongodb_extensions.mongo_apps.MongoAdminConfig",
+    "django_mongodb_extensions.mongo_apps.MongoAuthConfig",
+    "django_mongodb_extensions.mongo_apps.MongoContentTypesConfig",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",

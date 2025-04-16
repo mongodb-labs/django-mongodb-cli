@@ -203,7 +203,7 @@ test_settings_map = {
                 ),
             },
             "migrations": {
-                "source": join("config", "debug_toolbar", "debug_toolbar_settings.py"),
+                "source": join("config", "extensions", "debug_toolbar_settings.py"),
                 "target": join(
                     "src",
                     "django-mongodb-extensions",

@@ -51,6 +51,7 @@ dev = [
     "wagtail-mongodb-project @ git+ssh://git@github.com/mongodb-labs/wagtail-mongodb-project@main",
     "wagtail @ git+ssh://git@github.com/mongodb-forks/wagtail@main",
     "xmlsec @ git+ssh://git@github.com/xmlsec/python-xmlsec@main",
+    "specifications @ git+ssh://git@github.com:mongodb/specifications@master",
 ]
 
 [project.scripts]

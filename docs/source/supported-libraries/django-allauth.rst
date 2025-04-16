@@ -3,8 +3,11 @@ Django allauth
 
 .. _django-allauth-results:
 
+Test suite
+----------
+
 Results
--------
+~~~~~~~
 
 Via ``dm repo test django-filter``
 
@@ -17,7 +20,7 @@ Via ``dm repo test django-filter``
 - `django-filter.txt <../_static/django-filter.txt>`_
 
 Settings
---------
+~~~~~~~~
 
 Via ``dm repo test django-filter --show``
 
@@ -78,7 +81,7 @@ Via ``dm repo test django-filter --show``
     }
 
 Tests
------
+~~~~~
 
 Via ``dm repo test django-filter -l``
 
@@ -209,3 +212,9 @@ Via ``dm repo test django-filter -l``
         ├── headless_only
         ├── login_required_mw
         └── regular
+
+Project examples
+----------------
+
+Known issues
+------------

@@ -4,9 +4,10 @@ Django MongoDB CLI
 
 .. note::
 
-    This documentation is for the MongoDB DBX Python team and developers of third
-    party libraries that support Django MongoDB Backend. End users of
-    Django MongoDB Backend should refer to the
+    This documentation is for the MongoDB Python Database Experience team and
+    developers of third party libraries that support `Django MongoDB Backend`_.
+
+    End users of Django MongoDB Backend should refer to the
     `Django MongoDB Backend documentation`_.
 
 About

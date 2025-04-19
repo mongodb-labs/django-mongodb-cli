@@ -14,7 +14,7 @@ Django MongoDB CLI
 About
 -----
 
-This library provides the ``dm`` command line utility which can be used for:
+This library provides the ``dm`` command which can be used for:
 
 - Testing `Django MongoDB Backend`_ with MongoDB's `Django fork`_ and :ref:`third party library test suites <third-party-libraries>`.
 - Testing Django projects with `Django MongoDB Backend`_ and :ref:`third party libraries <third-party-libraries>`.

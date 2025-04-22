@@ -16,11 +16,8 @@ About
 
 This library provides the ``dm`` command which can be used for:
 
-- Testing
-
-
-  -  :ref:`Third party library test suites <third-party-libraries>` with `Django MongoDB Backend`_ and MongoDB's `Django fork`_.
-  - `Django projects`_ with `Django MongoDB Backend`_ and :ref:`third party libraries <third-party-libraries>`.
+- :ref:`Running third party library test suites <third-party-libraries>` with `Django MongoDB Backend`_ and MongoDB's `Django fork`_.
+- Creating `Django projects`_ with `Django MongoDB Backend`_ and :ref:`third party libraries <third-party-libraries>`.
 
 Table of Contents
 -----------------

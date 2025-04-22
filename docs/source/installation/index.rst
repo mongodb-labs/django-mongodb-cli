@@ -26,8 +26,8 @@ Install CLI
 
     python -m pip install -e .
 
-Install development dependencies
---------------------------------
+Clone third-party library repositories
+--------------------------------------
 
 ::
 

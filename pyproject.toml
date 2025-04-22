@@ -25,6 +25,7 @@ dependencies = [
     "requests-oauthlib",  # For django-allauth
     "rich",
     "setuptools",  # For django-rest-framework
+    "sphinx-autobuild",  # For django-mongodb-backend documentation
     "toml",
 ]
 
@@ -48,7 +49,7 @@ dev = [
     "flask-pymongo @ git+ssh://git@github.com/mongodb-labs/flask-pymongo",
     "langchain-mongodb @ git+ssh://git@github.com/langchain-ai/langchain-mongodb@main",
     "mongo-python-driver @ git+ssh://git@github.com/mongodb/mongo-python-driver@master",
-    "specifications @ git+ssh://git@github.com:mongodb/specifications@master",
+    "specifications @ git+ssh://git@github.com/mongodb/specifications@master",
     "wagtail @ git+ssh://git@github.com/mongodb-forks/wagtail@main",
     "wagtail-mongodb-project @ git+ssh://git@github.com/mongodb-labs/wagtail-mongodb-project@main",
     "xmlsec @ git+ssh://git@github.com/xmlsec/python-xmlsec@main",

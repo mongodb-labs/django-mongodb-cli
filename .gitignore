@@ -27,7 +27,6 @@ src/
 home/
 .dockerignore
 Dockerfile
-requirements.txt
 search/
 uv.lock
 docs/_build/

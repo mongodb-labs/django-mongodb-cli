@@ -25,6 +25,7 @@ dependencies = [
     "requests-oauthlib",  # For django-allauth
     "rich",
     "setuptools",  # For django-rest-framework
+    "sphinx-autobuild",  # For django-mongodb-backend documentation
     "toml",
 ]
 

@@ -92,7 +92,8 @@ alias b := sphinx-build
 
 [group('sphinx')]
 sphinx-serve:
-    cd docs/_build && python -m http.server
+    # cd docs/_build && python -m http.server
+    sphinx-autobuild docs/source docs/_build
 alias ss := sphinx-serve
 
 [group('sphinx')]

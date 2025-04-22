@@ -27,6 +27,7 @@ Table of Contents
 
    installation/index
    third-party-library-support/index
+   supported-libraries/index
 
 .. _`Django MongoDB Backend`: https://github.com/mongodb/django-mongodb-backend
 .. _`Django fork`: https://github.com/mongodb-forks/django

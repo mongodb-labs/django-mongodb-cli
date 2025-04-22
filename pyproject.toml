@@ -26,6 +26,7 @@ dependencies = [
     "rich",
     "setuptools",  # For django-rest-framework
     "sphinx-autobuild",  # For django-mongodb-backend documentation
+    "sphinx-copybutton",  # For django-mongodb-backend documentation
     "toml",
 ]
 

@@ -19,8 +19,8 @@ Create a virtual environment
     source .venv/bin/activate
 
 
-Install CLI
------------
+Install ``dm`` command
+----------------------
 
 ::
 

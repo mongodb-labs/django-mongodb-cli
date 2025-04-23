@@ -24,14 +24,20 @@ Install ``dm`` command
 
 ::
 
-    python -m pip install -e .
+    pip install -e .
 
 .. _additional-installation-steps:
 
 Additional installation steps
 -----------------------------
 
-Clone third-party library repositories and install dependencies with ``just``.
+.. note::
+
+    ``just install`` also installs the ``dm`` command as shown above
+    so in practice you can ``just install`` and skip the previous step.
+
+Install ``dm`` command, clone and install third-party library
+repositories and install dependencies with ``just install``.
 
 ::
 

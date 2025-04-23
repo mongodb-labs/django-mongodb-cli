@@ -14,7 +14,7 @@ Via ``dm repo test django-filter``
 |  93%                      | 515        |      480  | 1         |       16       |       15     |                    3       |   0              |
 +---------------------------+------------+-----------+-----------+----------------+--------------+----------------------------+------------------+
 
-- `django-filter.txt <../_static/django-filter.txt>`_
+- `django-filter.txt <../_static/logs/django-filter.txt>`_
 
 Project examples
 ----------------

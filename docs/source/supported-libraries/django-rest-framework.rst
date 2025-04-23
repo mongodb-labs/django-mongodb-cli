@@ -14,7 +14,7 @@ Via ``dm repo test django-rest-framework``
 |  81%                      | 1558       |     1276  | 146       |        136     |       0      |                    0       |   4              |
 +---------------------------+------------+-----------+-----------+----------------+--------------+----------------------------+------------------+
 
-- `django-rest-framework.txt <../_static/django-rest-framework.txt>`_
+- `django-rest-framework.txt <../_static/logs/django-rest-framework.txt>`_
 
 Project examples
 ----------------

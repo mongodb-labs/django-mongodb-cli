@@ -14,7 +14,7 @@ Via ``dm repo test django-debug-toolbar``
 |  73%                      | 262        |     192   | 41        |        26      |       0      |                    1       |   0              |
 +---------------------------+------------+-----------+-----------+----------------+--------------+----------------------------+------------------+
 
-- `django-debug-toolbar.txt <../_static/django-debug-toolbar.txt>`_
+- `django-debug-toolbar.txt <../_static/logs/django-debug-toolbar.txt>`_
 
 Project examples
 ----------------

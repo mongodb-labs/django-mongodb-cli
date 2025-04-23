@@ -81,9 +81,7 @@ test_settings_map = {
             "target": join("src", "django-rest-framework", "tests", "mongo_apps.py"),
         },
         "migrations_dir": {
-            "source": join(
-                "src", "rest_framework", "django-mongodb-project", "mongo_migrations"
-            ),
+            "source": join("src", "django-mongodb-project", "mongo_migrations"),
             "target": join("src", "django-rest-framework", "tests", "mongo_migrations"),
         },
         "test_command": "./runtests.py",

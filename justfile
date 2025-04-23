@@ -30,6 +30,7 @@ git-clone:
     dm repo clone django-mongodb-extensions
     dm repo clone django-mongodb-project
     dm repo clone django-mongodb-templates
+    dm repo clone django-rest-framework
     dm repo clone mongo-python-driver
     dm repo clone python-xmlsec
 
@@ -97,10 +98,10 @@ sphinx-build:
 alias b := sphinx-build
 
 [group('sphinx')]
-sphinx-serve:
+sphinx-autobuild:
     # cd docs/_build && python -m http.server
     sphinx-autobuild docs/source docs/_build
-alias ss := sphinx-serve
+alias ab := sphinx-autobuild
 
 [group('sphinx')]
 sphinx-clean:

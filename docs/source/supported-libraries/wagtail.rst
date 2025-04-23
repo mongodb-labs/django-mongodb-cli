@@ -18,8 +18,8 @@ Via ``dm repo test wagtail``
 |  43%                      | 4897       |     2124  | 52        |        468     |       2252   |                    1       |   0              |
 +---------------------------+------------+-----------+-----------+----------------+--------------+----------------------------+------------------+
 
-- `wagtail.txt <../_static/wagtail.txt>`_
-- `wagtail2.txt <../_static/wagtail2.txt>`_
+- `wagtail.txt <../_static/logs/wagtail.txt>`_
+- `wagtail2.txt <../_static/logs/wagtail2.txt>`_
 
 Project examples
 ----------------

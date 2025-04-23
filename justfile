@@ -97,10 +97,10 @@ sphinx-build:
 alias b := sphinx-build
 
 [group('sphinx')]
-sphinx-serve:
+sphinx-autobuild:
     # cd docs/_build && python -m http.server
     sphinx-autobuild docs/source docs/_build
-alias ss := sphinx-serve
+alias ab := sphinx-autobuild
 
 [group('sphinx')]
 sphinx-clean:

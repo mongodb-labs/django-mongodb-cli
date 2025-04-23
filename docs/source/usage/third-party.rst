@@ -1,11 +1,8 @@
-Usage
-=====
-
 Run third-party library tests
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------
 
 django-filter
-+++++++++++++
+~~~~~~~~~~~~~
 
 ::
 
@@ -13,10 +10,10 @@ django-filter
 
 When completed successfully the output should look something like this:
 
-.. image:: _static/images/django-filter.png
+.. image:: ../_static/images/django-filter.png
 
 django-rest-framework
-+++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
@@ -24,10 +21,10 @@ django-rest-framework
 
 When completed successfully the output should look something like this:
 
-.. image:: _static/images/django-rest-framework.png
+.. image:: ../_static/images/django-rest-framework.png
 
 django-debug-toolbar
-++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~
 
 ::
 
@@ -35,10 +32,10 @@ django-debug-toolbar
 
 When completed successfully the output should look something like this:
 
-.. image:: _static/images/django-debug-toolbar.png
+.. image:: ../_static/images/django-debug-toolbar.png
 
 django-allauth
-++++++++++++++
+~~~~~~~~~~~~~~
 
 .. warning::
 
@@ -53,10 +50,10 @@ django-allauth
 
 When completed successfully the output should look something like this:
 
-.. image:: _static/images/django-allauth.png
+.. image:: ../_static/images/django-allauth.png
 
 wagtail
-+++++++
+~~~~~~~
 
 ::
 
@@ -64,4 +61,4 @@ wagtail
 
 When completed successfully the output should look something like this:
 
-.. image:: _static/images/wagtail.png
+.. image:: ../_static/images/wagtail.png

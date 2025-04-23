@@ -12,7 +12,6 @@ dependencies = [
     "dj-database-url",  # For startproject and testing with postgres
     "fido2",  # For django-allauth
     "html5lib",  # Required by django-debug-toolbar
-    "lxml==5.2.1",  # For django-allauth
     "psycopg2",  # For django-allauth
     "python3-openid",  # For django-allauth
     "python3-saml",  # For django-allauth

@@ -17,3 +17,8 @@ django-allauth
 ::
 
     dm repo test django-allauth
+
+
+When completed successfully the output should look something like this:
+
+.. image:: _static/images/django-allauth.png

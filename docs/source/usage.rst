@@ -26,6 +26,17 @@ When completed successfully the output should look something like this:
 
 .. image:: _static/images/django-rest-framework.png
 
+django-debug-toolbar
+++++++++++++++++++++
+
+::
+
+    dm repo test django-debug-toolbar
+
+When completed successfully the output should look something like this:
+
+.. image:: _static/images/django-debug-toolbar.png
+
 django-allauth
 ++++++++++++++
 
@@ -40,7 +51,17 @@ django-allauth
 
     dm repo test django-allauth
 
-
 When completed successfully the output should look something like this:
 
 .. image:: _static/images/django-allauth.png
+
+wagtail
++++++++
+
+::
+
+    dm repo test wagtail
+
+When completed successfully the output should look something like this:
+
+.. image:: _static/images/wagtail.png

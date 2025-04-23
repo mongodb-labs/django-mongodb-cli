@@ -24,7 +24,7 @@ django-rest-framework
 
 When completed successfully the output should look something like this:
 
-.. image:: _static/images/django-allauth.png
+.. image:: _static/images/django-rest-framework.png
 
 django-allauth
 ++++++++++++++

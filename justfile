@@ -30,6 +30,7 @@ git-clone:
     dm repo clone django-mongodb-extensions
     dm repo clone django-mongodb-project
     dm repo clone django-mongodb-templates
+    dm repo clone django-rest-framework
     dm repo clone mongo-python-driver
     dm repo clone python-xmlsec
 

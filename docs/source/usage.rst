@@ -4,6 +4,28 @@ Usage
 Run third-party library tests
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+django-filter
++++++++++++++
+
+::
+
+    dm repo test django-filter
+
+When completed successfully the output should look something like this:
+
+.. image:: _static/images/django-filter.png
+
+django-rest-framework
++++++++++++++++++++++
+
+::
+
+    dm repo test django-rest-framework
+
+When completed successfully the output should look something like this:
+
+.. image:: _static/images/django-allauth.png
+
 django-allauth
 ++++++++++++++
 

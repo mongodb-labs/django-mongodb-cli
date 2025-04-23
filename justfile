@@ -5,9 +5,11 @@ install: pip-install git-clone dev-install
 alias i := install
 
 dev-install:
+    dm repo install django
     dm repo install django-mongodb-backend
     dm repo install django-mongodb-extensions
     dm repo install mongo-python-driver
+    dm repo install python-xmlsec
 
 
 demo:
@@ -21,12 +23,15 @@ alias d := demo
 
 [group('git')]
 git-clone:
+    dm repo clone django
+    dm repo clone django-allauth
     dm repo clone django-mongodb-app
     dm repo clone django-mongodb-backend
     dm repo clone django-mongodb-extensions
     dm repo clone django-mongodb-project
     dm repo clone django-mongodb-templates
     dm repo clone mongo-python-driver
+    dm repo clone python-xmlsec
 
 # ---------------------------------------- django ----------------------------------------
 
@@ -63,6 +68,7 @@ db-init:
 [group('python')]
 pip-install: check-venv
     brew install libxml2 libxmlsec1 pkg-config
+    pip install lxml==5.3.2 --no-binary :all:
     pip install -U pip
     pip install -e .
     pre-commit install

@@ -25,7 +25,8 @@ Table of Contents
 .. toctree::
    :maxdepth: 3
 
-   installation/index
+   installation
+   usage
    third-party-library-support/index
    supported-libraries/index
 

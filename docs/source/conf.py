@@ -25,3 +25,7 @@ exclude_patterns = []
 
 html_theme = "alabaster"
 html_static_path = ["_static"]
+html_theme_options = {
+    "show_relbar_top": False,
+    "show_relbar_bottom": True,
+}

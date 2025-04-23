@@ -26,9 +26,13 @@ Install ``dm`` command
 
     python -m pip install -e .
 
-Clone third-party library repositories
---------------------------------------
+.. _additional-installation-steps:
+
+Additional installation steps
+-----------------------------
+
+Clone third-party library repositories and install dependencies with ``just``.
 
 ::
 
-    dm repo clone -a
+    just install

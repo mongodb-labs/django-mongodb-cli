@@ -26,9 +26,9 @@ Table of Contents
 -----------------
 
 .. toctree::
+   third-party-library-support/index
    installation
    usage/index
-   third-party-library-support/index
    supported-libraries/index
    glossary
 

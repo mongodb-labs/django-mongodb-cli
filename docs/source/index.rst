@@ -26,6 +26,7 @@ Table of Contents
    :maxdepth: 3
 
    installation/index
+   usage
    third-party-library-support/index
    supported-libraries/index
 

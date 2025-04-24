@@ -15,5 +15,3 @@ A third party library supported when the following criteria are met:
     test-suites
     project-examples
     known-issues
-
-.. _256: https://github.com/mongodb/django-mongodb-backend/pull/256

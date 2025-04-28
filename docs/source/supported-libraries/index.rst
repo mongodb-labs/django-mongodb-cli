@@ -33,3 +33,5 @@ Supported Libraries
    django-debug-toolbar
    django-allauth
    wagtail
+
+.. _256: https://github.com/mongodb/django-mongodb-backend/pull/256

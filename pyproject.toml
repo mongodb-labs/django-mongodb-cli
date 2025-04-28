@@ -48,10 +48,13 @@ dev = [
     "docs @ git+ssh://git@github.com/mongodb/docs@master",
     "flask-pymongo @ git+ssh://git@github.com/mongodb-labs/flask-pymongo",
     "langchain-mongodb @ git+ssh://git@github.com/langchain-ai/langchain-mongodb@main",
+    "libmongocrypt @ git+ssh://git@github.com/mongodb-labs/libmongocrypt@main",
     "mongo-python-driver @ git+ssh://git@github.com/mongodb/mongo-python-driver@master",
+    "pymongo-auth-aws @ git+ssh://git@github.com/mongodb/pymongo-auth-aws@main",
     "specifications @ git+ssh://git@github.com/mongodb/specifications@master",
     "wagtail @ git+ssh://git@github.com/mongodb-forks/wagtail@main",
     "wagtail-mongodb-project @ git+ssh://git@github.com/mongodb-labs/wagtail-mongodb-project@main",
+    "winkerberos @ git+ssh://git@github.com/mongodb-labs/winkerberos@main",
     "xmlsec @ git+ssh://git@github.com/xmlsec/python-xmlsec@main",
 ]
 

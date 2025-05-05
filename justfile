@@ -107,3 +107,8 @@ alias ab := sphinx-autobuild
 sphinx-clean:
     rm -rvf docs/_build
 alias sc := sphinx-clean
+
+# ---------------------------------------- test ----------------------------------------
+[group('test')]
+HELP-72348:
+    python test/HELP-72348.py

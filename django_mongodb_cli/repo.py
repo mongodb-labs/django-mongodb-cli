@@ -368,7 +368,7 @@ def test(
                             ]
                         )
                     elif repo_name == "mongo-python-driver":
-                        command.extend(["test"])
+                        command.extend(["test", "-s"])
 
                     command.extend(modules)
                     if os.environ.get("DJANGO_SETTINGS_MODULE"):
@@ -402,9 +402,14 @@ def test(
     "--reset",
     is_flag=True,
 )
+@click.option(
+    "-d",
+    "--diff",
+    is_flag=True,
+)
 @click.pass_context
 @pass_repo
-def status(repo, ctx, repo_names, all_repos, reset):
+def status(repo, ctx, repo_names, all_repos, reset, diff):
     """Repository status."""
     repos, url_pattern, _ = get_repos("pyproject.toml")
     if repo_names:
@@ -415,7 +420,7 @@ def status(repo, ctx, repo_names, all_repos, reset):
                     os.path.basename(url_pattern.search(repo_entry).group(0))
                     == repo_name
                 ):
-                    repo_status(repo_entry, url_pattern, repo, reset=reset)
+                    repo_status(repo_entry, url_pattern, repo, reset=reset, diff=diff)
                     return
                 else:
                     not_found.add(repo_name)
@@ -425,7 +430,7 @@ def status(repo, ctx, repo_names, all_repos, reset):
     if all_repos:
         click.echo(f"Status of {len(repos)} repositories...")
         for repo_entry in repos:
-            repo_status(repo_entry, url_pattern, repo, reset=reset)
+            repo_status(repo_entry, url_pattern, repo, reset=reset, diff=diff)
         return
 
     if ctx.args == []:

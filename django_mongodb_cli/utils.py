@@ -137,6 +137,8 @@ def repo_clone(repo_entry, url_pattern, branch_pattern, repo):
 
 
 def repo_install(clone_path):
+    if clone_path.endswith("mongo-arrow"):
+        clone_path = os.path.join(clone_path, "bindings", "python")
     if os.path.exists(os.path.join(clone_path, "pyproject.toml")):
         subprocess.run([sys.executable, "-m", "pip", "install", "-e", clone_path])
     elif os.path.exists(os.path.join(clone_path, "setup.py")):
@@ -177,7 +179,7 @@ def repo_update(repo_entry, url_pattern, repo):
         click.echo(f"Skipping {repo_name}: Repository not found at {clone_path}")
 
 
-def repo_status(repo_entry, url_pattern, repo, reset=False):
+def repo_status(repo_entry, url_pattern, repo, reset=False, diff=False):
     """Helper function to update a single repository."""
     url_match = url_pattern.search(repo_entry)
     if not url_match:
@@ -190,25 +192,29 @@ def repo_status(repo_entry, url_pattern, repo, reset=False):
     if os.path.exists(clone_path):
         try:
             repo = git.Repo(clone_path)
-            click.echo(click.style(f"Status for {repo_name}:", fg="blue"))
+            click.echo(f"=== {repo_name} ===")
             if reset:
                 click.echo(click.style(repo.git.reset("--hard"), fg="blue"))
             else:
-                click.echo()
+                click.echo("Remote URLs:")
                 click.echo(
-                    click.style(
-                        "".join(
-                            [f"{remote.name}:{remote.url}" for remote in repo.remotes]
-                        ),
-                        fg="blue",
-                    )
+                    "".join(
+                        [f"- {remote.name}:{remote.url}" for remote in repo.remotes]
+                    ),
                 )
-                click.echo()
-                click.echo(click.style(repo.git.status(), fg="blue"))
-                click.echo()
-                click.echo()
-                click.echo()
+                click.echo(repo.git.status())
+                if diff:
+                    diff_output = repo.git.diff()
+                    if diff_output:
+                        click.echo(click.style(diff_output, fg="red"))
+                    else:
+                        click.echo(click.style("No diff output", fg="yellow"))
         except git.exc.NoSuchPathError:
             click.echo("Not a valid Git repository.")
     else:
-        click.echo(f"Skipping {repo_name}: Repository not found at {clone_path}")
+        click.echo(
+            click.style(
+                f"Skipping {repo_name}: Repository not found at {clone_path}",
+                fg="yellow",
+            )
+        )

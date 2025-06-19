@@ -137,21 +137,25 @@ def repo_clone(repo_entry, url_pattern, branch_pattern, repo):
 
 
 def repo_install(clone_path):
-    if clone_path.endswith("mongo-arrow"):
-        clone_path = os.path.join(clone_path, "bindings", "python")
-    if os.path.exists(os.path.join(clone_path, "pyproject.toml")):
-        subprocess.run([sys.executable, "-m", "pip", "install", "-e", clone_path])
-    elif os.path.exists(os.path.join(clone_path, "setup.py")):
-        subprocess.run([sys.executable, "setup.py", "develop"], cwd=clone_path)
-    elif os.path.exists(os.path.join(clone_path, "requirements.txt")):
+    install_path = clone_path
+
+    if clone_path.endswith("mongo-arrow") or clone_path.endswith("libmongocrypt"):
+        install_path = os.path.join(clone_path, "bindings", "python")
+        install_path = os.path.join(clone_path, "bindings", "python")
+
+    if os.path.exists(os.path.join(install_path, "pyproject.toml")):
+        subprocess.run([sys.executable, "-m", "pip", "install", "-e", install_path])
+    elif os.path.exists(os.path.join(install_path, "setup.py")):
+        subprocess.run([sys.executable, "setup.py", "develop"], cwd=install_path)
+    elif os.path.exists(os.path.join(install_path, "requirements.txt")):
         subprocess.run(
             [sys.executable, "-m", "pip", "install", "-r", "requirements.txt"],
-            cwd=clone_path,
+            cwd=install_path,
         )
     else:
         click.echo(
             click.style(
-                f"No valid installation method found for {clone_path}", fg="red"
+                f"No valid installation method found for {install_path}", fg="red"
             )
         )
 

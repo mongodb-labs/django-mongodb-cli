@@ -1,5 +1,6 @@
 import click
 import os
+import sys
 
 from .repo import repo
 from .startproject import startproject
@@ -11,7 +12,14 @@ if os.path.exists("manage.py"):
     from .startapp import startapp
 
 
-@click.group()
+def get_help_text():
+    help_text = """
+    Django MongoDB CLI
+    """
+    return f"\n\n{help_text.strip()}\n\nSystem executable:\n\n{sys.executable}\n"
+
+
+@click.group(help=get_help_text())
 def cli():
     """Django MongoDB CLI"""
 

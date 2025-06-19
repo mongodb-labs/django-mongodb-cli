@@ -10,6 +10,7 @@ dev-install:
     dm repo install django-mongodb-extensions
     dm repo install mongo-python-driver
     dm repo install python-xmlsec
+    dm repo install libmongocrypt
 
 
 demo:
@@ -31,6 +32,7 @@ git-clone:
     dm repo clone django-mongodb-project
     dm repo clone django-mongodb-templates
     dm repo clone django-rest-framework
+    dm repo clone libmongocrypt
     dm repo clone mongo-python-driver
     dm repo clone python-xmlsec
 
@@ -108,7 +110,7 @@ sphinx-clean:
     rm -rvf docs/_build
 alias sc := sphinx-clean
 
-# ---------------------------------------- test ----------------------------------------
-[group('test')]
-HELP-72348:
-    python test/HELP-72348.py
+# ---------------------------------------- qe ----------------------------------------
+qe:
+    python qe.py
+alias q := qe

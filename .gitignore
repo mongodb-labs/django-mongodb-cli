@@ -31,5 +31,4 @@ search/
 uv.lock
 docs/_build/
 config/wagtail/wagtail_settings.py
-HELP-72348.json
 customer-master-key.txt

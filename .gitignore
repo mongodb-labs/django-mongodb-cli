@@ -32,3 +32,4 @@ uv.lock
 docs/_build/
 config/wagtail/wagtail_settings.py
 customer-master-key.txt
+mongocryptd.pid

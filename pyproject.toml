@@ -16,6 +16,7 @@ dependencies = [
     "python3-openid",  # For django-allauth
     "python3-saml",  # For django-allauth
     "pyjwt[crypto]",  # For django-allauth
+    "pymongocrypt",  # For django-mongodb-backend QE
     "pytest",
     "pytest-html",
     "pytest-django",  # For django-rest-framework and django-debug-toolbar

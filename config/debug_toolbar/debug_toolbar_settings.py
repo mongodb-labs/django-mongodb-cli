@@ -1,10 +1,10 @@
 """Django settings for tests."""
 
 import os
-from django_mongodb_cli.utils import get_databases
+import django_mongodb_backend
 
-
-DATABASES = get_databases("debug_toolbar")
+DATABASE_URL = os.environ.get("MONGODB_URI", "mongodb://localhost:27017/djangotests")
+DATABASES = {"default": django_mongodb_backend.parse_uri(DATABASE_URL)}
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 

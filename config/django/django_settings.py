@@ -1,7 +1,22 @@
-from django_mongodb_cli.utils import get_databases
+import os
+import django_mongodb_backend
 
+kms_providers = django_mongodb_backend.get_kms_providers()
 
-DATABASES = get_databases("django")
+HOME = os.environ.get("HOME")
+
+auto_encryption_opts = django_mongodb_backend.get_auto_encryption_opts(
+    kms_providers=kms_providers,
+    crypt_shared_lib_path=f"{HOME}/Downloads/mongo_crypt_shared_v1-macos-arm64-enterprise-8.0.10/lib/mongo_crypt_v1.dylib",
+)
+
+DATABASE_URL = os.environ.get("MONGODB_URI", "mongodb://localhost:27017/djangotests")
+DATABASES = {
+    "default": django_mongodb_backend.parse_uri(DATABASE_URL),
+    "encryption": django_mongodb_backend.parse_uri(
+        DATABASE_URL, options={"auto_encryption_opts": auto_encryption_opts}
+    ),
+}
 
 DEFAULT_AUTO_FIELD = "django_mongodb_backend.fields.ObjectIdAutoField"
 PASSWORD_HASHERS = ("django.contrib.auth.hashers.MD5PasswordHasher",)

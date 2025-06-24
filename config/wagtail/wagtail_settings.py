@@ -6,7 +6,9 @@ from django.contrib.messages import constants as message_constants
 from django.utils.translation import gettext_lazy as _
 
 from wagtail.test.numberformat import patch_number_formats
-from django_mongodb_cli.utils import get_databases
+
+DATABASE_URL = os.environ.get("MONGODB_URI", "mongodb://localhost:27017/djangotests")
+DATABASES = {"default": django_mongodb_backend.parse_uri(DATABASE_URL)}
 
 WAGTAIL_CHECK_TEMPLATE_NUMBER_FORMAT = (
     os.environ.get("WAGTAIL_CHECK_TEMPLATE_NUMBER_FORMAT", "0") == "1"
@@ -24,8 +26,6 @@ MEDIA_ROOT = os.path.join(WAGTAIL_ROOT, "tests", "test-media")
 MEDIA_URL = "/media/"
 
 TIME_ZONE = "Asia/Tokyo"
-
-DATABASES = get_databases("wagtail")
 
 SECRET_KEY = "not needed"
 

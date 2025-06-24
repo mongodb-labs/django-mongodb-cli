@@ -3,10 +3,11 @@ from pathlib import Path
 
 from django.contrib.auth.hashers import PBKDF2PasswordHasher
 
-from django_mongodb_cli.utils import get_databases
+import os
+import django_mongodb_backend
 
-
-DATABASES = get_databases("allauth")
+DATABASE_URL = os.environ.get("MONGODB_URI", "mongodb://localhost:27017/djangotests")
+DATABASES = {"default": django_mongodb_backend.parse_uri(DATABASE_URL)}
 
 SECRET_KEY = "psst"
 SITE_ID = ObjectId()

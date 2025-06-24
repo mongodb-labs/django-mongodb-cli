@@ -1,12 +1,11 @@
 # ensure package/conf is importable
 from django_filters.conf import DEFAULTS
 
+import os
+import django_mongodb_backend
 
-from django_mongodb_cli.utils import get_databases
-
-
-DATABASES = get_databases("django_filter")
-
+DATABASE_URL = os.environ.get("MONGODB_URI", "mongodb://localhost:27017/djangotests")
+DATABASES = {"default": django_mongodb_backend.parse_uri(DATABASE_URL)}
 
 INSTALLED_APPS = (
     "tests.mongo_apps.MongoContentTypesConfig",

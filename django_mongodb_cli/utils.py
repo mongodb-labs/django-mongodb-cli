@@ -79,17 +79,6 @@ def get_management_command(command=None):
     return base_command
 
 
-def get_databases(app):
-    """Get the databases configuration for the specified app."""
-    import django_mongodb_backend
-
-    DATABASE_URL = os.environ.get(
-        "MONGODB_URI", f"mongodb://localhost:27017/{app}_tests"
-    )
-    DATABASES = {"default": django_mongodb_backend.parse_uri(DATABASE_URL)}
-    return DATABASES
-
-
 def get_repos(pyproject_path):
     with open(pyproject_path, "r") as f:
         pyproject_data = toml.load(f)

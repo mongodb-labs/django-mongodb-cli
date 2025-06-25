@@ -12,7 +12,6 @@ from .utils import (
     repo_clone,
     repo_install,
     repo_status,
-    repo_update,
 )
 
 
@@ -68,7 +67,7 @@ def repo(ctx, list_repos):
 @click.pass_context
 @pass_repo
 def clone(repo, ctx, repo_names, all_repos, install):
-    """Clone repositories from `pyproject.toml`."""
+    """Clone and install repositories from `pyproject.toml`."""
     repos, url_pattern, branch_pattern = get_repos("pyproject.toml")
 
     if repo_names:
@@ -100,75 +99,39 @@ def clone(repo, ctx, repo_names, all_repos, install):
         click.echo(ctx.get_help())
 
 
-@repo.command()
-@click.option(
-    "-a",
-    "--all-repos",
-    is_flag=True,
-)
-@click.argument("repo_names", nargs=-1)
-@click.pass_context
-@pass_repo
-def install(repo, ctx, repo_names, all_repos):
-    """Install cloned repositories with `pip install -e`."""
-
-    if repo_names:
-        for repo_name in repo_names:
-            clone_path = os.path.join(ctx.obj.home, repo_name)
-            if os.path.exists(clone_path):
-                repo_install(clone_path)
-            else:
-                click.echo(f"Repository '{repo_name}' not found.")
-        return
-
-    if all_repos:
-        repos, url_pattern, branch_pattern = get_repos("pyproject.toml")
-        for repo_entry in repos:
-            url_match = url_pattern.search(repo_entry)
-            if url_match:
-                repo_url = url_match.group(0)
-                repo_name = os.path.basename(repo_url)
-                clone_path = os.path.join(ctx.obj.home, repo_name)
-                if os.path.exists(clone_path):
-                    repo_install(clone_path)
-        return
-
-    if ctx.args == []:
-        click.echo(ctx.get_help())
-
-
-@repo.command()
-@click.argument("repo_names", nargs=-1)
-@click.option(
-    "-a",
-    "--all-repos",
-    is_flag=True,
-)
-@click.pass_context
-@pass_repo
-def update(repo, ctx, repo_names, all_repos):
-    """Update cloned repositories with `git pull`."""
-    repos, url_pattern, _ = get_repos("pyproject.toml")
-    if repo_names:
-        for repo_name in repo_names:
-            for repo_entry in repos:
-                if (
-                    os.path.basename(url_pattern.search(repo_entry).group(0))
-                    == repo_name
-                ):
-                    repo_update(repo_entry, url_pattern, repo)
-                    return
-            click.echo(f"Repository '{repo_name}' not found.")
-        return
-
-    if all_repos:
-        click.echo(f"Updating {len(repos)} repositories...")
-        for repo_entry in repos:
-            repo_update(repo_entry, url_pattern, repo)
-        return
-
-    if ctx.args == []:
-        click.echo(ctx.get_help())
+# @repo.command()
+# @click.argument("repo_names", nargs=-1)
+# @click.option(
+#     "-a",
+#     "--all-repos",
+#     is_flag=True,
+# )
+# @click.pass_context
+# @pass_repo
+# def update(repo, ctx, repo_names, all_repos):
+#     """Update cloned repositories with `git pull`."""
+#     repos, url_pattern, _ = get_repos("pyproject.toml")
+#     if repo_names:
+#         for repo_name in repo_names:
+#             for repo_entry in repos:
+#                 if (
+#                     os.path.basename(url_pattern.search(repo_entry).group(0))
+#                     == repo_name
+#                 ):
+#                     repo_update(repo_entry, url_pattern, repo)
+#                     return
+#             click.echo(f"Repository '{repo_name}' not found.")
+#         return
+#
+#     if all_repos:
+#         click.echo(f"Updating {len(repos)} repositories...")
+#         for repo_entry in repos:
+#             repo_update(repo_entry, url_pattern, repo)
+#         return
+#
+#     if ctx.args == []:
+#         click.echo(ctx.get_help())
+#
 
 
 @repo.command(context_settings={"ignore_unknown_options": True})
@@ -240,8 +203,7 @@ def makemigrations(
 @click.argument("modules", nargs=-1)
 @click.option("-k", "--keyword", help="Filter tests by keyword")
 @click.option("-l", "--list-tests", help="List tests", is_flag=True)
-@click.option("-s", "--setup", help="Setup tests (pymongo only)", is_flag=True)
-@click.option("--show", help="Show settings", is_flag=True)
+@click.option("-s", "--show", help="Show settings", is_flag=True)
 @click.pass_context
 def test(
     ctx,
@@ -249,7 +211,6 @@ def test(
     modules,
     keyword,
     list_tests,
-    setup,
     show,
 ):
     """
@@ -259,6 +220,7 @@ def test(
     if repo_name:
         # Show test settings
         if show:
+            click.echo(f"⚙️  Test settings for 📦 {repo_name}:")
             if repo_name in test_settings_map.keys():
                 from rich import print
                 from black import format_str as format
@@ -286,7 +248,7 @@ def test(
                     test_dirs = test_settings_map[repo_name]["test_dirs"]
                     if list_tests:
                         for test_dir in test_dirs:
-                            click.echo(click.style(f"{test_dir}", fg="blue"))
+                            click.echo(f"📂 {test_dir}")
                             try:
                                 modules = sorted(os.listdir(test_dir))
                                 count = 0
@@ -297,9 +259,17 @@ def test(
                                         and module != "__init__.py"
                                     ):
                                         if count == len(modules):
-                                            click.echo(f"    └── {module}")
+                                            click.echo(
+                                                click.style(
+                                                    f"    └── {module}", fg="green"
+                                                )
+                                            )
                                         else:
-                                            click.echo(f"    ├── {module}")
+                                            click.echo(
+                                                click.style(
+                                                    f"    └── {module}", fg="green"
+                                                )
+                                            )
                                 click.echo()
                             except FileNotFoundError:
                                 click.echo(
@@ -347,6 +317,7 @@ def test(
                                 "3",
                                 "--debug-sql",
                                 "--noinput",
+                                "--keepdb",
                             ]
                         )
                     if keyword:
@@ -407,9 +378,19 @@ def test(
     "--diff",
     is_flag=True,
 )
+@click.option(
+    "-b",
+    "--branch",
+    is_flag=True,
+)
+@click.option(
+    "-u",
+    "--update",
+    is_flag=True,
+)
 @click.pass_context
 @pass_repo
-def status(repo, ctx, repo_names, all_repos, reset, diff):
+def status(repo, ctx, repo_names, all_repos, reset, diff, branch, update):
     """Repository status."""
     repos, url_pattern, _ = get_repos("pyproject.toml")
     if repo_names:
@@ -420,17 +401,34 @@ def status(repo, ctx, repo_names, all_repos, reset, diff):
                     os.path.basename(url_pattern.search(repo_entry).group(0))
                     == repo_name
                 ):
-                    repo_status(repo_entry, url_pattern, repo, reset=reset, diff=diff)
+                    repo_status(
+                        repo_entry,
+                        url_pattern,
+                        repo,
+                        reset=reset,
+                        diff=diff,
+                        branch=branch,
+                        update=update,
+                    )
                     return
                 else:
                     not_found.add(repo_name)
-            click.echo(f"Repository '{not_found.pop()}' not found.")
+            if not_found:
+                click.echo(f"Repository '{not_found.pop()}' not found.")
         return
 
     if all_repos:
         click.echo(f"Status of {len(repos)} repositories...")
         for repo_entry in repos:
-            repo_status(repo_entry, url_pattern, repo, reset=reset, diff=diff)
+            repo_status(
+                repo_entry,
+                url_pattern,
+                repo,
+                reset=reset,
+                diff=diff,
+                branch=branch,
+                update=update,
+            )
         return
 
     if ctx.args == []:

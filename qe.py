@@ -50,6 +50,6 @@ try:
         database, "encrypted_collection", encrypted_fields, "local"
     )
 except EncryptedCollectionError as e:
-    print(f"Encrypted collection already exists: {e}")
+    print(f"Encrypted collection error: {e}")
 
 code.interact(local=locals())

@@ -35,7 +35,6 @@ packages = ["django_mongodb_cli"]
 
 [tool.django_mongodb_cli]
 dev = [
-    "DublinCityCenterPubFinder @ git+ssh://git@github.com/anaiyaraisin/DublinCityCenterPubFinder",
     "django @ git+ssh://git@github.com/mongodb-forks/django@mongodb-5.2.x",
     "django-allauth @ git+ssh://git@github.com/pennersr/django-allauth@main",
     "django-debug-toolbar @ git+ssh://git@github.com/django-commons/django-debug-toolbar@main",
@@ -54,7 +53,6 @@ dev = [
     "mongo-orchestration @ git+ssh://git@github.com/mongodb-labs/mongo-orchestration@master",
     "mongo-python-driver @ git+ssh://git@github.com/mongodb/mongo-python-driver@master",
     "pymongo-auth-aws @ git+ssh://git@github.com/mongodb/pymongo-auth-aws@main",
-    "pymongo-transactions @ git+ssh://git@github.com/aclark4life/pymongo-transactions@main",
     "specifications @ git+ssh://git@github.com/mongodb/specifications@master",
     "wagtail @ git+ssh://git@github.com/mongodb-forks/wagtail@main",
     "wagtail-mongodb-project @ git+ssh://git@github.com/mongodb-labs/wagtail-mongodb-project@main",

@@ -1,26 +1,20 @@
 default:
     echo 'Hello, world!'
 
-install: pip-install git-clone repo-install
+install: pip-install git-clone
 alias i := install
-
-repo-install:
-    dm repo install django
-    dm repo install django-mongodb-backend
-    dm repo install mongo-python-driver
 
 # ---------------------------------------- git ----------------------------------------
 
 [group('git')]
 git-clone:
-    dm repo clone django
-    dm repo clone django-allauth
+    dm repo clone django --install
     dm repo clone django-mongodb-app
-    dm repo clone django-mongodb-backend
+    dm repo clone django-mongodb-backend --install
     dm repo clone django-mongodb-extensions
     dm repo clone django-mongodb-project
     dm repo clone django-mongodb-templates
-    dm repo clone mongo-python-driver
+    dm repo clone mongo-python-driver --install
 
 # ---------------------------------------- django ----------------------------------------
 

@@ -106,7 +106,7 @@ def repo_clone(repo_entry, url_pattern, branch_pattern, repo):
     clone_path = os.path.join(repo.home, repo_name)
 
     if os.path.exists(clone_path):
-        click.echo(f"Skipping: {repo_name} already exists.")
+        click.echo(f"Skipping {repo_name}: already exists at {clone_path}")
     else:
         click.echo(
             f"Cloning {repo_name} from {repo_url} into {clone_path} (branch: {branch})"
@@ -122,7 +122,7 @@ def repo_clone(repo_entry, url_pattern, branch_pattern, repo):
                     click.echo(f"Failed to clone repository: {e}")
             subprocess.run(["pre-commit", "install"], cwd=clone_path)
         else:
-            click.echo(f"Skipping {repo_url} in {clone_path} (branch: {branch})")
+            click.echo(f"Skipping {repo_url}: already exists at {clone_path}")
 
 
 def repo_install(clone_path):
@@ -149,7 +149,7 @@ def repo_install(clone_path):
         )
 
 
-def repo_update(repo_entry, url_pattern, repo):
+def repo_update(repo_entry, url_pattern, clone_path):
     """Helper function to update a single repository."""
     url_match = url_pattern.search(repo_entry)
     if not url_match:
@@ -157,22 +157,23 @@ def repo_update(repo_entry, url_pattern, repo):
 
     repo_url = url_match.group(0)
     repo_name = os.path.basename(repo_url)
-    clone_path = os.path.join(repo.home, repo_name)
 
     if os.path.exists(clone_path):
-        click.echo(f"Updating {repo_name}...")
         try:
+            click.echo(f"Updating 📦 {repo_name}")
             repo = git.Repo(clone_path)
-            click.echo(click.style(repo.git.pull(), fg="blue"))
+            click.echo(repo.git.pull())
         except git.exc.NoSuchPathError:
-            click.echo("Not a valid Git repository.")
+            click.echo(click.style("Not a valid Git repository.", fg="red"))
         except git.exc.GitCommandError:
             click.echo(click.style(f"Failed to update {repo_name}", fg="red"))
     else:
-        click.echo(f"Skipping {repo_name}: Repository not found at {clone_path}")
+        click.echo(click.style(f"Skipping {repo_name}", fg="blue"))
 
 
-def repo_status(repo_entry, url_pattern, repo, reset=False, diff=False):
+def repo_status(
+    repo_entry, url_pattern, repo, reset=False, diff=False, branch=False, update=False
+):
     """Helper function to update a single repository."""
     url_match = url_pattern.search(repo_entry)
     if not url_match:
@@ -185,14 +186,17 @@ def repo_status(repo_entry, url_pattern, repo, reset=False, diff=False):
     if os.path.exists(clone_path):
         try:
             repo = git.Repo(clone_path)
-            click.echo(f"=== {repo_name} ===")
+            click.echo(f"📦 {repo_name}")
             if reset:
-                click.echo(click.style(repo.git.reset("--hard"), fg="blue"))
+                click.echo(click.style(f"Resetting {repo_name}", fg="red"))
+                click.echo(repo.git.reset("--hard"))
             else:
-                click.echo("Remote URLs:")
                 click.echo(
                     "".join(
-                        [f"- {remote.name}:{remote.url}" for remote in repo.remotes]
+                        [
+                            f"On remote {remote.name} at {remote.url}"
+                            for remote in repo.remotes
+                        ]
                     ),
                 )
                 click.echo(repo.git.status())
@@ -202,12 +206,17 @@ def repo_status(repo_entry, url_pattern, repo, reset=False, diff=False):
                         click.echo(click.style(diff_output, fg="red"))
                     else:
                         click.echo(click.style("No diff output", fg="yellow"))
+                if branch:
+                    click.echo(repo.git.branch("--all"))
+                if update:
+                    repo_update(repo_entry, url_pattern, clone_path)
+            click.echo()
         except git.exc.NoSuchPathError:
             click.echo("Not a valid Git repository.")
     else:
         click.echo(
             click.style(
-                f"Skipping {repo_name}: Repository not found at {clone_path}",
-                fg="yellow",
+                f"Skipping 📦 {repo_name}",
+                fg="blue",
             )
         )

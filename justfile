@@ -1,24 +1,13 @@
 default:
     echo 'Hello, world!'
 
-install: pip-install git-clone dev-install
+install: pip-install git-clone repo-install
 alias i := install
 
-dev-install:
+repo-install:
     dm repo install django
     dm repo install django-mongodb-backend
-    dm repo install django-mongodb-extensions
     dm repo install mongo-python-driver
-    dm repo install python-xmlsec
-    dm repo install libmongocrypt
-
-
-demo:
-    dm repo test django queries_
-    dm repo test django-filter tests.test_filters
-    dm repo test django-debug-toolbar
-    dm repo test django-allauth allauth/account/tests
-alias d := demo
 
 # ---------------------------------------- git ----------------------------------------
 
@@ -31,10 +20,7 @@ git-clone:
     dm repo clone django-mongodb-extensions
     dm repo clone django-mongodb-project
     dm repo clone django-mongodb-templates
-    dm repo clone django-rest-framework
-    dm repo clone libmongocrypt
     dm repo clone mongo-python-driver
-    dm repo clone python-xmlsec
 
 # ---------------------------------------- django ----------------------------------------
 
@@ -111,6 +97,7 @@ sphinx-clean:
 alias sc := sphinx-clean
 
 # ---------------------------------------- qe ----------------------------------------
+
 qe:
     python qe.py
 alias q := qe

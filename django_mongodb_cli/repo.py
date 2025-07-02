@@ -118,6 +118,45 @@ def clone(repo, context, repo_names, all_repos, install):
     click.echo(context.get_help())
 
 
+@repo.command()
+@click.argument("repo_names", nargs=-1)
+@click.option("-a", "--all-repos", is_flag=True, help="Install all repositories")
+@click.pass_context
+@pass_repo
+def install(repo, context, repo_names, all_repos):
+    """Install repositories (like 'clone -i')."""
+    repos, url_pattern, _ = get_repos("pyproject.toml")
+    repo_name_map = get_repo_name_map(repos, url_pattern)
+
+    if all_repos and repo_names:
+        click.echo("Cannot specify both repo names and --all-repos")
+        return
+
+    # If -a/--all-repos is given
+    if all_repos:
+        click.echo(f"Updating {len(repo_name_map)} repositories...")
+        for repo_name, repo_url in repo_name_map.items():
+            clone_path = os.path.join(context.obj.home, repo_name)
+            if os.path.exists(clone_path):
+                install_package(clone_path)
+        return
+
+    # If specific repo names are given
+    if repo_names:
+        not_found = []
+        for repo_name in repo_names:
+            clone_path = os.path.join(context.obj.home, repo_name)
+            if os.path.exists(clone_path):
+                install_package(clone_path)
+            else:
+                not_found.append(repo_name)
+        for name in not_found:
+            click.echo(f"Repository '{name}' not found.")
+        return
+
+    click.echo(context.get_help())
+
+
 @repo.command(context_settings={"ignore_unknown_options": True})
 @click.argument("repo_name", required=False)
 @click.argument("args", nargs=-1)

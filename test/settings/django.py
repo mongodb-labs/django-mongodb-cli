@@ -4,17 +4,20 @@ from django_mongodb_backend import encryption, parse_uri
 
 kms_providers = encryption.get_kms_providers()
 
-HOME = os.environ.get("HOME")
-
 auto_encryption_opts = encryption.get_auto_encryption_opts(
     kms_providers=kms_providers,
-    crypt_shared_lib_path=f"{HOME}/Downloads/mongo_crypt_shared_v1-macos-arm64-enterprise-8.0.10/lib/mongo_crypt_v1.dylib",
 )
 
-DATABASE_URL = os.environ.get("MONGODB_URI", "mongodb://localhost:27017/djangotests")
+DATABASE_URL = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
 DATABASES = {
     "default": parse_uri(
-        DATABASE_URL, options={"auto_encryption_opts": auto_encryption_opts}
+        DATABASE_URL,
+        db_name="djangotests",
+    ),
+    "encrypted": parse_uri(
+        DATABASE_URL,
+        options={"auto_encryption_opts": auto_encryption_opts},
+        db_name="encrypted_djangotests",
     ),
 }
 

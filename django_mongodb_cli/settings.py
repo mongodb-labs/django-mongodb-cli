@@ -25,11 +25,11 @@ test_settings_map = {
         },
         "settings": {
             "test": {
-                "source": join("config", "django", "django_settings.py"),
+                "source": join("test", "settings", "django.py"),
                 "target": join("src", "django", "tests", "mongo_settings.py"),
             },
             "migrations": {
-                "source": join("config", "django", "django_settings.py"),
+                "source": join("test", "settings", "django.py"),
                 "target": join("src", "django", "tests", "mongo_settings.py"),
             },
             "module": {
@@ -44,7 +44,7 @@ test_settings_map = {
     },
     "django-filter": {
         "apps_file": {
-            "source": join("config", "filter", "filter_apps.py"),
+            "source": join("test", "apps", "django_filter.py"),
             "target": join("src", "django-filter", "tests", "mongo_apps.py"),
         },
         "test_command": "./runtests.py",
@@ -61,11 +61,11 @@ test_settings_map = {
         "clone_dir": join("src", "django-filter"),
         "settings": {
             "test": {
-                "source": join("config", "filter", "filter_settings.py"),
+                "source": join("test", "settings", "django_filter.py"),
                 "target": join("src", "django-filter", "tests", "settings.py"),
             },
             "migrations": {
-                "source": join("config", "filter", "filter_settings.py"),
+                "source": join("test", "settings", "django_filter.py"),
                 "target": join("src", "django-filter", "tests", "settings.py"),
             },
             "module": {
@@ -77,7 +77,7 @@ test_settings_map = {
     },
     "django-rest-framework": {
         "apps_file": {
-            "source": join("config", "rest_framework", "rest_framework_apps.py"),
+            "source": join("test", "apps", "rest_framework.py"),
             "target": join("src", "django-rest-framework", "tests", "mongo_apps.py"),
         },
         "migrations_dir": {
@@ -89,13 +89,11 @@ test_settings_map = {
         "clone_dir": join("src", "django-rest-framework"),
         "settings": {
             "test": {
-                "source": join(
-                    "config", "rest_framework", "rest_framework_settings.py"
-                ),
+                "source": join("test", "settings", "rest_framework.py"),
                 "target": join("src", "django-rest-framework", "tests", "conftest.py"),
             },
             "migrations": {
-                "source": join("config", "rest_framework", "rest_framework_migrate.py"),
+                "source": join("test", "settings", "rest_framework_migrations.py"),
                 "target": join("src", "django-rest-framework", "tests", "conftest.py"),
             },
             "module": {
@@ -107,7 +105,7 @@ test_settings_map = {
     },
     "wagtail": {
         "apps_file": {
-            "source": join("config", "wagtail", "wagtail_apps.py"),
+            "source": join("test", "apps", "wagtail.py"),
             "target": join("src", "wagtail", "wagtail", "test", "mongo_apps.py"),
         },
         "migrations_dir": {
@@ -124,13 +122,13 @@ test_settings_map = {
         "clone_dir": join("src", "wagtail"),
         "settings": {
             "test": {
-                "source": join("config", "wagtail", "wagtail_settings.py"),
+                "source": join("test", "settings", "wagtail.py"),
                 "target": join(
                     "src", "wagtail", "wagtail", "test", "mongo_settings.py"
                 ),
             },
             "migrations": {
-                "source": join("config", "wagtail", "settings_wagtail.py"),
+                "source": join("test", "settings", "wagtail.py"),
                 "target": join(
                     "src", "wagtail", "wagtail", "test", "mongo_settings.py"
                 ),
@@ -147,7 +145,7 @@ test_settings_map = {
     },
     "django-debug-toolbar": {
         "apps_file": {
-            "source": join("config", "debug_toolbar", "debug_toolbar_apps.py"),
+            "source": join("test", "apps", "debug_toolbar.py"),
             "target": join(
                 "src", "django-debug-toolbar", "debug_toolbar", "mongo_apps.py"
             ),
@@ -157,13 +155,13 @@ test_settings_map = {
         "clone_dir": join("src", "django-debug-toolbar"),
         "settings": {
             "test": {
-                "source": join("config", "debug_toolbar", "debug_toolbar_settings.py"),
+                "source": join("test", "settings", "debug_toolbar.py"),
                 "target": join(
                     "src", "django-debug-toolbar", "debug_toolbar", "mongo_settings.py"
                 ),
             },
             "migrations": {
-                "source": join("config", "debug_toolbar", "debug_toolbar_settings.py"),
+                "source": join("test", "settings", "debug_toolbar.py"),
                 "target": join(
                     "src", "django-debug-toolbar", "debug_toolbar", "mongo_settings.py"
                 ),
@@ -179,7 +177,7 @@ test_settings_map = {
     },
     "django-mongodb-extensions": {
         "apps_file": {
-            "source": join("config", "extensions", "debug_toolbar_apps.py"),
+            "source": join("test", "apps", "django_mongodb_extensions.py"),
             "target": join(
                 "src",
                 "django-mongodb-extensions",
@@ -192,7 +190,7 @@ test_settings_map = {
         "clone_dir": join("src", "django-mongodb-extensions"),
         "settings": {
             "test": {
-                "source": join("config", "extensions", "debug_toolbar_settings.py"),
+                "source": join("test", "settings", "django_mongodb_extensions.py"),
                 "target": join(
                     "src",
                     "django-mongodb-extensions",
@@ -201,7 +199,7 @@ test_settings_map = {
                 ),
             },
             "migrations": {
-                "source": join("config", "extensions", "debug_toolbar_settings.py"),
+                "source": join("test", "extensions", "debug_toolbar_settings.py"),
                 "target": join(
                     "src",
                     "django-mongodb-extensions",
@@ -225,16 +223,16 @@ test_settings_map = {
         "test_dir": join("src", "django-allauth"),
         "clone_dir": join("src", "django-allauth"),
         "apps_file": {
-            "source": join("config", "allauth", "allauth_apps.py"),
+            "source": join("test", "apps", "allauth.py"),
             "target": join("src", "django-allauth", "allauth", "mongo_apps.py"),
         },
         "settings": {
             "test": {
-                "source": join("config", "allauth", "allauth_settings.py"),
+                "source": join("test", "settings", "allauth.py"),
                 "target": join("src", "django-allauth", "allauth", "mongo_settings.py"),
             },
             "migrations": {
-                "source": join("config", "allauth", "allauth_settings.py"),
+                "source": join("test", "settings", "allauth.py"),
                 "target": join("src", "django-allauth", "allauth", "mongo_settings.py"),
             },
             "module": {

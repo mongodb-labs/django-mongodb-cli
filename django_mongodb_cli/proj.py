@@ -4,18 +4,82 @@ import shutil
 import subprocess
 
 
-@click.command()
+from .utils import get_management_command
+
+
+class Proj:
+    def __init__(self):
+        self.config = {}
+
+    def set_config(self, key, value):
+        self.config[key] = value
+
+    def __repr__(self):
+        return f"<Proj {self}>"
+
+
+pass_proj = click.make_pass_decorator(Proj)
+
+
+@click.group(invoke_without_command=True)
+@click.pass_context
+def proj(context):
+    """
+    Create Django projects configured to test django-mongodb-backend.
+    """
+    context.obj = Proj()
+
+    # Show help only if no subcommand is invoked
+    if context.invoked_subcommand is None:
+        click.echo(context.get_help())
+        context.exit()
+
+
+@proj.command(context_settings={"ignore_unknown_options": True})
+@click.argument("args", nargs=-1)
+def manage(args):
+    """Run management commands."""
+
+    command = get_management_command()
+
+    subprocess.run(command + [*args])
+
+
+@proj.command()
+def run():
+    """Start the Django development server."""
+
+    if os.environ.get("MONGODB_URI"):
+        click.echo(os.environ["MONGODB_URI"])
+
+    command = get_management_command()
+
+    # Start npm install
+    subprocess.run(["npm", "install"], cwd="frontend")
+
+    # Start npm run watch
+    npm_process = subprocess.Popen(["npm", "run", "watch"], cwd="frontend")
+
+    # Start django-admin runserver
+    django_process = subprocess.Popen(command + ["runserver"])
+
+    # Wait for both processes to complete
+    npm_process.wait()
+    django_process.wait()
+
+
+@proj.command()
 @click.option("-d", "--delete", is_flag=True, help="Delete existing project files")
 @click.option("-dj", "--django", is_flag=True, help="Use django mongodb template")
 @click.option("-w", "--wagtail", is_flag=True, help="Use wagtail mongodb template")
 @click.argument("project_name", required=False, default="backend")
-def startproject(
+def start(
     delete,
     django,
     wagtail,
     project_name,
 ):
-    """Run `startproject` with custom templates."""
+    """Run Django's `startproject` with custom templates."""
     if os.path.exists("manage.py"):
         click.echo("manage.py already exists")
         if not delete:
@@ -105,3 +169,32 @@ def startproject(
                 home_template,
             ]
         )
+
+
+@proj.command()
+def su():
+    """Create a superuser with the username 'admin' and the email from git config."""
+    try:
+        user_email = subprocess.check_output(
+            ["git", "config", "user.email"], text=True
+        ).strip()
+    except subprocess.CalledProcessError:
+        click.echo("Error: Unable to retrieve the user email from git config.")
+        return
+
+    os.environ["DJANGO_SUPERUSER_PASSWORD"] = "admin"
+
+    if os.environ.get("MONGODB_URI"):
+        click.echo(os.environ["MONGODB_URI"])
+    click.echo(f"User email: {user_email}")
+
+    command = get_management_command("createsuperuser")
+
+    subprocess.run(
+        command
+        + [
+            "--noinput",
+            "--username=admin",
+            f"--email={user_email}",
+        ]
+    )

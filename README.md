@@ -26,10 +26,15 @@ Usage: dm [OPTIONS] COMMAND [ARGS]...
 
   Django MongoDB CLI
 
+  System executable:
+
+  /Users/alexclark/Developer/django-mongodb-cli/.venv/bin/python
+
 Options:
   --help  Show this message and exit.
 
 Commands:
-  repo          Run Django fork and third-party library tests.
-  startproject  Run `startproject` with custom templates.
+  app   Create Django apps configured to test django-mongodb-backend.
+  proj  Create Django projects configured to test django-mongodb-backend.
+  repo  Run tests configured to test django-mongodb-backend.
 ```

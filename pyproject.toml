@@ -28,6 +28,7 @@ dependencies = [
     "sphinx-autobuild",  # For django-mongodb-backend documentation
     "sphinx-copybutton",  # For django-mongodb-backend documentation
     "toml",
+    "wagtail",  # For django-mongodb-templates
 ]
 
 [tool.setuptools]

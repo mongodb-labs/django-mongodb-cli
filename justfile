@@ -11,7 +11,7 @@ git-clone:
     dm repo clone django --install
     dm repo clone django-mongodb-app
     dm repo clone django-mongodb-backend --install
-    dm repo clone django-mongodb-extensions
+    dm repo clone django-mongodb-extensions --install
     dm repo clone django-mongodb-project
     dm repo clone django-mongodb-templates
     dm repo clone mongo-python-driver --install
@@ -25,17 +25,17 @@ alias o := django-open
 
 [group('django')]
 django-runserver:
-    dm runserver
+    dm proj run
 alias s := django-runserver
 
 [group('django')]
 django-migrate:
-    dm manage migrate
+    dm proj migrate
 alias m := django-migrate
 
 [group('django')]
 django-createsuperuser:
-    dm createsuperuser
+    dm proj su
 alias su := django-createsuperuser
 
 # ---------------------------------------- mongodb ----------------------------------------

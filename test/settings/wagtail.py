@@ -174,11 +174,11 @@ ALLOWED_HOSTS = [
     "0.0.0.0",
 ]
 
-WAGTAILSEARCH_BACKENDS = {
-    "default": {
-        "BACKEND": "wagtail.search.backends.database.fallback",
-    }
-}
+WAGTAILSEARCH_BACKENDS = {  # noqa
+    "default": {  # noqa
+        "BACKEND": "wagtail.search.backends.database.fallback",  # noqa
+    }  # noqa
+}  # noqa
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 

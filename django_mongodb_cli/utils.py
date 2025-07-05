@@ -2,13 +2,42 @@ import click
 import git
 import os
 import shutil
+import string
 import sys
 import toml
+import random
 import re
 import subprocess
 
 
 from .settings import test_settings_map
+
+
+DELETE_DIRS_AND_FILES = {
+    ".babelrc": os.path.isfile,
+    ".dockerignore": os.path.isfile,
+    ".browserslistrc": os.path.isfile,
+    ".eslintrc": os.path.isfile,
+    ".nvmrc": os.path.isfile,
+    ".stylelintrc.json": os.path.isfile,
+    "Dockerfile": os.path.isfile,
+    "apps": os.path.isdir,
+    "home": os.path.isdir,
+    "backend": os.path.isdir,
+    "db.sqlite3": os.path.isfile,
+    "frontend": os.path.isdir,
+    "manage.py": os.path.isfile,
+    "package-lock.json": os.path.isfile,
+    "package.json": os.path.isfile,
+    "postcss.config.js": os.path.isfile,
+    "requirements.txt": os.path.isfile,
+    "search": os.path.isdir,
+}
+
+
+def random_app_name(prefix="app_", length=6):
+    suffix = "".join(random.choices(string.ascii_lowercase + string.digits, k=length))
+    return prefix + suffix
 
 
 def copy_mongo_apps(repo_name):
@@ -265,6 +294,15 @@ def clone_repo(repo_entry, url_pattern, branch_pattern, repo):
         click.echo(
             click.style(f"No pre-commit config found in {repo_name}.", fg="yellow")
         )
+
+
+def get_repo_name_map(repos, url_pattern):
+    """Return a dict mapping repo_name to repo_url from a list of repo URLs."""
+    return {
+        os.path.basename(url_pattern.search(url).group(0)): url
+        for url in repos
+        if url_pattern.search(url)
+    }
 
 
 def install_package(clone_path):

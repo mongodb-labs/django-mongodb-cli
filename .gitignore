@@ -6,7 +6,6 @@ django_mongodb_cli.egg-info/
 __pycache__
 manage.py
 mongo_app/
-mongo_migrations/
 mongo_project/
 node_modules/
 server.log

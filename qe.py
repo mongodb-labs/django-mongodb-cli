@@ -1,5 +1,4 @@
 import code
-import os
 
 from bson.binary import STANDARD
 from bson.codec_options import CodecOptions
@@ -8,25 +7,20 @@ from pymongo.encryption import ClientEncryption
 from pymongo.errors import EncryptedCollectionError
 from django_mongodb_backend.encryption import (
     get_auto_encryption_opts,
-    get_customer_master_key,
+    get_kms_providers,
+    get_key_vault_namespace,
 )
 
-HOME = os.environ.get("HOME")
-
-kms_providers = {
-    "local": {
-        "key": get_customer_master_key(),
-    },
-}
+kms_providers = get_kms_providers()
+key_vault_namespace = get_key_vault_namespace()
 
 client = MongoClient(
     auto_encryption_opts=get_auto_encryption_opts(
-        crypt_shared_lib_path=f"{HOME}/Downloads/mongo_crypt_shared_v1-macos-arm64-enterprise-8.0.10/lib/mongo_crypt_v1.dylib",
+        key_vault_namespace=key_vault_namespace,
         kms_providers=kms_providers,
     )
 )
 
-key_vault_namespace = client.options.auto_encryption_opts._key_vault_namespace
 codec_options = CodecOptions(uuid_representation=STANDARD)
 client_encryption = ClientEncryption(
     kms_providers, key_vault_namespace, client, codec_options

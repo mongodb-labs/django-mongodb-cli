@@ -14,6 +14,7 @@ from .utils import (
     get_management_command,
     get_repos,
     get_status,
+    get_repo_name_map,
     install_package,
 )
 
@@ -33,15 +34,6 @@ class Repo:
 pass_repo = click.make_pass_decorator(Repo)
 
 
-def get_repo_name_map(repos, url_pattern):
-    """Return a dict mapping repo_name to repo_url from a list of repo URLs."""
-    return {
-        os.path.basename(url_pattern.search(url).group(0)): url
-        for url in repos
-        if url_pattern.search(url)
-    }
-
-
 @click.group(invoke_without_command=True)
 @click.option(
     "-l",
@@ -52,7 +44,7 @@ def get_repo_name_map(repos, url_pattern):
 @click.pass_context
 def repo(context, list_repos):
     """
-    Run Django fork and third-party library tests.
+    Run tests configured to test django-mongodb-backend.
     """
     context.obj = Repo()
     repos, url_pattern, branch_pattern = get_repos("pyproject.toml")
@@ -208,14 +200,74 @@ def makemigrations(context, repo_name, args):
 
 
 @repo.command()
+@click.argument("repo_names", nargs=-1)
+@click.option("-a", "--all-repos", is_flag=True, help="Status for all repositories")
+@click.option("-r", "--reset", is_flag=True, help="Reset")
+@click.option("-d", "--diff", is_flag=True, help="Show diff")
+@click.option("-b", "--branch", is_flag=True, help="Show branch")
+@click.option("-u", "--update", is_flag=True, help="Update repos")
+@click.option("-l", "--log", is_flag=True, help="Show log")
+@click.pass_context
+@pass_repo
+def status(repo, context, repo_names, all_repos, reset, diff, branch, update, log):
+    """Repository status."""
+    repos, url_pattern, _ = get_repos("pyproject.toml")
+    repo_name_map = get_repo_name_map(repos, url_pattern)
+
+    # Status for specified repo names
+    if repo_names:
+        not_found = []
+        for repo_name in repo_names:
+            repo_url = repo_name_map.get(repo_name)
+            if repo_url:
+                get_status(
+                    repo_url,
+                    url_pattern,
+                    repo,
+                    reset=reset,
+                    diff=diff,
+                    branch=branch,
+                    update=update,
+                    log=log,
+                )
+            else:
+                not_found.append(repo_name)
+        for name in not_found:
+            click.echo(f"Repository '{name}' not found.")
+        return
+
+    # Status for all repos
+    if all_repos:
+        click.echo(f"Status of {len(repos)} repositories...")
+        for repo_name, repo_url in repo_name_map.items():
+            get_status(
+                repo_url,
+                url_pattern,
+                repo,
+                reset=reset,
+                diff=diff,
+                branch=branch,
+                update=update,
+                log=log,
+            )
+        return
+
+    # Show help if nothing selected
+    click.echo(context.get_help())
+
+
+@repo.command()
 @click.argument("repo_name", required=False)
 @click.argument("modules", nargs=-1)
 @click.option("-k", "--keyword", help="Filter tests by keyword")
 @click.option("-l", "--list-tests", is_flag=True, help="List tests")
-@click.option("-s", "--show", is_flag=True, help="Show settings")
+@click.option("-s", "--show-settings", is_flag=True, help="Show settings")
+@click.option("-a", "--all-repos", is_flag=True, help="All repos")
 @click.option("--keepdb", is_flag=True, help="Keep db")
 @click.pass_context
-def test(context, repo_name, modules, keyword, list_tests, show, keepdb):
+def test(
+    context, repo_name, modules, keyword, list_tests, show_settings, keepdb, all_repos
+):
     """Run tests for Django fork and third-party libraries."""
     repos, url_pattern, _ = get_repos("pyproject.toml")
     repo_name_map = get_repo_name_map(repos, url_pattern)
@@ -229,7 +281,7 @@ def test(context, repo_name, modules, keyword, list_tests, show, keepdb):
             )
             return
 
-        if show:
+        if show_settings:
             click.echo(f"⚙️  Test settings for 📦 {repo_name}:")
             settings_dict = dict(sorted(test_settings_map[repo_name].items()))
             formatted = format_str(str(settings_dict), mode=Mode())
@@ -327,64 +379,23 @@ def test(context, repo_name, modules, keyword, list_tests, show, keepdb):
         subprocess.run(command, cwd=settings["test_dir"])
         return
 
-    # No repo_name, show help
-    click.echo(context.get_help())
-
-
-@repo.command()
-@click.argument("repo_names", nargs=-1)
-@click.option("-a", "--all-repos", is_flag=True, help="Status for all repositories")
-@click.option("-r", "--reset", is_flag=True, help="Reset")
-@click.option("-d", "--diff", is_flag=True, help="Show diff")
-@click.option("-b", "--branch", is_flag=True, help="Show branch")
-@click.option("-u", "--update", is_flag=True, help="Update repos")
-@click.option("-l", "--log", is_flag=True, help="Show log")
-@click.pass_context
-@pass_repo
-def status(repo, context, repo_names, all_repos, reset, diff, branch, update, log):
-    """Repository status."""
-    repos, url_pattern, _ = get_repos("pyproject.toml")
-    repo_name_map = get_repo_name_map(repos, url_pattern)
-
-    # Status for specified repo names
-    if repo_names:
-        not_found = []
-        for repo_name in repo_names:
-            repo_url = repo_name_map.get(repo_name)
-            if repo_url:
-                get_status(
-                    repo_url,
-                    url_pattern,
-                    repo,
-                    reset=reset,
-                    diff=diff,
-                    branch=branch,
-                    update=update,
-                    log=log,
-                )
+    if all_repos and show_settings:
+        repos, url_pattern, _ = get_repos("pyproject.toml")
+        repo_name_map = get_repo_name_map(repos, url_pattern)
+        for repo_name in repo_name_map:
+            if repo_name in test_settings_map:
+                click.echo(f"⚙️  Test settings for 📦 {repo_name}:")
+                settings_dict = dict(sorted(test_settings_map[repo_name].items()))
+                formatted = format_str(str(settings_dict), mode=Mode())
+                rprint(formatted)
             else:
-                not_found.append(repo_name)
-        for name in not_found:
-            click.echo(f"Repository '{name}' not found.")
+                click.echo(f"Settings for '{repo_name}' not found.")
+        return
+    else:
+        click.echo("Can only use --all-repos with --show-settings")
         return
 
-    # Status for all repos
-    if all_repos:
-        click.echo(f"Status of {len(repos)} repositories...")
-        for repo_name, repo_url in repo_name_map.items():
-            get_status(
-                repo_url,
-                url_pattern,
-                repo,
-                reset=reset,
-                diff=diff,
-                branch=branch,
-                update=update,
-                log=log,
-            )
-        return
-
-    # Show help if nothing selected
+    # No repo_name, show help
     click.echo(context.get_help())
 
 

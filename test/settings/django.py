@@ -11,16 +11,19 @@ AUTO_ENCRYPTION_OPTS = encryption.get_auto_encryption_opts(
     kms_providers=KMS_PROVIDERS,
 )
 
+ENCRYPTED_DB_ALIAS = encryption.ENCRYPTED_DB_ALIAS
+ENCRYPTED_APPS = encryption.ENCRYPTED_APPS
+
 DATABASE_URL = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
 DATABASES = {
     "default": parse_uri(
         DATABASE_URL,
         db_name="test",
     ),
-    "encrypted": parse_uri(
+    ENCRYPTED_DB_ALIAS: parse_uri(
         DATABASE_URL,
         options={"auto_encryption_opts": AUTO_ENCRYPTION_OPTS},
-        db_name="encrypted",
+        db_name=ENCRYPTED_DB_ALIAS,
     ),
 }
 
@@ -29,13 +32,4 @@ PASSWORD_HASHERS = ("django.contrib.auth.hashers.MD5PasswordHasher",)
 SECRET_KEY = "django_tests_secret_key"
 USE_TZ = False
 
-
-class TestRouter:
-    def allow_migrate(self, db, app_label, model_name=None, **hints):
-        if db == "encrypted":
-            if app_label != "encryption_":
-                return False
-        return None
-
-
-DATABASE_ROUTERS = [TestRouter()]
+DATABASE_ROUTERS = [encryption.EncryptedRouter()]

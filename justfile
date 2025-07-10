@@ -13,7 +13,6 @@ git-clone:
     dm repo clone django-mongodb-backend --install
     dm repo clone django-mongodb-extensions --install
     dm repo clone django-mongodb-project
-    dm repo clone django-mongodb-templates
     dm repo clone mongo-python-driver --install
 
 # ---------------------------------------- django ----------------------------------------

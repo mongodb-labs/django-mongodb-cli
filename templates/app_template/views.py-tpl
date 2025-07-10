@@ -1,0 +1,7 @@
+from django.views.generic import TemplateView
+
+# Create your views here.
+
+
+class {{ camel_case_app_name}}View(TemplateView):
+    template_name = '{{ app_name }}.html'

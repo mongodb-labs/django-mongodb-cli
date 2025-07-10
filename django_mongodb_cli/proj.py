@@ -4,7 +4,7 @@ import shutil
 import subprocess
 
 
-from .utils import get_management_command
+from .utils import DELETE_DIRS_AND_FILES, get_management_command
 
 
 class Proj:
@@ -22,12 +22,26 @@ pass_proj = click.make_pass_decorator(Proj)
 
 
 @click.group(invoke_without_command=True)
+@click.option("-d", "--delete", is_flag=True, help="Delete existing project files")
 @click.pass_context
-def proj(context):
+def proj(context, delete):
     """
     Create Django projects configured to test django-mongodb-backend.
     """
     context.obj = Proj()
+
+    if delete:
+        for item, check_function in DELETE_DIRS_AND_FILES.items():
+            if check_function(item):
+                if os.path.isdir(item):
+                    shutil.rmtree(item)
+                    click.echo(f"Removed directory: {item}")
+                elif os.path.isfile(item):
+                    os.remove(item)
+                    click.echo(f"Removed file: {item}")
+            else:
+                click.echo(f"Skipping: {item} does not exist")
+        return
 
     # Show help only if no subcommand is invoked
     if context.invoked_subcommand is None:
@@ -69,12 +83,10 @@ def run():
 
 
 @proj.command()
-@click.option("-d", "--delete", is_flag=True, help="Delete existing project files")
 @click.option("-dj", "--django", is_flag=True, help="Use django mongodb template")
 @click.option("-w", "--wagtail", is_flag=True, help="Use wagtail mongodb template")
 @click.argument("project_name", required=False, default="backend")
 def start(
-    delete,
     django,
     wagtail,
     project_name,
@@ -82,41 +94,6 @@ def start(
     """Run Django's `startproject` with custom templates."""
     if os.path.exists("manage.py"):
         click.echo("manage.py already exists")
-        if not delete:
-            click.echo("Use -d to delete existing project files")
-            return
-    if delete:
-        items = {
-            ".babelrc": os.path.isfile,
-            ".dockerignore": os.path.isfile,
-            ".browserslistrc": os.path.isfile,
-            ".eslintrc": os.path.isfile,
-            ".nvmrc": os.path.isfile,
-            ".stylelintrc.json": os.path.isfile,
-            "Dockerfile": os.path.isfile,
-            "apps": os.path.isdir,
-            "home": os.path.isdir,
-            "backend": os.path.isdir,
-            "db.sqlite3": os.path.isfile,
-            "frontend": os.path.isdir,
-            "mongo_migrations": os.path.isdir,
-            "manage.py": os.path.isfile,
-            "package-lock.json": os.path.isfile,
-            "package.json": os.path.isfile,
-            "postcss.config.js": os.path.isfile,
-            "requirements.txt": os.path.isfile,
-            "search": os.path.isdir,
-        }
-        for item, check_function in items.items():
-            if check_function(item):
-                if os.path.isdir(item):
-                    shutil.rmtree(item)
-                    click.echo(f"Removed directory: {item}")
-                elif os.path.isfile(item):
-                    os.remove(item)
-                    click.echo(f"Removed file: {item}")
-            else:
-                click.echo(f"Skipping: {item} does not exist")
         return
     template = None
     django_admin = "django-admin"
@@ -129,9 +106,7 @@ def start(
     elif django:
         template = os.path.join(os.path.join("src", "django-mongodb-project"))
     if not template:
-        template = os.path.join(
-            os.path.join("src", "django-mongodb-templates", "project_template")
-        )
+        template = os.path.join(os.path.join("templates", "project_template"))
     click.echo(f"Using template: {template}")
     subprocess.run(
         [
@@ -143,9 +118,7 @@ def start(
             template,
         ]
     )
-    frontend_template = os.path.join(
-        "src", "django-mongodb-templates", "frontend_template"
-    )
+    frontend_template = os.path.join("templates", "frontend_template")
     click.echo(f"Using template: {frontend_template}")
     subprocess.run(
         [
@@ -158,7 +131,7 @@ def start(
         ]
     )
     if not wagtail:
-        home_template = os.path.join("src", "django-mongodb-templates", "home_template")
+        home_template = os.path.join("templates", "home_template")
         click.echo(f"Using template: {home_template}")
         subprocess.run(
             [

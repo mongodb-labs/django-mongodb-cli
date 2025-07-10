@@ -49,10 +49,10 @@ STORAGES = {
     },
 }
 
-if os.environ.get("STATICFILES_STORAGE", "") == "manifest":
-    STORAGES["staticfiles"]["BACKEND"] = (
-        "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
-    )
+if os.environ.get("STATICFILES_STORAGE", "") == "manifest":  # noqa
+    STORAGES["staticfiles"][  # noqa
+        "BACKEND"  # noqa
+    ] = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"  # noqa
 
 
 USE_TZ = not os.environ.get("DISABLE_TIMEZONE")

@@ -89,6 +89,11 @@ sphinx-clean:
     rm -rvf docs/_build
 alias sc := sphinx-clean
 
+[group('sphinx')]
+sphinx-open:
+    open docs/_build/index.html
+alias so := sphinx-open
+
 # ---------------------------------------- qe ----------------------------------------
 
 qe:

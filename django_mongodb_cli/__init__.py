@@ -1,23 +1,21 @@
-import click
-import sys
+import os
+import typer
 
-from .app import app
-from .proj import proj
 from .repo import repo
 
-
-def get_help_text():
-    help_text = """
-    Django MongoDB CLI
+help_text = (
     """
-    return f"\n\n{help_text.strip()}\n\nSystem executable:\n\n{sys.executable}\n"
+Django MongoDB CLI
 
+System executable:
+"""
+    + os.sys.executable
+)
 
-@click.group(help=get_help_text())
-def cli():
-    """Django MongoDB CLI"""
+dm = typer.Typer(
+    help=help_text,
+    add_completion=False,
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
 
-
-cli.add_command(app)
-cli.add_command(proj)
-cli.add_command(repo)
+dm.add_typer(repo, name="repo")

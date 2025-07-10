@@ -51,14 +51,3 @@ django-allauth
 When completed successfully the output will look like this:
 
 .. image:: ../_static/images/django-allauth.png
-
-wagtail
-~~~~~~~
-
-::
-
-    dm repo test wagtail
-
-When completed successfully the output will look like this:
-
-.. image:: ../_static/images/wagtail.png

@@ -1,32 +1,28 @@
-from bson.binary import STANDARD
 from bson.codec_options import CodecOptions
 from pymongo import MongoClient
-from pymongo.encryption import ClientEncryption
+from pymongo.encryption import ClientEncryption, AutoEncryptionOpts
 from pymongo.errors import EncryptedCollectionError
-from django_mongodb_backend.encryption import (
-    get_auto_encryption_opts,
-    get_kms_providers,
-    get_key_vault_namespace,
-)
 
-kms_providers = get_kms_providers()
-key_vault_namespace = get_key_vault_namespace()
+from django_mongodb_backend.encryption import KMS_PROVIDERS
+
+KEY_VAULT_NAMESPACE = "encryption.__keyVault"
 
 client = MongoClient(
-    auto_encryption_opts=get_auto_encryption_opts(
-        key_vault_namespace=key_vault_namespace,
-        kms_providers=kms_providers,
+    auto_encryption_opts=AutoEncryptionOpts(
+        key_vault_namespace=KEY_VAULT_NAMESPACE,
+        kms_providers=KMS_PROVIDERS,
     )
 )
 
-codec_options = CodecOptions(uuid_representation=STANDARD)
+codec_options = CodecOptions()
 client_encryption = ClientEncryption(
-    kms_providers, key_vault_namespace, client, codec_options
+    KMS_PROVIDERS, KEY_VAULT_NAMESPACE, client, codec_options
 )
 
-client.drop_database("test")
-
-database = client["test"]
+COLLECTION_NAME = "patient"
+DB_NAME = "qe"
+client.drop_database(DB_NAME)
+database = client[DB_NAME]
 
 encrypted_fields = {
     "fields": [
@@ -42,10 +38,10 @@ encrypted_fields = {
     ]
 }
 try:
-    encrypted_collection = client_encryption.create_encrypted_collection(
-        database, "encrypted_collection", encrypted_fields, "local"
+    collection = client_encryption.create_encrypted_collection(
+        database, "patient", encrypted_fields, "local"
     )
-    patient_document = {
+    patient = {
         "patientName": "Jon Doe",
         "patientId": 12345678,
         "patientRecord": {
@@ -57,9 +53,9 @@ try:
             "billAmount": 1500,
         },
     }
-    encrypted_collection = client["test"]["encrypted_collection"]
-    encrypted_collection.insert_one(patient_document)
-    print(encrypted_collection.find_one({"patientRecord.ssn": "987-65-4320"}))
+    collection = client[DB_NAME][COLLECTION_NAME]
+    collection.insert_one(patient)
+    print(collection.find_one({"patientRecord.ssn": "987-65-4320"}))
 
 except EncryptedCollectionError as e:
     print(f"Encrypted collection error: {e}")

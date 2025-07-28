@@ -18,23 +18,3 @@ python -m venv .venv
 source .venv/bin/activate
 just install
 ```
-
-## Usage
-
-```
-Usage: dm [OPTIONS] COMMAND [ARGS]...
-
-  Django MongoDB CLI
-
-  System executable:
-
-  /Users/alexclark/Developer/django-mongodb-cli/.venv/bin/python
-
-Options:
-  --help  Show this message and exit.
-
-Commands:
-  app   Create Django apps configured to test django-mongodb-backend.
-  proj  Create Django projects configured to test django-mongodb-backend.
-  repo  Run tests configured to test django-mongodb-backend.
-```

@@ -1,197 +1,12 @@
-import click
-import git
-import os
-import shutil
-import string
-import sys
 import toml
-import random
+import typer
+import os
 import re
+import shutil
 import subprocess
 
-
-from .settings import test_settings_map
-
-
-DELETE_DIRS_AND_FILES = {
-    ".babelrc": os.path.isfile,
-    ".dockerignore": os.path.isfile,
-    ".browserslistrc": os.path.isfile,
-    ".eslintrc": os.path.isfile,
-    ".nvmrc": os.path.isfile,
-    ".stylelintrc.json": os.path.isfile,
-    "Dockerfile": os.path.isfile,
-    "apps": os.path.isdir,
-    "home": os.path.isdir,
-    "backend": os.path.isdir,
-    "db.sqlite3": os.path.isfile,
-    "frontend": os.path.isdir,
-    "manage.py": os.path.isfile,
-    "package-lock.json": os.path.isfile,
-    "package.json": os.path.isfile,
-    "postcss.config.js": os.path.isfile,
-    "requirements.txt": os.path.isfile,
-    "search": os.path.isdir,
-}
-
-
-def random_app_name(prefix="app_", length=6):
-    suffix = "".join(random.choices(string.ascii_lowercase + string.digits, k=length))
-    return prefix + suffix
-
-
-def copy_mongo_apps(repo_name):
-    """
-    Copy the appropriate mongo_apps file based on the repo name.
-
-    Requires test_settings_map[repo_name]['apps_file']['source'] and
-    test_settings_map[repo_name]['apps_file']['target'] to be defined.
-    """
-    settings = test_settings_map.get(repo_name)
-    if not settings or "apps_file" not in settings or repo_name == "django":
-        return  # Nothing to copy for this repo
-
-    apps_file = settings["apps_file"]
-    source = apps_file.get("source")
-    target = apps_file.get("target")
-
-    if not source or not target:
-        click.echo(
-            click.style(
-                f"[copy_mongo_apps] Source or target path missing for '{repo_name}'.",
-                fg="yellow",
-            )
-        )
-        return
-
-    try:
-        click.echo(click.style(f"Copying {source} → {target}", fg="blue"))
-        shutil.copyfile(source, target)
-        click.echo(
-            click.style(f"Copied {source} to {target} successfully.", fg="green")
-        )
-    except FileNotFoundError as e:
-        click.echo(click.style(f"File not found: {e.filename}", fg="red"))
-    except Exception as e:
-        click.echo(click.style(f"Failed to copy: {e}", fg="red"))
-
-
-def copy_mongo_migrations(repo_name):
-    """
-    Copy mongo_migrations to the specified test directory for this repo.
-
-    test_settings_map[repo_name]['migrations_dir']['source'] and
-    test_settings_map[repo_name]['migrations_dir']['target'] must be defined.
-    Does nothing if 'migrations_dir' not present.
-    """
-    settings = test_settings_map.get(repo_name)
-    if not settings or "migrations_dir" not in settings:
-        click.echo(click.style("No migrations to copy.", fg="yellow"))
-        return
-
-    migrations = settings["migrations_dir"]
-    source = migrations.get("source")
-    target = migrations.get("target")
-
-    if not source or not target:
-        click.echo(
-            click.style(
-                f"[copy_mongo_migrations] Source/target path missing for '{repo_name}'.",
-                fg="yellow",
-            )
-        )
-        return
-
-    if not os.path.exists(source):
-        click.echo(
-            click.style(
-                f"Source migrations directory does not exist: {source}", fg="red"
-            )
-        )
-        return
-
-    if os.path.exists(target):
-        click.echo(
-            click.style(
-                f"Target migrations already exist: {target} (skipping copy)", fg="cyan"
-            )
-        )
-        return
-
-    try:
-        click.echo(
-            click.style(f"Copying migrations from {source} to {target}", fg="blue")
-        )
-        shutil.copytree(source, target)
-        click.echo(
-            click.style(f"Copied migrations to {target} successfully.", fg="green")
-        )
-    except Exception as e:
-        click.echo(click.style(f"Failed to copy migrations: {e}", fg="red"))
-
-
-def copy_mongo_settings(source, target):
-    """
-    Copy mongo_settings to the specified test directory.
-
-    Args:
-        source (str): Path to the source settings file.
-        target (str): Path to the target location.
-
-    Shows a message and handles errors gracefully.
-    """
-    if not source or not target:
-        click.echo(click.style("Source or target not specified.", fg="yellow"))
-        return
-    if not os.path.exists(source):
-        click.echo(click.style(f"Source file does not exist: {source}", fg="red"))
-        exit(1)
-
-    try:
-        click.echo(click.style(f"Copying {source} → {target}", fg="blue"))
-        shutil.copyfile(source, target)
-        click.echo(click.style(f"Copied settings to {target}.", fg="green"))
-    except Exception as e:
-        click.echo(click.style(f"Failed to copy settings: {e}", fg="red"))
-
-
-def get_management_command(command=None, *args):
-    """
-    Construct a Django management command suitable for subprocess execution.
-
-    If 'manage.py' exists in the current directory, use it; otherwise, fall back to 'django-admin'.
-    Commands in REQUIRES_MANAGE_PY require 'manage.py' to be present.
-    Pass additional arguments via *args for command options.
-    """
-    REQUIRES_MANAGE_PY = {
-        "createsuperuser",
-        "migrate",
-        "runserver",
-        "shell",
-        "startapp",
-    }
-    manage_py = "manage.py"
-    manage_py_exists = os.path.isfile(manage_py)
-
-    if not manage_py_exists and (command is None or command in REQUIRES_MANAGE_PY):
-        raise click.ClickException(
-            "manage.py is required to run this command. "
-            "Please run this command in the project directory."
-        )
-
-    base_command = [sys.executable, manage_py] if manage_py_exists else ["django-admin"]
-
-    if command:
-        full_command = base_command + [command]
-    else:
-        full_command = base_command
-
-    if args:
-        # *args allows for further options/args (e.g. get_management_command("makemigrations", "--verbosity", "2"))
-        full_command.extend(args)
-
-    return full_command
-
+from git import Repo as GitRepo
+from pathlib import Path
 
 URL_PATTERN = re.compile(r"git\+ssh://(?:[^@]+@)?([^/]+)/([^@]+)")
 BRANCH_PATTERN = re.compile(
@@ -199,314 +14,381 @@ BRANCH_PATTERN = re.compile(
 )
 
 
-def get_repos(pyproject_path, section="dev"):
+class Repo:
     """
-    Load repository info from a pyproject.toml file.
-
-    Args:
-        pyproject_path (str): Path to the pyproject.toml file.
-        section (str): Which section ('dev', etc.) of [tool.django_mongodb_cli] to use.
-
-    Returns:
-        repos (list): List of repository spec strings.
-        url_pattern (Pattern): Compiled regex to extract repo basename.
-        branch_pattern (Pattern): Compiled regex to extract branch from url.
+    Repo is a class that manages repository operations such as cloning, updating,
+    and checking the status of repositories defined in a configuration file.
+    It provides methods to handle various repository-related tasks.
     """
-    try:
-        with open(pyproject_path, "r") as f:
-            pyproject_data = toml.load(f)
-    except FileNotFoundError:
-        raise click.ClickException(f"Could not find {pyproject_path}")
-    except toml.TomlDecodeError as e:
-        raise click.ClickException(f"Failed to parse TOML: {e}")
 
-    tool_section = pyproject_data.get("tool", {}).get("django_mongodb_cli", {})
-    repos = tool_section.get(section, [])
-    if not isinstance(repos, list):
-        raise click.ClickException(
-            f"Expected a list of repos in [tool.django_mongodb_cli.{section}]"
-        )
+    def __init__(self, pyproject_file: Path = Path("pyproject.toml")):
+        self.pyproject_file = pyproject_file
+        self.config = self._load_config()
+        self.path = Path(self.config["tool"]["django_mongodb_cli"]["path"])
+        self.map = self.get_map()
 
-    return repos, URL_PATTERN, BRANCH_PATTERN
+    def _load_config(self) -> dict:
+        return toml.load(self.pyproject_file)
 
+    def get_map(self) -> dict:
+        """
+        Return a dict mapping repo_name to repo_url from repos in
+        [tool.django_mongodb_cli.repos].
+        """
+        return {
+            repo.split("@", 1)[0].strip(): repo.split("@", 1)[1].strip()
+            for repo in self.config["tool"]["django_mongodb_cli"].get("repos", [])
+            if "@" in repo
+        }
 
-def clone_repo(repo_entry, url_pattern, branch_pattern, repo):
-    """
-    Clone a single repository into repo.home given a repo spec entry.
-    If the repo already exists at the destination, skips.
-    Tries to check out a branch if one is found in the entry, defaults to 'main'.
-    """
-    url_match = url_pattern.search(repo_entry)
-    if not url_match:
-        click.echo(click.style(f"Invalid repository entry: {repo_entry}", fg="red"))
-        return
+    def get_repo_path(self, name: str) -> Path:
+        return (self.path / name).resolve()
 
-    repo_url = url_match.group(0)
-    repo_name = os.path.basename(repo_url)
-    branch = (
-        branch_pattern.search(repo_entry).group(1)
-        if branch_pattern.search(repo_entry)
-        else "main"
-    )
-    clone_path = os.path.join(repo.home, repo_name)
+    def get_repo(self, path: str) -> GitRepo:
+        return GitRepo(path)
 
-    if os.path.exists(clone_path):
-        click.echo(
-            click.style(
-                f"Skipping {repo_name}: already exists at {clone_path}", fg="yellow"
+    def get_repo_status(self, repo_name: str) -> str:
+        """
+        Get the status of a repository.
+        """
+        typer.echo(
+            typer.style(
+                f"Getting status for repository: {repo_name}", fg=typer.colors.CYAN
             )
         )
-        return
 
-    click.echo(
-        click.style(
-            f"Cloning {repo_name} from {repo_url} into {clone_path} (branch: {branch})",
-            fg="blue",
-        )
-    )
-    try:
-        git.Repo.clone_from(repo_url, clone_path, branch=branch)
-    except git.exc.GitCommandError as e:
-        click.echo(
-            click.style(
-                f"Warning: Failed to clone branch '{branch}'. Trying default branch instead... ({e})",
-                fg="yellow",
+        path = self.get_repo_path(repo_name)
+        if not os.path.exists(path):
+            typer.echo(
+                typer.style(
+                    f"Repository '{repo_name}' not found at path: {path}",
+                    fg=typer.colors.RED,
+                )
+            )
+            return
+        typer.echo(
+            typer.style(
+                f"Repository '{repo_name}' found at path: {path}", fg=typer.colors.GREEN
             )
         )
-        try:
-            git.Repo.clone_from(repo_url, clone_path)
-        except git.exc.GitCommandError as e2:
-            click.echo(click.style(f"Failed to clone repository: {e2}", fg="red"))
+        repo = self.get_repo(path)
+        typer.echo(
+            typer.style(f"On branch: {repo.active_branch}", fg=typer.colors.CYAN)
+        )
+        unstaged = repo.index.diff(None)
+        if unstaged:
+            typer.echo(
+                typer.style("\nChanges not staged for commit:", fg=typer.colors.YELLOW)
+            )
+            for diff in unstaged:
+                typer.echo(
+                    typer.style(f"  modified: {diff.a_path}", fg=typer.colors.YELLOW)
+                )
+        staged = repo.index.diff("HEAD")
+        if staged:
+            typer.echo(typer.style("\nChanges to be committed:", fg=typer.colors.GREEN))
+            for diff in staged:
+                typer.echo(
+                    typer.style(f"  staged: {diff.a_path}", fg=typer.colors.GREEN)
+                )
+        if repo.untracked_files:
+            typer.echo(typer.style("\nUntracked files:", fg=typer.colors.MAGENTA))
+            for f in repo.untracked_files:
+                typer.echo(typer.style(f"  {f}", fg=typer.colors.MAGENTA))
+        if not unstaged and not staged and not repo.untracked_files:
+            typer.echo(
+                typer.style(
+                    "\nNothing to commit, working tree clean.", fg=typer.colors.GREEN
+                )
+            )
+
+    def clone_repo(self, repo_name: str) -> None:
+        """
+        Clone a repository into the specified path.
+        If the repository already exists, it will skip cloning.
+        """
+        typer.echo(
+            typer.style(f"Cloning repository: {repo_name}", fg=typer.colors.CYAN)
+        )
+
+        if repo_name not in self.map:
+            typer.echo(
+                typer.style(
+                    f"Repository '{repo_name}' not found in configuration.",
+                    fg=typer.colors.RED,
+                )
+            )
             return
 
-    # Optionally install pre-commit hooks if available
-    pre_commit_cfg = os.path.join(clone_path, ".pre-commit-config.yaml")
-    if os.path.exists(pre_commit_cfg):
-        click.echo(
-            click.style(f"Installing pre-commit hooks for {repo_name}...", fg="green")
+        url = self.map[repo_name]
+        path = self.get_repo_path(repo_name)
+        branch = (
+            BRANCH_PATTERN.search(url).group(1)
+            if BRANCH_PATTERN.search(url)
+            else "main"
         )
-        result = subprocess.run(["pre-commit", "install"], cwd=clone_path)
-        if result.returncode == 0:
-            click.echo(click.style("pre-commit installed successfully.", fg="green"))
-        else:
-            click.echo(click.style("pre-commit installation failed.", fg="red"))
-    else:
-        click.echo(
-            click.style(f"No pre-commit config found in {repo_name}.", fg="yellow")
-        )
-
-
-def get_repo_name_map(repos, url_pattern):
-    """Return a dict mapping repo_name to repo_url from a list of repo URLs."""
-    return {
-        os.path.basename(url_pattern.search(url).group(0)): url
-        for url in repos
-        if url_pattern.search(url)
-    }
-
-
-def install_package(clone_path):
-    """
-    Install a package from the given clone path.
-
-    - If clone_path ends with 'mongo-arrow' or 'libmongocrypt', the actual install path is 'bindings/python' inside it.
-    - Tries editable install via pip if pyproject.toml exists.
-    - Tries setup.py develop if setup.py exists.
-    - Installs from requirements.txt if available.
-    - Warns the user if nothing can be installed.
-    """
-    # Special case for known subdir installs
-    if clone_path.endswith(("mongo-arrow", "libmongocrypt")):
-        install_path = os.path.join(clone_path, "bindings", "python")
-    else:
-        install_path = clone_path
-
-    if os.path.exists(os.path.join(install_path, "pyproject.toml")):
-        click.echo(
-            click.style(
-                f"Installing (editable) with pyproject.toml: {install_path}", fg="blue"
-            )
-        )
-        result = subprocess.run(
-            [sys.executable, "-m", "pip", "install", "-e", install_path]
-        )
-    elif os.path.exists(os.path.join(install_path, "setup.py")):
-        click.echo(
-            click.style(
-                f"Installing (develop) with setup.py in {install_path}", fg="blue"
-            )
-        )
-        result = subprocess.run(
-            [sys.executable, "setup.py", "develop"], cwd=install_path
-        )
-    elif os.path.exists(os.path.join(install_path, "requirements.txt")):
-        click.echo(
-            click.style(f"Installing requirements.txt in {install_path}", fg="blue")
-        )
-        result = subprocess.run(
-            [sys.executable, "-m", "pip", "install", "-r", "requirements.txt"],
-            cwd=install_path,
-        )
-    else:
-        click.echo(
-            click.style(
-                f"No valid installation method found for {install_path}", fg="red"
-            )
-        )
-        return
-
-    if "result" in locals():
-        if result.returncode == 0:
-            click.echo(
-                click.style(f"Install successful in {install_path}.", fg="green")
-            )
-        else:
-            click.echo(click.style(f"Install failed in {install_path}.", fg="red"))
-
-
-def repo_update(repo_entry, url_pattern, clone_path):
-    """
-    Update a single git repository at clone_path.
-
-    Args:
-        repo_entry (str): The repository entry string (e.g. repo URL).
-        url_pattern (Pattern): Compiled regex to extract repo name from URL.
-        clone_path (str): Path where the repository is cloned.
-
-    If the repo doesn't exist, skips it. Handles and reports errors.
-    """
-    url_match = url_pattern.search(repo_entry)
-    if not url_match:
-        click.echo(click.style(f"Invalid repository entry: {repo_entry}", fg="red"))
-        return
-
-    repo_url = url_match.group(0)
-    repo_name = os.path.basename(repo_url)
-
-    if not os.path.exists(clone_path):
-        click.echo(
-            click.style(
-                f"Skipping {repo_name}: {clone_path} does not exist.", fg="yellow"
-            )
-        )
-        return
-
-    try:
-        # Check if clone_path is a git repo
-        repo = git.Repo(clone_path)
-        click.echo(click.style(f"Updating 📦 {repo_name}...", fg="blue"))
-        pull_output = repo.git.pull()
-        click.echo(
-            click.style(f"Pull result for {repo_name}:\n{pull_output}", fg="green")
-        )
-    except git.exc.NoSuchPathError:
-        click.echo(
-            click.style(f"Not a valid Git repository at {clone_path}.", fg="red")
-        )
-    except git.exc.GitCommandError as e:
-        click.echo(click.style(f"Failed to update {repo_name}: {e}", fg="red"))
-    except Exception as e:
-        click.echo(click.style(f"Unexpected error updating {repo_name}: {e}", fg="red"))
-
-
-def get_status(
-    repo_entry,
-    url_pattern,
-    repo,
-    reset=False,
-    diff=False,
-    branch=False,
-    update=False,
-    log=False,
-):
-    """
-    Show status (and optionally reset/update/log/diff/branch) for a single repo.
-
-    Args:
-        repo_entry (str): The repository entry spec (from pyproject.toml).
-        url_pattern (Pattern): Regex to extract basename from URL.
-        repo (object): Repo context with .home attribute.
-        reset (bool): If True, hard-reset the repo.
-        diff (bool): If True, show git diff.
-        branch (bool): If True, show all branches.
-        update (bool): If True, run repo_update().
-        log (bool): If True, show formatted log.
-
-    Outputs status/log info with color and error reporting.
-    """
-    url_match = url_pattern.search(repo_entry)
-    if not url_match:
-        click.echo(click.style(f"Invalid repository entry: {repo_entry}", fg="red"))
-        return
-
-    repo_url = url_match.group(0)
-    repo_name = os.path.basename(repo_url)
-    clone_path = os.path.join(repo.home, repo_name)
-
-    if not os.path.exists(clone_path):
-        click.echo(click.style(f"Skipping 📦 {repo_name} (not cloned)", fg="yellow"))
-        return
-
-    try:
-        repo_obj = git.Repo(clone_path)
-        click.echo(click.style(f"\n📦 {repo_name}", fg="blue", bold=True))
-
-        if reset:
-            click.echo(
-                click.style(f"Resetting {repo_name} to HEAD (hard)...", fg="red")
-            )
-            out = repo_obj.git.reset("--hard")
-            click.echo(out)
-            click.echo()  # Space
-
-        else:
-            # Print remote info
-            for remote in repo_obj.remotes:
-                click.echo(
-                    click.style(f"Remote: {remote.name} @ {remote.url}", fg="blue")
+        url = URL_PATTERN.search(url).group(0)
+        if os.path.exists(path):
+            typer.echo(
+                typer.style(
+                    f"Repository '{repo_name}' already exists at path: {path}",
+                    fg=typer.colors.YELLOW,
                 )
-
-            # Print branch info
-            current_branch = (
-                repo_obj.active_branch.name
-                if repo_obj.head.is_valid()
-                else "<detached HEAD>"
             )
-            click.echo(click.style(f"On branch: {current_branch}", fg="magenta"))
+            return
 
-            status = repo_obj.git.status()
-            click.echo(status)
-
-            # Show diff if requested
-            if diff:
-                diff_output = repo_obj.git.diff()
-                if diff_output.strip():
-                    click.echo(click.style("Diff:", fg="yellow"))
-                    click.echo(click.style(diff_output, fg="red"))
-                else:
-                    click.echo(click.style("No diff output", fg="green"))
-
-            # Show branches if requested
-            if branch:
-                click.echo(click.style("Branches:", fg="blue"))
-                click.echo(repo_obj.git.branch("--all"))
-
-            # Show log if requested
-            if log:
-                click.echo(click.style("Git log:", fg="blue"))
-                click.echo(
-                    repo_obj.git.log("--pretty=format:%h - %an, %ar : %s", "--graph")
-                )
-
-            # Run update if requested (AFTER showing status etc)
-            if update:
-                repo_update(repo_entry, url_pattern, clone_path)
-
-        click.echo()  # Add extra space after each repo status for legibility
-
-    except git.exc.InvalidGitRepositoryError:
-        click.echo(
-            click.style(f"{clone_path} is not a valid Git repository.", fg="red")
+        typer.echo(
+            typer.style(
+                f"Cloning {url} into {path} (branch: {branch})", fg=typer.colors.CYAN
+            )
         )
-    except Exception as e:
-        click.echo(click.style(f"An error occurred for {repo_name}: {e}", fg="red"))
+        GitRepo.clone_from(url, path, branch=branch)
+
+        # Install pre-commit hooks if config exists
+        pre_commit_config = os.path.join(path, ".pre-commit-config.yaml")
+        if os.path.exists(pre_commit_config):
+            typer.echo(
+                typer.style("Installing pre-commit hooks...", fg=typer.colors.CYAN)
+            )
+            try:
+                subprocess.run(["pre-commit", "install"], cwd=path, check=True)
+                typer.echo(
+                    typer.style("Pre-commit hooks installed!", fg=typer.colors.GREEN)
+                )
+            except subprocess.CalledProcessError as e:
+                typer.echo(
+                    typer.style(
+                        f"Failed to install pre-commit hooks for {repo_name}: {e}",
+                        fg=typer.colors.RED,
+                    )
+                )
+        else:
+            typer.echo(
+                typer.style(
+                    "No .pre-commit-config.yaml found. Skipping pre-commit hook installation.",
+                    fg=typer.colors.YELLOW,
+                )
+            )
+
+    def install_package(self, repo_name: str) -> None:
+        """
+        Install a package from the cloned repository.
+        """
+        typer.echo(
+            typer.style(
+                f"Installing package from repository: {repo_name}", fg=typer.colors.CYAN
+            )
+        )
+
+        path = self.get_repo_path(repo_name)
+        if not os.path.exists(path):
+            typer.echo(
+                typer.style(
+                    f"Repository '{repo_name}' not found at path: {path}",
+                    fg=typer.colors.RED,
+                )
+            )
+            return
+
+        try:
+            subprocess.run(
+                [os.sys.executable, "-m", "pip", "install", "-e", path],
+                check=True,
+            )
+            typer.echo(
+                typer.style(
+                    f"✅ Successfully installed package from {repo_name}.",
+                    fg=typer.colors.GREEN,
+                )
+            )
+        except subprocess.CalledProcessError as e:
+            typer.echo(
+                typer.style(
+                    f"❌ Failed to install package from {repo_name}: {e}",
+                    fg=typer.colors.RED,
+                )
+            )
+
+    def sync_repo(self, repo_name: str) -> None:
+        """
+        Synchronize the repository by pulling the latest changes.
+        """
+        typer.echo(typer.style("Synchronizing repository...", fg=typer.colors.CYAN))
+        path = self.get_repo_path(repo_name)
+        if not os.path.exists(path):
+            typer.echo(
+                typer.style(
+                    f"Repository '{repo_name}' not found at path: {path}",
+                    fg=typer.colors.RED,
+                )
+            )
+            return
+        try:
+            repo = self.get_repo(path)
+            typer.echo(
+                typer.style(
+                    f"Pulling latest changes for {repo_name}...", fg=typer.colors.CYAN
+                )
+            )
+            repo.remotes.origin.pull()
+            typer.echo(
+                typer.style(
+                    f"✅ Successfully synchronized {repo_name}.", fg=typer.colors.GREEN
+                )
+            )
+        except Exception as e:
+            typer.echo(
+                typer.style(
+                    f"❌ Failed to synchronize {repo_name}: {e}", fg=typer.colors.RED
+                )
+            )
+
+    def run_tests(self, repo_name: str) -> None:
+        """
+        Run tests for the specified repository.
+        """
+        typer.echo(
+            typer.style(
+                f"Running tests for repository: {repo_name}", fg=typer.colors.CYAN
+            )
+        )
+
+        path = self.get_repo_path(repo_name)
+        if not os.path.exists(path):
+            typer.echo(
+                typer.style(
+                    f"Repository '{repo_name}' not found at path: {path}",
+                    fg=typer.colors.RED,
+                )
+            )
+            return
+
+        Test().run_tests(repo_name)
+        typer.echo(
+            typer.style(
+                f"✅ Tests completed successfully for {repo_name}.",
+                fg=typer.colors.GREEN,
+            )
+        )
+
+
+class Test(Repo):
+    """
+    Test is a subclass of Repo that provides additional functionality
+    for running tests on repositories.
+    It inherits methods from the Repo class and can be extended with
+    more test-specific methods if needed.
+    """
+
+    def __init__(self, pyproject_file: Path = Path("pyproject.toml")):
+        super().__init__(pyproject_file)
+        self.modules = []
+        self.keep_db = False
+        self.keyword = None
+        self.setenv = False
+
+    def set_modules(self, modules: list) -> None:
+        self.modules = modules
+
+    def set_keep_db(self, keep_db: bool) -> None:
+        """Set whether to keep the database after tests."""
+        self.keep_db = keep_db
+
+    def set_keyword(self, keyword: str) -> None:
+        """Set a keyword to filter tests."""
+        self.keyword = keyword
+
+    def set_env(self, setenv: bool) -> None:
+        """Set whether to set DJANGO_SETTINGS_MODULE environment variable."""
+        self.setenv = setenv
+
+    def copy_settings(self, repo_name: str) -> None:
+        """
+        Copy test settings from this repository to the repository
+        specified by repo_name.
+        """
+        source = self.test_settings["settings"]["test"]["source"]
+        target = self.test_settings["settings"]["test"]["target"]
+        shutil.copyfile(source, target)
+        typer.echo(
+            typer.style(
+                f"Copied test settings from {source} to {target} for {repo_name}.",
+                fg=typer.colors.CYAN,
+            )
+        )
+
+    def copy_apps(self, repo_name: str) -> None:
+        """
+        Copy test settings from this repository to the repository
+        specified by repo_name.
+        """
+        source = self.test_settings["apps_file"]["source"]
+        target = self.test_settings["apps_file"]["target"]
+        shutil.copyfile(source, target)
+        typer.echo(
+            typer.style(
+                f"Copied apps from {source} to {target} for {repo_name}.",
+                fg=typer.colors.CYAN,
+            )
+        )
+
+    def copy_migrations(self, repo_name: str) -> None:
+        """
+        Copy migrations from this repository to the repository
+        specified by repo_name.
+        """
+        source = self.test_settings["migrations_dir"]["source"]
+        target = self.test_settings["migrations_dir"]["target"]
+        shutil.copytree(source, target)
+        typer.echo(
+            typer.style(
+                f"Copied apps from {source} to {target} for {repo_name}.",
+                fg=typer.colors.CYAN,
+            )
+        )
+
+    def run_tests(self, repo_name: str) -> None:
+        self.test_settings = (
+            self.config.get("tool", {})
+            .get("django_mongodb_cli", {})
+            .get("test", {})
+            .get(repo_name, {})
+        )
+        if not self.test_settings:
+            typer.echo(
+                typer.style(
+                    f"No test settings found for {repo_name}.", fg=typer.colors.YELLOW
+                )
+            )
+            return
+        test_dir = self.test_settings.get("test_dir")
+        if not os.path.exists(test_dir):
+            typer.echo(
+                typer.style(
+                    f"Test directory '{test_dir}' does not exist for {repo_name}.",
+                    fg=typer.colors.RED,
+                )
+            )
+            return
+        self.copy_apps(repo_name)
+        self.copy_migrations(repo_name)
+        self.copy_settings(repo_name)
+        test_options = self.test_settings.get("test_options")
+        test_command = [self.test_settings.get("test_command")]
+        settings_module = (
+            self.test_settings.get("settings", {}).get("module", {}).get("test")
+        )
+        if test_options:
+            test_command.extend(test_options)
+        if settings_module and test_command == "./runtests.py":
+            test_command.extend(["--settings", settings_module])
+        if self.keep_db:
+            test_command.extend("--keepdb")
+        if self.keyword:
+            test_command.extend(["-k", self.keyword])
+        if self.modules:
+            test_command.extend(self.modules)
+        subprocess.run(
+            test_command,
+            cwd=test_dir,
+        )

@@ -1,8 +1,45 @@
 import typer
 
-from .utils import Repo, Test
+from .utils import Package, Repo, Test
 
 repo = typer.Typer()
+
+
+def repo_command(
+    all_repos: bool,
+    repo_name: str,
+    all_msg: str,
+    missing_msg: str,
+    single_func,
+    all_func,
+    fg=typer.colors.CYAN,
+    repo_list=None,
+):
+    if all_repos:
+        if all_msg:
+            typer.echo(typer.style(all_msg, fg=fg))
+        for name in repo_list if repo_list is not None else Repo().map:
+            all_func(name)
+    elif repo_name:
+        single_func(repo_name)
+    else:
+        typer.echo(typer.style(missing_msg, fg=typer.colors.YELLOW))
+
+
+@repo.callback(invoke_without_command=True)
+def main(
+    ctx: typer.Context,
+    list_repos: bool = typer.Option(
+        False, "--list-repos", "-l", help="List available repositories."
+    ),
+):
+    if list_repos:
+        Repo().list_repos()
+        raise typer.Exit()  # End, no further action
+
+    if ctx.invoked_subcommand is None:
+        typer.echo(ctx.get_help())
+        raise typer.Exit()
 
 
 @repo.command()
@@ -12,22 +49,36 @@ def status(
         False, "--all-repos", "-a", help="Show status of all repos"
     ),
 ):
-    """Show the status of the specified Git repository."""
-    if all_repos:
-        typer.echo(
-            typer.style("Showing status for all repositories...", fg=typer.colors.CYAN)
-        )
-        for repo_name in Repo().map:
-            Repo().get_repo_status(repo_name)
-    elif repo_name:
-        Repo().get_repo_status(repo_name)
-    else:
-        typer.echo(
-            typer.style(
-                "Please specify a repository name or use --all-repos to show all repositories.",
-                fg=typer.colors.YELLOW,
-            )
-        )
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Showing status for all repositories...",
+        missing_msg="Please specify a repository name or use --all-repos to show all repositories.",
+        single_func=lambda name: Repo().get_repo_status(name),
+        all_func=lambda name: Repo().get_repo_status(name),
+    )
+
+
+@repo.command()
+def branch(
+    repo_name: str = typer.Argument(None),
+    branch_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(
+        False, "--all-repos", "-a", help="Show branches of all repositories"
+    ),
+):
+    repo = Repo()
+    if branch_name:
+        repo.set_branch(branch_name)
+
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Showing branches for all repositories...",
+        missing_msg="Please specify a repository name or use --all-repos to show branches of all repositories.",
+        single_func=lambda name: repo.get_repo_branches(name),
+        all_func=lambda name: repo.get_repo_branches(name),
+    )
 
 
 @repo.command()
@@ -40,24 +91,45 @@ def clone(
         False, "--install", "-i", help="Install after cloning"
     ),
 ):
-    """Clone the specified Git repository."""
-    if all_repos:
-        typer.echo(typer.style("Cloning all repositories...", fg=typer.colors.CYAN))
-        for repo_name in Repo().map:
-            Repo().clone_repo(repo_name)
-            if install:
-                Repo().install_package(repo_name)
-    elif repo_name:
-        Repo().clone_repo(repo_name)
+    def clone_repo(name):
+        Repo().clone_repo(name)
         if install:
-            Repo().install_package(repo_name)
-    else:
-        typer.echo(
-            typer.style(
-                "Please specify a repository name or use --all-repos to clone all repositories.",
-                fg=typer.colors.YELLOW,
-            )
-        )
+            Package().install_package(name)
+
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Cloning all repositories...",
+        missing_msg="Please specify a repository name or use --all-repos to clone all repositories.",
+        single_func=clone_repo,
+        all_func=clone_repo,
+    )
+
+
+@repo.command()
+def delete(
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(
+        False, "--all-repos", "-a", help="Delete all repositories"
+    ),
+    uninstall: bool = typer.Option(
+        False, "--uninstall", "-u", help="Uninstall after deleting"
+    ),
+):
+    def do_delete(name):
+        if uninstall:
+            Package().uninstall_package(name)
+        Repo().delete_repo(name)
+
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Deleting all repositories...",
+        missing_msg="Please specify a repository name or use --all-repos to delete all repositories.",
+        single_func=do_delete,
+        all_func=do_delete,
+        fg=typer.colors.RED,  # Red for delete
+    )
 
 
 @repo.command()
@@ -67,20 +139,31 @@ def install(
         False, "--all-repos", "-a", help="Install all repositories"
     ),
 ):
-    """Install the specified Git repository."""
-    if all_repos:
-        typer.echo(typer.style("Installing all repositories...", fg=typer.colors.CYAN))
-        for repo_name in Repo().map:
-            Repo().install_package(repo_name)
-    elif repo_name:
-        Repo().install_package(repo_name)
-    else:
-        typer.echo(
-            typer.style(
-                "Please specify a repository name or use --all-repos to install all repositories.",
-                fg=typer.colors.YELLOW,
-            )
-        )
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Installing all repositories...",
+        missing_msg="Please specify a repository name or use --all-repos to install all repositories.",
+        single_func=lambda name: Package().install_package(name),
+        all_func=lambda name: Package().install_package(name),
+    )
+
+
+@repo.command()
+def origin(
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(
+        False, "--all-repos", "-a", help="Show origin of all repositories"
+    ),
+):
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Showing origin for all repositories...",
+        missing_msg="Please specify a repository name or use --all-repos to show origins of all repositories.",
+        single_func=lambda name: Repo().get_repo_origin(name),
+        all_func=lambda name: Repo().get_repo_origin(name),
+    )
 
 
 @repo.command()
@@ -90,20 +173,14 @@ def sync(
         False, "--all-repos", "-a", help="Sync all repositories"
     ),
 ):
-    """Sync the specified Git repository."""
-    if all_repos:
-        typer.echo(typer.style("Syncing all repositories...", fg=typer.colors.CYAN))
-        for repo_name in Repo().map:
-            Repo().sync_repo(repo_name)
-    elif repo_name:
-        Repo().sync_repo(repo_name)
-    else:
-        typer.echo(
-            typer.style(
-                "Please specify a repository name or use --all-repos to sync all repositories.",
-                fg=typer.colors.YELLOW,
-            )
-        )
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Syncing all repositories...",
+        missing_msg="Please specify a repository name or use --all-repos to sync all repositories.",
+        single_func=lambda name: Repo().sync_repo(name),
+        all_func=lambda name: Repo().sync_repo(name),
+    )
 
 
 @repo.command()
@@ -111,7 +188,7 @@ def test(
     repo_name: str = typer.Argument(None),
     modules: list[str] = typer.Argument(None),
     all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Sync all repositories"
+        False, "--all-repos", "-a", help="Run tests for all repositories"
     ),
     keep_db: bool = typer.Option(
         False, "--keepdb", help="Keep the database after tests"
@@ -123,31 +200,25 @@ def test(
         False,
         "--setenv",
         "-s",
-        help="Set DJANGO_SETTINGS_MODULE" " environment variable",
+        help="Set DJANGO_SETTINGS_MODULE environment variable",
     ),
 ):
-    """Run tests for the specified Git repository."""
-    repo = Test()
+    test_runner = Test()
     if modules:
-        repo.set_modules(modules)
+        test_runner.set_modules(modules)
     if keep_db:
-        repo.set_keep_db(keep_db)
+        test_runner.set_keep_db(keep_db)
     if keyword:
-        repo.set_keyword(keyword)
+        test_runner.set_keyword(keyword)
     if setenv:
-        repo.set_env(setenv)
-    if all_repos:
-        typer.echo(
-            typer.style("Running tests for all repositories...", fg=typer.colors.CYAN)
-        )
-        for repo_name in repo.map:
-            repo.run_tests(repo_name)
-    elif repo_name:
-        repo.run_tests(repo_name)
-    else:
-        typer.echo(
-            typer.style(
-                "Please specify a repository name or use --all-repos to run tests for all repositories.",
-                fg=typer.colors.YELLOW,
-            )
-        )
+        test_runner.set_env(setenv)
+
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Running tests for all repositories...",
+        missing_msg="Please specify a repository name or use --all-repos to run tests for all repositories.",
+        single_func=lambda name: test_runner.run_tests(name),
+        all_func=lambda name: test_runner.run_tests(name),
+        repo_list=test_runner.map,  # Use Test().map instead of Repo().map
+    )

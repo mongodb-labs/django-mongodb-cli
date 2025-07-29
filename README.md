@@ -18,3 +18,9 @@ python -m venv .venv
 source .venv/bin/activate
 just install
 ```
+
+## Usage
+
+![image](screenshot.png)
+![image](screenshot2.png)
+![image](screenshot3.png)

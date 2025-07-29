@@ -278,3 +278,14 @@ migrations = "allauth.mongo_settings"
 [tool.django_mongodb_cli.test.django-allauth.migrations_dir]
 source = "mongo_migrations"
 target = "src/django-allauth/allauth/mongo_migrations"
+
+[[tool.django_mongodb_cli.origin.django-mongodb-backend]]
+user = "aclark4life"
+repo = "git+ssh://git@github.com/aclark4life/django-mongodb-backend"
+
+[[tool.django_mongodb_cli.origin.django-mongodb-backend]]
+user = "mongodb"
+repo = "git+ssh://git@github.com/mongodb/django-mongodb-backend"
+
+[tool.django_mongodb_cli.evergreen.django-mongodb-backend]
+project_name = "django-mongodb"

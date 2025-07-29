@@ -4,6 +4,7 @@ import os
 import re
 import shutil
 import subprocess
+import tempfile
 
 from git import Repo as GitRepo
 from pathlib import Path
@@ -27,6 +28,8 @@ class Repo:
         self.path = Path(self.config["tool"]["django_mongodb_cli"]["path"])
         self.map = self.get_map()
         self.branch = None
+        self.user = None
+        self.reset = False
 
     def _load_config(self) -> dict:
         return toml.load(self.pyproject_file)
@@ -99,6 +102,98 @@ class Repo:
                 )
             )
 
+    def commit_repo(self, repo_name: str, message: str = "") -> None:
+        """
+        Commit changes to the specified repository with a commit message.
+        If no message is given, open editor for the commit message.
+        """
+        typer.echo(
+            typer.style(
+                f"Committing changes to repository: {repo_name}", fg=typer.colors.CYAN
+            )
+        )
+
+        path = self.get_repo_path(repo_name)
+        if not os.path.exists(path):
+            typer.echo(
+                typer.style(
+                    f"Repository '{repo_name}' not found at path: {path}",
+                    fg=typer.colors.RED,
+                )
+            )
+            return
+
+        if not message.strip():
+            # Open editor
+            editor = os.environ.get("EDITOR", "vi")
+            with tempfile.NamedTemporaryFile(suffix=".tmp") as tf:
+                tf.write(
+                    b"# Enter commit message. Lines starting with '#' will be ignored.\n"
+                )
+                tf.flush()
+                subprocess.call([editor, tf.name])
+                tf.seek(0)
+                # Read and filter lines
+                content = []
+                for line in tf:
+                    # skip comment lines like in git
+                    if not line.decode().startswith("#"):
+                        content.append(line.decode())
+                # Join lines, strip whitespace
+                message = "".join(content).strip()
+            if not message:
+                typer.echo(
+                    typer.style(
+                        "Aborting commit due to empty commit message.",
+                        fg=typer.colors.YELLOW,
+                    )
+                )
+                return
+
+        repo = self.get_repo(path)
+        repo.git.add(A=True)
+        repo.git.commit(m=message)
+
+    def create_pr(self, repo_name: str) -> None:
+        """
+        Create a pull request for the specified repository.
+        """
+        typer.echo(
+            typer.style(
+                f"Creating pull request for repository: {repo_name}",
+                fg=typer.colors.CYAN,
+            )
+        )
+
+        path = self.get_repo_path(repo_name)
+        if not os.path.exists(path):
+            typer.echo(
+                typer.style(
+                    f"Repository '{repo_name}' not found at path: {path}",
+                    fg=typer.colors.RED,
+                )
+            )
+            return
+        repo = self.get_repo(path)
+        try:
+            repo.git.push("origin", repo.active_branch.name)
+            subprocess.run(
+                ["gh", "pr", "create"],
+                check=True,
+                cwd=path,
+            )
+            typer.echo(
+                typer.style(
+                    f"✅ Pull request created for {repo_name}.", fg=typer.colors.GREEN
+                )
+            )
+        except subprocess.CalledProcessError as e:
+            typer.echo(
+                typer.style(
+                    f"❌ Failed to create pull request: {e}", fg=typer.colors.RED
+                )
+            )
+
     def delete_repo(self, repo_name: str) -> None:
         """
         Delete the specified repository.
@@ -131,6 +226,36 @@ class Repo:
                 )
             )
 
+    def get_repo_log(self, repo_name: str) -> None:
+        """
+        Get the commit log for the specified repository.
+        """
+        typer.echo(
+            typer.style(
+                f"Getting commit log for repository: {repo_name}", fg=typer.colors.CYAN
+            )
+        )
+
+        path = self.get_repo_path(repo_name)
+        if not os.path.exists(path):
+            typer.echo(
+                typer.style(
+                    f"Repository '{repo_name}' not found at path: {path}",
+                    fg=typer.colors.RED,
+                )
+            )
+            return
+
+        repo = self.get_repo(path)
+        log_entries = repo.git.log(
+            "--pretty=format:%h - %an, %ar : %s",
+            "--abbrev-commit",
+            "--date=relative",
+            "--graph",
+        ).splitlines()
+        for entry in log_entries:
+            typer.echo(f"  - {entry}")
+
     def get_map(self) -> dict:
         """
         Return a dict mapping repo_name to repo_url from repos in
@@ -147,11 +272,6 @@ class Repo:
         Get a list of both local and remote branches for the specified repository.
         Optionally, if self.branch is set, switch to it (existing) or create new (checkout -b).
         """
-        typer.echo(
-            typer.style(
-                f"Getting branches for repository: {repo_name}", fg=typer.colors.CYAN
-            )
-        )
 
         path = self.get_repo_path(repo_name)
         if not os.path.exists(path):
@@ -175,35 +295,23 @@ class Repo:
             if ref.name != "origin/HEAD"
         ]
 
-        # Merge, deduplicate, and sort
-        all_branches = sorted(set(local_branches + remote_branches))
+        if self.branch:
+            typer.echo(
+                typer.style(f"Checking out branch: {self.branch}", fg=typer.colors.CYAN)
+            )
+            repo.git.checkout(self.branch)
+            return
 
         typer.echo(
             typer.style(
-                f"Branches in {repo_name}: {', '.join(all_branches)}",
-                fg=typer.colors.GREEN,
+                f"Getting branches for repository: {repo_name}", fg=typer.colors.CYAN
             )
         )
 
-        if getattr(self, "branch", None):
-            if self.branch in local_branches:
-                typer.echo(
-                    typer.style(
-                        f"Checking out existing branch '{self.branch}'",
-                        fg=typer.colors.YELLOW,
-                    )
-                )
-                repo.git.checkout(self.branch)
-            else:
-                typer.echo(
-                    typer.style(
-                        f"Branch '{self.branch}' does not exist. Creating and checking out new branch.",
-                        fg=typer.colors.YELLOW,
-                    )
-                )
-                repo.git.checkout("-b", self.branch)
-
-        return all_branches
+        # Merge, deduplicate, and sort
+        all_branches = sorted(set(local_branches + remote_branches))
+        for name in sorted(all_branches):
+            typer.echo(f"  - {name}")
 
     def get_repo_origin(self, repo_name: str) -> str:
         """
@@ -227,11 +335,20 @@ class Repo:
 
         repo = self.get_repo(path)
         origin_url = repo.remotes.origin.url
-        typer.echo(
-            typer.style(
-                f"Origin URL for {repo_name}: {origin_url}", fg=typer.colors.GREEN
-            )
+        origin_users = (
+            self.config.get("tool").get("django_mongodb_cli").get("origin", [])
         )
+        if repo_name in origin_users and self.user:
+            for user in origin_users[repo_name]:
+                if user.get("user") == self.user:
+                    origin_url = user.get("repo")
+                    origin = repo.remotes.origin
+                    origin.set_url(origin_url)
+            typer.echo(
+                typer.style(
+                    f"Origin URL for {repo_name}: {origin_url}", fg=typer.colors.GREEN
+                )
+            )
         return origin_url
 
     def get_repo_path(self, name: str) -> Path:
@@ -244,6 +361,27 @@ class Repo:
         """
         Get the status of a repository.
         """
+        if self.reset:
+            typer.echo(
+                typer.style(f"Resetting repository: {repo_name}", fg=typer.colors.CYAN)
+            )
+            path = self.get_repo_path(repo_name)
+            if not os.path.exists(path):
+                typer.echo(
+                    typer.style(
+                        f"Repository '{repo_name}' not found at path: {path}",
+                        fg=typer.colors.RED,
+                    )
+                )
+                return
+            repo = self.get_repo(path)
+            repo.git.reset("--hard")
+            typer.echo(
+                typer.style(
+                    f"✅ Repository {repo_name} has been reset.", fg=typer.colors.GREEN
+                )
+            )
+            return
         typer.echo(
             typer.style(
                 f"Getting status for repository: {repo_name}", fg=typer.colors.CYAN
@@ -268,6 +406,8 @@ class Repo:
         typer.echo(
             typer.style(f"On branch: {repo.active_branch}", fg=typer.colors.CYAN)
         )
+        self.get_repo_origin(repo_name)
+
         unstaged = repo.index.diff(None)
         if unstaged:
             typer.echo(
@@ -294,6 +434,13 @@ class Repo:
                     "\nNothing to commit, working tree clean.", fg=typer.colors.GREEN
                 )
             )
+        # Diff the working tree
+        working_tree_diff = repo.git.diff()
+        if working_tree_diff:
+            typer.echo(
+                typer.style("\nWorking tree differences:", fg=typer.colors.YELLOW)
+            )
+            typer.echo(working_tree_diff)
 
     def list_repos(self) -> None:
         """
@@ -330,7 +477,7 @@ class Repo:
         if in_both:
             typer.echo(
                 typer.style(
-                    "Repositories in both self.map and filesystem:",
+                    "Repositories in pyproject.toml and on filesystem:",
                     fg=typer.colors.GREEN,
                 )
             )
@@ -339,20 +486,59 @@ class Repo:
 
         if only_in_map:
             typer.echo(
-                typer.style("Repositories only in self.map:", fg=typer.colors.YELLOW)
+                typer.style(
+                    "Repositories only in pyproject.toml:", fg=typer.colors.YELLOW
+                )
             )
             for name in sorted(only_in_map):
                 typer.echo(f"  - {name}")
 
         if only_in_fs:
             typer.echo(
-                typer.style("Repositories only in filesystem:", fg=typer.colors.MAGENTA)
+                typer.style("Repositories only on filesystem:", fg=typer.colors.MAGENTA)
             )
             for name in sorted(only_in_fs):
                 typer.echo(f"  - {name}")
 
         if not (in_both or only_in_map or only_in_fs):
             typer.echo("No repositories found.")
+
+    def open_repo(self, repo_name: str) -> None:
+        """
+        Open the specified repository with `gh browse` command.
+        """
+        typer.echo(
+            typer.style(f"Opening repository: {repo_name}", fg=typer.colors.CYAN)
+        )
+
+        path = self.get_repo_path(repo_name)
+        if not os.path.exists(path):
+            typer.echo(
+                typer.style(
+                    f"Repository '{repo_name}' not found at path: {path}",
+                    fg=typer.colors.RED,
+                )
+            )
+            return
+        try:
+            subprocess.run(
+                ["gh", "browse"],
+                check=True,
+                cwd=path,
+            )
+            typer.echo(
+                typer.style(
+                    f"✅ Successfully opened {repo_name} in browser.",
+                    fg=typer.colors.GREEN,
+                )
+            )
+        except subprocess.CalledProcessError as e:
+            typer.echo(
+                typer.style(
+                    f"❌ Failed to open {repo_name} in browser: {e}",
+                    fg=typer.colors.RED,
+                )
+            )
 
     def run_tests(self, repo_name: str) -> None:
         """
@@ -385,9 +571,20 @@ class Repo:
     def set_branch(self, branch: str) -> None:
         self.branch = branch
 
+    def set_reset(self, reset: bool) -> None:
+        self.reset = reset
+
+    def set_user(self, user: str) -> None:
+        """
+        Set the user for the repository operations.
+        This can be used to specify which user to use for operations like cloning.
+        """
+        self.user = user
+        typer.echo(typer.style(f"User set to: {self.user}", fg=typer.colors.CYAN))
+
     def sync_repo(self, repo_name: str) -> None:
         """
-        Synchronize the repository by pulling the latest changes.
+        Synchronize the repository by pulling the latest changes and then pushing local changes.
         """
         typer.echo(typer.style("Synchronizing repository...", fg=typer.colors.CYAN))
         path = self.get_repo_path(repo_name)
@@ -409,7 +606,29 @@ class Repo:
             repo.remotes.origin.pull()
             typer.echo(
                 typer.style(
-                    f"✅ Successfully synchronized {repo_name}.", fg=typer.colors.GREEN
+                    f"✅ Successfully pulled latest changes for {repo_name}.",
+                    fg=typer.colors.GREEN,
+                )
+            )
+            # Identify current branch
+            current_branch = repo.active_branch.name
+            typer.echo(
+                typer.style(
+                    f"Pushing local changes to origin/{current_branch}...",
+                    fg=typer.colors.CYAN,
+                )
+            )
+            repo.remotes.origin.push(refspec=current_branch)
+            typer.echo(
+                typer.style(
+                    f"✅ Successfully pushed to origin/{current_branch}.",
+                    fg=typer.colors.GREEN,
+                )
+            )
+            typer.echo(
+                typer.style(
+                    f"✅ Repository {repo_name} is synchronized (pull & push complete).",
+                    fg=typer.colors.GREEN,
                 )
             )
         except Exception as e:
@@ -571,6 +790,28 @@ class Test(Repo):
                 )
             )
 
+    def patch_repo(self, repo_name: str) -> None:
+        """
+        Run evergreen patching operations on the specified repository.
+        """
+        typer.echo(
+            typer.style(
+                f"Running `evergreen patch` for: {repo_name}", fg=typer.colors.CYAN
+            )
+        )
+        project_name = (
+            self.config.get("tool", {})
+            .get("django_mongodb_cli", {})
+            .get("evergreen", {})
+            .get(repo_name)
+            .get("project_name")
+        )
+        subprocess.run(
+            ["evergreen", "patch", "-p", project_name, "-u", "--finalize"],
+            check=True,
+            cwd=self.get_repo_path(repo_name),
+        )
+
     def run_tests(self, repo_name: str) -> None:
         self.test_settings = (
             self.config.get("tool", {})
@@ -597,21 +838,30 @@ class Test(Repo):
         self.copy_apps(repo_name)
         self.copy_migrations(repo_name)
         self.copy_settings(repo_name)
+
+        test_command_name = self.test_settings.get("test_command")
+        test_command = [test_command_name] if test_command_name else ["pytest"]
         test_options = self.test_settings.get("test_options")
-        test_command = [self.test_settings.get("test_command")]
-        settings_module = (
+        test_settings_module = (
             self.test_settings.get("settings", {}).get("module", {}).get("test")
         )
+
+        if test_command_name == "./runtests.py":
+            test_command.extend(["--settings", test_settings_module])
         if test_options:
             test_command.extend(test_options)
-        if settings_module and test_command == "./runtests.py":
-            test_command.extend(["--settings", settings_module])
         if self.keep_db:
             test_command.extend("--keepdb")
         if self.keyword:
             test_command.extend(["-k", self.keyword])
         if self.modules:
             test_command.extend(self.modules)
+        typer.echo(
+            typer.style(
+                f"Running tests with command: {' '.join(test_command)}",
+                fg=typer.colors.CYAN,
+            )
+        )
         subprocess.run(
             test_command,
             cwd=test_dir,

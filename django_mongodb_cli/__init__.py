@@ -14,7 +14,6 @@ System executable:
 
 dm = typer.Typer(
     help=help_text,
-    add_completion=False,
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 

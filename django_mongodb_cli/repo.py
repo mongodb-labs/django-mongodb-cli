@@ -48,14 +48,20 @@ def status(
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Show status of all repos"
     ),
+    reset: bool = typer.Option(
+        False, "--reset", "-r", help="Reset the status of the repository"
+    ),
 ):
+    repo = Repo()
+    if reset:
+        repo.set_reset(reset)
     repo_command(
         all_repos,
         repo_name,
         all_msg="Showing status for all repositories...",
         missing_msg="Please specify a repository name or use --all-repos to show all repositories.",
-        single_func=lambda name: Repo().get_repo_status(name),
-        all_func=lambda name: Repo().get_repo_status(name),
+        single_func=lambda name: repo.get_repo_status(name),
+        all_func=lambda name: repo.get_repo_status(name),
     )
 
 
@@ -107,6 +113,30 @@ def clone(
 
 
 @repo.command()
+def commit(
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(
+        False, "--all-repos", "-a", help="Commit all repositories"
+    ),
+    message: str = typer.Argument(None, help="Commit message"),
+):
+    def do_commit(name):
+        if not message:
+            typer.echo(typer.style("Commit message is required.", fg=typer.colors.RED))
+            raise typer.Exit(1)
+        Repo().commit_repo(name, message)
+
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Committing all repositories...",
+        missing_msg="Please specify a repository name or use --all-repos to commit all repositories.",
+        single_func=do_commit,
+        all_func=do_commit,
+    )
+
+
+@repo.command()
 def delete(
     repo_name: str = typer.Argument(None),
     all_repos: bool = typer.Option(
@@ -150,19 +180,74 @@ def install(
 
 
 @repo.command()
-def origin(
+def log(
     repo_name: str = typer.Argument(None),
     all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Show origin of all repositories"
+        False, "--all-repos", "-a", help="Show logs of all repositories"
     ),
 ):
     repo_command(
         all_repos,
         repo_name,
+        all_msg="Showing logs for all repositories...",
+        missing_msg="Please specify a repository name or use --all-repos to show logs of all repositories.",
+        single_func=lambda name: Repo().get_repo_log(repo_name),
+        all_func=lambda name: Repo().get_repo_log(repo_name),
+    )
+
+
+@repo.command()
+def open(
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(
+        False, "--all-repos", "-a", help="Open all repositories"
+    ),
+):
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Opening all repositories...",
+        missing_msg="Please specify a repository name or use --all-repos to open all repositories.",
+        single_func=lambda name: Repo().open_repo(repo_name),
+        all_func=lambda name: Repo().open_repo(repo_name),
+    )
+
+
+@repo.command()
+def origin(
+    repo_name: str = typer.Argument(None),
+    repo_user: str = typer.Argument(None),
+    all_repos: bool = typer.Option(
+        False, "--all-repos", "-a", help="Show origin of all repositories"
+    ),
+):
+    repo = Repo()
+    if repo_user:
+        repo.set_user(repo_user)
+    repo_command(
+        all_repos,
+        repo_name,
         all_msg="Showing origin for all repositories...",
         missing_msg="Please specify a repository name or use --all-repos to show origins of all repositories.",
-        single_func=lambda name: Repo().get_repo_origin(name),
-        all_func=lambda name: Repo().get_repo_origin(name),
+        single_func=lambda name: repo.get_repo_origin(name),
+        all_func=lambda name: repo.get_repo_origin(name),
+    )
+
+
+@repo.command()
+def pr(
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(
+        False, "--all-repos", "-a", help="Create pull requests for all repositories"
+    ),
+):
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Creating pull requests for all repositories...",
+        missing_msg="Please specify a repository name or use --all-repos to create pull requests for all repositories.",
+        single_func=lambda name: Repo().create_pr(repo_name),
+        all_func=lambda name: Repo().create_pr(repo_name),
     )
 
 
@@ -180,6 +265,20 @@ def sync(
         missing_msg="Please specify a repository name or use --all-repos to sync all repositories.",
         single_func=lambda name: Repo().sync_repo(name),
         all_func=lambda name: Repo().sync_repo(name),
+    )
+
+
+@repo.command()
+def patch(
+    repo_name: str = typer.Argument(None),
+):
+    repo_command(
+        False,
+        repo_name,
+        all_msg="Running evergreen...",
+        missing_msg="Please specify a repository name.",
+        single_func=lambda name: Test().patch_repo(name),
+        all_func=lambda name: Test().patch_repo(name),
     )
 
 

@@ -1,4 +1,5 @@
 import typer
+import os
 
 from .utils import Package, Repo, Test
 
@@ -43,47 +44,41 @@ def main(
 
 
 @repo.command()
-def status(
-    repo_name: str = typer.Argument(None),
-    all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Show status of all repos"
-    ),
-    reset: bool = typer.Option(
-        False, "--reset", "-r", help="Reset the status of the repository"
-    ),
-):
-    repo = Repo()
-    if reset:
-        repo.set_reset(reset)
-    repo_command(
-        all_repos,
-        repo_name,
-        all_msg="Showing status for all repositories...",
-        missing_msg="Please specify a repository name or use --all-repos to show all repositories.",
-        single_func=lambda name: repo.get_repo_status(name),
-        all_func=lambda name: repo.get_repo_status(name),
-    )
-
-
-@repo.command()
 def branch(
     repo_name: str = typer.Argument(None),
     branch_name: str = typer.Argument(None),
+    list_branches: bool = typer.Option(
+        False, "--list-branches", "-l", help="List branches of the repository"
+    ),
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Show branches of all repositories"
     ),
 ):
+    """
+    Checkout or create a branch in a repository.
+    If branch_name is provided, switch to that branch or create it if it doesn't exist.
+    If --all-repos is used, show branches for all repositories.
+    """
     repo = Repo()
     if branch_name:
         repo.set_branch(branch_name)
+
+    # else:
+    #     typer.echo(
+    #         typer.style(
+    #             "Create or set branch cannot be used with --all-repos.",
+    #             fg=typer.colors.RED,
+    #         )
+    #     )
+    #     return
 
     repo_command(
         all_repos,
         repo_name,
         all_msg="Showing branches for all repositories...",
         missing_msg="Please specify a repository name or use --all-repos to show branches of all repositories.",
-        single_func=lambda name: repo.get_repo_branches(name),
-        all_func=lambda name: repo.get_repo_branches(name),
+        single_func=lambda repo_name: repo.get_repo_branch(repo_name),
+        all_func=lambda repo_name: repo.get_repo_branch(repo_name),
     )
 
 
@@ -97,6 +92,12 @@ def clone(
         False, "--install", "-i", help="Install after cloning"
     ),
 ):
+    """
+    Clone a repository.
+    If --all-repos is used, clone all repositories.
+    If --install is used, install the package after cloning.
+    """
+
     def clone_repo(name):
         Repo().clone_repo(name)
         if install:
@@ -120,17 +121,23 @@ def commit(
     ),
     message: str = typer.Argument(None, help="Commit message"),
 ):
+    """
+    Commit changes in a repository with message provided or prompt for message.
+    """
+
+    if all_repos:
+        typer.echo(
+            typer.style("Commit cannot be used with --all-repos.", fg=typer.colors.RED)
+        )
+
     def do_commit(name):
-        if not message:
-            typer.echo(typer.style("Commit message is required.", fg=typer.colors.RED))
-            raise typer.Exit(1)
         Repo().commit_repo(name, message)
 
     repo_command(
         all_repos,
         repo_name,
         all_msg="Committing all repositories...",
-        missing_msg="Please specify a repository name or use --all-repos to commit all repositories.",
+        missing_msg="Please specify a repository name.",
         single_func=do_commit,
         all_func=do_commit,
     )
@@ -146,6 +153,12 @@ def delete(
         False, "--uninstall", "-u", help="Uninstall after deleting"
     ),
 ):
+    """
+    Delete the specified repository.
+    If --all-repos is used, delete all repositories.
+    If --uninstall is used, uninstall the package before deleting.
+    """
+
     def do_delete(name):
         if uninstall:
             Package().uninstall_package(name)
@@ -169,13 +182,17 @@ def install(
         False, "--all-repos", "-a", help="Install all repositories"
     ),
 ):
+    """
+    Install Python package found in the specified repository.
+    If --all-repos is used, install packages for all repositories.
+    """
     repo_command(
         all_repos,
         repo_name,
         all_msg="Installing all repositories...",
         missing_msg="Please specify a repository name or use --all-repos to install all repositories.",
-        single_func=lambda name: Package().install_package(name),
-        all_func=lambda name: Package().install_package(name),
+        single_func=lambda repo_name: Package().install_package(repo_name),
+        all_func=lambda repo_name: Package().install_package(repo_name),
     )
 
 
@@ -186,13 +203,17 @@ def log(
         False, "--all-repos", "-a", help="Show logs of all repositories"
     ),
 ):
+    """
+    Show logs for the specified repository.
+    If --all-repos is used, show logs for all repositories.
+    """
     repo_command(
         all_repos,
         repo_name,
         all_msg="Showing logs for all repositories...",
         missing_msg="Please specify a repository name or use --all-repos to show logs of all repositories.",
-        single_func=lambda name: Repo().get_repo_log(repo_name),
-        all_func=lambda name: Repo().get_repo_log(repo_name),
+        single_func=lambda repo_name: Repo().get_repo_log(repo_name),
+        all_func=lambda repo_name: Repo().get_repo_log(repo_name),
     )
 
 
@@ -203,13 +224,17 @@ def open(
         False, "--all-repos", "-a", help="Open all repositories"
     ),
 ):
+    """
+    Open the specified repository in the default web browser.
+    If --all-repos is used, open all repositories.
+    """
     repo_command(
         all_repos,
         repo_name,
         all_msg="Opening all repositories...",
         missing_msg="Please specify a repository name or use --all-repos to open all repositories.",
-        single_func=lambda name: Repo().open_repo(repo_name),
-        all_func=lambda name: Repo().open_repo(repo_name),
+        single_func=lambda repo_name: Repo().open_repo(repo_name),
+        all_func=lambda repo_name: Repo().open_repo(repo_name),
     )
 
 
@@ -221,16 +246,45 @@ def origin(
         False, "--all-repos", "-a", help="Show origin of all repositories"
     ),
 ):
+    """
+    Show or set the origin of a repository.
+    """
     repo = Repo()
+    if repo_user and all_repos:
+        typer.echo(
+            typer.style(
+                "Set origin cannot be used with --all-repos.",
+                fg=typer.colors.RED,
+            )
+        )
+        return
     if repo_user:
         repo.set_user(repo_user)
+
     repo_command(
         all_repos,
         repo_name,
         all_msg="Showing origin for all repositories...",
         missing_msg="Please specify a repository name or use --all-repos to show origins of all repositories.",
         single_func=lambda name: repo.get_repo_origin(name),
-        all_func=lambda name: repo.get_repo_origin(name),
+        all_func=lambda repo_name: repo.get_repo_origin(repo_name),
+    )
+
+
+@repo.command()
+def patch(
+    repo_name: str = typer.Argument(None),
+):
+    """
+    Create an evergreen patch for the specified repository.
+    """
+    repo_command(
+        False,
+        repo_name,
+        all_msg="Running evergreen...",
+        missing_msg="Please specify a repository name.",
+        single_func=lambda repo_name: Test().patch_repo(repo_name),
+        all_func=lambda repo_name: Test().patch_repo(repo_name),
     )
 
 
@@ -241,13 +295,63 @@ def pr(
         False, "--all-repos", "-a", help="Create pull requests for all repositories"
     ),
 ):
+    """
+    Create a pull request for the specified repository.
+    """
     repo_command(
         all_repos,
         repo_name,
         all_msg="Creating pull requests for all repositories...",
         missing_msg="Please specify a repository name or use --all-repos to create pull requests for all repositories.",
-        single_func=lambda name: Repo().create_pr(repo_name),
-        all_func=lambda name: Repo().create_pr(repo_name),
+        single_func=lambda repo_name: Repo().create_pr(repo_name),
+        all_func=lambda repo_name: Repo().create_pr(repo_name),
+    )
+
+
+@repo.command()
+def reset(
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(
+        False, "--all-repos", "-a", help="Reset all repositories"
+    ),
+):
+    """
+    Reset a repository to its initial state.
+    If --all-repos is used, reset all repositories.
+    """
+
+    def reset_repo(name):
+        Repo().reset_repo(name)
+
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Resetting all repositories...",
+        missing_msg="Please specify a repository name or use --all-repos to reset all repositories.",
+        single_func=reset_repo,
+        all_func=reset_repo,
+    )
+
+
+@repo.command()
+def status(
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(
+        False, "--all-repos", "-a", help="Show status of all repos"
+    ),
+):
+    """
+    Show the status of a repository.
+    If --all-repos is used, show the status for all repositories.
+    """
+    repo = Repo()
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Showing status for all repositories...",
+        missing_msg="Please specify a repository name or use --all-repos to show all repositories.",
+        single_func=lambda repo_name: repo.get_repo_status(repo_name),
+        all_func=lambda repo_name: repo.get_repo_status(repo_name),
     )
 
 
@@ -258,27 +362,27 @@ def sync(
         False, "--all-repos", "-a", help="Sync all repositories"
     ),
 ):
+    """
+    Sync a repository with its remote counterpart.
+    If --all-repos is used, sync all repositories.
+    """
+    repo = Repo()
+    if not repo.map:
+        typer.echo(
+            typer.style(
+                f"No repositories found in {os.path.join(os.getcwd(), repo.pyproject_file)}.",
+                fg=typer.colors.RED,
+            )
+        )
+        raise typer.Exit()
+
     repo_command(
         all_repos,
         repo_name,
         all_msg="Syncing all repositories...",
         missing_msg="Please specify a repository name or use --all-repos to sync all repositories.",
-        single_func=lambda name: Repo().sync_repo(name),
-        all_func=lambda name: Repo().sync_repo(name),
-    )
-
-
-@repo.command()
-def patch(
-    repo_name: str = typer.Argument(None),
-):
-    repo_command(
-        False,
-        repo_name,
-        all_msg="Running evergreen...",
-        missing_msg="Please specify a repository name.",
-        single_func=lambda name: Test().patch_repo(name),
-        all_func=lambda name: Test().patch_repo(name),
+        single_func=lambda repo_name: repo.sync_repo(repo_name),
+        all_func=lambda repo_name: repo.sync_repo(repo_name),
     )
 
 
@@ -286,14 +390,14 @@ def patch(
 def test(
     repo_name: str = typer.Argument(None),
     modules: list[str] = typer.Argument(None),
-    all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Run tests for all repositories"
-    ),
     keep_db: bool = typer.Option(
         False, "--keepdb", help="Keep the database after tests"
     ),
     keyword: str = typer.Option(
         None, "--keyword", "-k", help="Run tests with the specified keyword"
+    ),
+    list_tests: bool = typer.Option(
+        False, "--list-tests", "-l", help="List tests instead of running them"
     ),
     setenv: bool = typer.Option(
         False,
@@ -302,6 +406,13 @@ def test(
         help="Set DJANGO_SETTINGS_MODULE environment variable",
     ),
 ):
+    """
+    Run tests for a repository.
+    If --modules is provided, run tests for the specified modules.
+    If --keepdb is used, keep the database after tests.
+    If --keyword is provided, run tests with the specified keyword.
+    If --setenv is used, set the DJANGO_SETTINGS_MODULE environment variable.
+    """
     test_runner = Test()
     if modules:
         test_runner.set_modules(modules)
@@ -311,13 +422,15 @@ def test(
         test_runner.set_keyword(keyword)
     if setenv:
         test_runner.set_env(setenv)
+    if list_tests:
+        test_runner.set_list_tests(list_tests)
 
     repo_command(
-        all_repos,
+        False,
         repo_name,
-        all_msg="Running tests for all repositories...",
-        missing_msg="Please specify a repository name or use --all-repos to run tests for all repositories.",
-        single_func=lambda name: test_runner.run_tests(name),
-        all_func=lambda name: test_runner.run_tests(name),
-        repo_list=test_runner.map,  # Use Test().map instead of Repo().map
+        all_msg=None,
+        missing_msg="Please specify a repository name.",
+        single_func=lambda repo_name: test_runner.run_tests(repo_name),
+        repo_list=test_runner.map,
+        all_func=None,
     )

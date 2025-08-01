@@ -2,34 +2,44 @@
 name = "django-mongodb-cli"
 version = "0.1.0"
 dependencies = [
-    "GitPython",  # For git integration
-    "Sphinx",  # For django-mongodb-backend documentation
-    "black",
-    "django-extensions",  # <3 django-extensions
+    # --- allauth ---
+    "django-ninja",
+    "fido2",
+    "psycopg2",
+    "python3-openid",
+    "python3-saml",
+    "pyjwt[crypto]",
+    "requests-oauthlib",
+
+    # --- DRF ---
+    "pytest-django",
+    "setuptools",
+
+    # --- debug toolbar ---
     "django-debug-toolbar",
-    "django-ninja",  # For django-allauth
-    "dj-database-url",  # For startproject and testing with postgres
-    "fido2",  # For django-allauth
-    "html5lib",  # Required by django-debug-toolbar
-    "psycopg2",  # For django-allauth
-    "python3-openid",  # For django-allauth
-    "python3-saml",  # For django-allauth
-    "pyjwt[crypto]",  # For django-allauth
-    "pymongocrypt",  # For django-mongodb-backend QE
-    "pymongo-auth-aws",  # For django-mongodb-backend QE
+    "html5lib",
+    "pytest-django",
+
+    # --- filter ---
+    "pytz",
+
+    # --- everything else ---
+    "GitPython",
+    "Sphinx",
+    "black",
+    "django-extensions",
+    "dj-database-url",
+    "pymongocrypt",
+    "pymongo-auth-aws",
     "pytest",
     "pytest-html",
-    "pytest-django",  # For django-rest-framework and django-debug-toolbar
-    "python-webpack-boilerplate",  # For startproject
-    "pytz",  # For django-filter
-    "requests-oauthlib",  # For django-allauth
+    "python-webpack-boilerplate",
     "rich",
-    "setuptools",  # For django-rest-framework
-    "sphinx-autobuild",  # For django-mongodb-backend documentation
-    "sphinx-copybutton",  # For django-mongodb-backend documentation
+    "sphinx-autobuild",
+    "sphinx-copybutton",
     "toml",
     "typer",
-    "wagtail",  # For django-mongodb-templates
+    "wagtail",
 ]
 
 [project.scripts]
@@ -38,42 +48,49 @@ dm = "django_mongodb_cli:dm"
 [tool.setuptools]
 packages = ["django_mongodb_cli"]
 
-[tool.django_mongodb_cli]
+[tool.django-mongodb-cli]
 repos = [
-    "django @ git+ssh://git@github.com/mongodb-forks/django@mongodb-5.2.x",
+    # 1. Third-Party Libs
     "django-allauth @ git+ssh://git@github.com/pennersr/django-allauth@main",
-    "django-debug-toolbar @ git+ssh://git@github.com/django-commons/django-debug-toolbar@main",
+    "xmlsec @ git+ssh://git@github.com/xmlsec/python-xmlsec@main",
+    "django-rest-framework @ git+ssh://git@github.com/encode/django-rest-framework@main",
     "django-filter @ git+ssh://git@github.com/carltongibson/django-filter@main",
+    "django-debug-toolbar @ git+ssh://git@github.com/django-commons/django-debug-toolbar@main",
+    "wagtail @ git+ssh://git@github.com/mongodb-forks/wagtail@main",
+    "wagtail-mongodb-project @ git+ssh://git@github.com/mongodb-labs/wagtail-mongodb-project@main",
+
+    # 2. Django MongoDB Backend
+    "django @ git+ssh://git@github.com/mongodb-forks/django@mongodb-5.2.x",
     "django-mongodb-app @ git+ssh://git@github.com/mongodb-labs/django-mongodb-app@5.2.x",
     "django-mongodb-backend @ git+ssh://git@github.com/mongodb/django-mongodb-backend@main",
     "django-mongodb-extensions @ git+ssh://git@github.com/mongodb-labs/django-mongodb-extensions@main",
     "django-mongodb-project @ git+ssh://git@github.com/mongodb-labs/django-mongodb-project@5.2.x",
     "django-mongodb-project-benchmark @ git+ssh://git@github.com/NoahStapp/django-mongodb-backend-benchmark.git@main",
-    "django-rest-framework @ git+ssh://git@github.com/encode/django-rest-framework@main",
+    "mongo-python-driver @ git+ssh://git@github.com/mongodb/mongo-python-driver@master",
+
+    # 3. QE
+    "pymongo-auth-aws @ git+ssh://git@github.com/mongodb/pymongo-auth-aws@master",
+    "libmongocrypt @ git+ssh://git@github.com/mongodb-labs/libmongocrypt@master",
+
+    # 4. MongoDB
     "drivers-evergreen-tools @ git+ssh://git@github.com/mongodb-labs/drivers-evergreen-tools@master",
     "docs @ git+ssh://git@github.com/mongodb/docs@main",
     "flask-pymongo @ git+ssh://git@github.com/mongodb-labs/flask-pymongo",
     "langchain-mongodb @ git+ssh://git@github.com/langchain-ai/langchain-mongodb@main",
-    "libmongocrypt @ git+ssh://git@github.com/mongodb-labs/libmongocrypt@master",
     "mongo-arrow @ git+ssh://git@github.com/mongodb-labs/mongo-arrow@main",
     "mongo-orchestration @ git+ssh://git@github.com/mongodb-labs/mongo-orchestration@master",
-    "mongo-python-driver @ git+ssh://git@github.com/mongodb/mongo-python-driver@master",
-    "pymongo-auth-aws @ git+ssh://git@github.com/mongodb/pymongo-auth-aws@master",
     "specifications @ git+ssh://git@github.com/mongodb/specifications@master",
-    "wagtail @ git+ssh://git@github.com/mongodb-forks/wagtail@main",
-    "wagtail-mongodb-project @ git+ssh://git@github.com/mongodb-labs/wagtail-mongodb-project@main",
     "winkerberos @ git+ssh://git@github.com/mongodb-labs/winkerberos@main",
-    "xmlsec @ git+ssh://git@github.com/xmlsec/python-xmlsec@main",
 ]
 path = "src"
 
-[tool.django_mongodb_cli.test.mongo-python-driver]
+[tool.django-mongodb-cli.test.mongo-python-driver]
 test_command = "just"
 test_dir = "src/mongo-python-driver/test"
 clone_dir = "src/mongo-python-driver"
 test_dirs = ["src/mongo-python-driver/test"]
 
-[tool.django_mongodb_cli.test.django]
+[tool.django-mongodb-cli.test.django]
 test_command = "./runtests.py"
 test_options = [
     "--parallel",
@@ -87,75 +104,75 @@ test_dir = "src/django/tests"
 clone_dir = "src/django"
 test_dirs = [ "src/django/tests", "src/django-mongodb-backend/tests" ]
 
-[tool.django_mongodb_cli.test.django.migrations_dir]
+[tool.django-mongodb-cli.test.django.migrations_dir]
 source = "mongo_migrations"
 target = "src/django/tests/mongo_migrations"
 
-[tool.django_mongodb_cli.test.django.settings.test]
+[tool.django-mongodb-cli.test.django.settings.test]
 source = "test/settings/django.py"
 target = "src/django/tests/mongo_settings.py"
 
-[tool.django_mongodb_cli.test.django.settings.migrations]
+[tool.django-mongodb-cli.test.django.settings.migrations]
 source = "test/settings/django_migrations.py"
 target = "src/django/tests/mongo_settings.py"
 
-[tool.django_mongodb_cli.test.django.settings.module]
+[tool.django-mongodb-cli.test.django.settings.module]
 test = "mongo_settings"
 migrations = "mongo_settings"
 
-[tool.django_mongodb_cli.test.django-filter]
+[tool.django-mongodb-cli.test.django-filter]
 test_command = "./runtests.py"
 test_dir = "src/django-filter"
 clone_dir = "src/django-filter"
 test_dirs = ["src/django-filter/tests"]
 
-[tool.django_mongodb_cli.test.django-filter.apps_file]
+[tool.django-mongodb-cli.test.django-filter.apps_file]
 source = "test/apps/django_filter.py"
 target = "src/django-filter/tests/mongo_apps.py"
 
-[tool.django_mongodb_cli.test.django-filter.migrations_dir]
+[tool.django-mongodb-cli.test.django-filter.migrations_dir]
 source = "mongo_migrations"
 target = "src/django-filter/tests/mongo_migrations"
 
-[tool.django_mongodb_cli.test.django-filter.settings.test]
+[tool.django-mongodb-cli.test.django-filter.settings.test]
 source = "test/settings/django_filter.py"
 target = "src/django-filter/tests/settings.py"
 
-[tool.django_mongodb_cli.test.django-filter.settings.migrations]
+[tool.django-mongodb-cli.test.django-filter.settings.migrations]
 source = "test/settings/django_filter.py"
 target = "src/django-filter/tests/settings.py"
 
-[tool.django_mongodb_cli.test.django-filter.settings.module]
+[tool.django-mongodb-cli.test.django-filter.settings.module]
 test = "tests.settings"
 migrations = "tests.settings"
 
-[tool.django_mongodb_cli.test.django-rest-framework]
+[tool.django-mongodb-cli.test.django-rest-framework]
 test_command = "./runtests.py"
 test_dir = "src/django-rest-framework"
 clone_dir = "src/django-rest-framework"
 test_dirs = ["src/django-rest-framework/tests"]
 
-[tool.django_mongodb_cli.test.django-rest-framework.apps_file]
+[tool.django-mongodb-cli.test.django-rest-framework.apps_file]
 source = "test/apps/rest_framework.py"
 target = "src/django-rest-framework/tests/mongo_apps.py"
 
-[tool.django_mongodb_cli.test.django-rest-framework.migrations_dir]
+[tool.django-mongodb-cli.test.django-rest-framework.migrations_dir]
 source = "mongo_migrations"
 target = "src/django-rest-framework/tests/mongo_migrations"
 
-[tool.django_mongodb_cli.test.django-rest-framework.settings.test]
+[tool.django-mongodb-cli.test.django-rest-framework.settings.test]
 source = "test/settings/rest_framework.py"
 target = "src/django-rest-framework/tests/conftest.py"
 
-[tool.django_mongodb_cli.test.django-rest-framework.settings.migrations]
+[tool.django-mongodb-cli.test.django-rest-framework.settings.migrations]
 source = "test/settings/rest_framework_migrations.py"
 target = "src/django-rest-framework/tests/conftest.py"
 
-[tool.django_mongodb_cli.test.django-rest-framework.settings.module]
+[tool.django-mongodb-cli.test.django-rest-framework.settings.module]
 test = "tests.conftest"
 migrations = "tests.conftest"
 
-[tool.django_mongodb_cli.test.wagtail]
+[tool.django-mongodb-cli.test.wagtail]
 test_command = "./runtests.py"
 test_dir = "src/wagtail"
 clone_dir = "src/wagtail"
@@ -164,71 +181,71 @@ test_dirs = [
   "src/wagtail/wagtail/test"
 ]
 
-[tool.django_mongodb_cli.test.wagtail.apps_file]
+[tool.django-mongodb-cli.test.wagtail.apps_file]
 source = "test/apps/wagtail.py"
 target = "src/wagtail/wagtail/test/mongo_apps.py"
 
-[tool.django_mongodb_cli.test.wagtail.migrations_dir]
+[tool.django-mongodb-cli.test.wagtail.migrations_dir]
 source = "mongo_migrations"
 target = "src/wagtail/wagtail/test/mongo_migrations"
 
-[tool.django_mongodb_cli.test.wagtail.settings.test]
+[tool.django-mongodb-cli.test.wagtail.settings.test]
 source = "test/settings/wagtail.py"
 target = "src/wagtail/wagtail/test/mongo_settings.py"
 
-[tool.django_mongodb_cli.test.wagtail.settings.migrations]
+[tool.django-mongodb-cli.test.wagtail.settings.migrations]
 source = "test/settings/wagtail.py"
 target = "src/wagtail/wagtail/test/mongo_settings.py"
 
-[tool.django_mongodb_cli.test.wagtail.settings.module]
+[tool.django-mongodb-cli.test.wagtail.settings.module]
 test = "wagtail.test.mongo_settings"
 migrations = "wagtail.test.mongo_settings"
 
-[tool.django_mongodb_cli.test.django-debug-toolbar]
+[tool.django-mongodb-cli.test.django-debug-toolbar]
 test_command = "pytest"
 test_dir = "src/django-debug-toolbar"
 clone_dir = "src/django-debug-toolbar"
 test_dirs = ["src/django-debug-toolbar/tests"]
 
-[tool.django_mongodb_cli.test.django-debug-toolbar.apps_file]
+[tool.django-mongodb-cli.test.django-debug-toolbar.apps_file]
 source = "test/apps/debug_toolbar.py"
 target = "src/django-debug-toolbar/debug_toolbar/mongo_apps.py"
 
-[tool.django_mongodb_cli.test.django-debug-toolbar.settings.test]
+[tool.django-mongodb-cli.test.django-debug-toolbar.settings.test]
 source = "test/settings/debug_toolbar.py"
 target = "src/django-debug-toolbar/debug_toolbar/mongo_settings.py"
 
-[tool.django_mongodb_cli.test.django-debug-toolbar.settings.migrations]
+[tool.django-mongodb-cli.test.django-debug-toolbar.settings.migrations]
 source = "test/settings/debug_toolbar.py"
 target = "src/django-debug-toolbar/debug_toolbar/mongo_settings.py"
 
-[tool.django_mongodb_cli.test.django-debug-toolbar.settings.module]
+[tool.django-mongodb-cli.test.django-debug-toolbar.settings.module]
 test = "debug_toolbar.mongo_settings"
 migrations = "debug_toolbar.mongo_settings"
 
-[tool.django_mongodb_cli.test.django-mongodb-extensions]
+[tool.django-mongodb-cli.test.django-mongodb-extensions]
 test_command = "pytest"
 test_dir = "src/django-mongodb-extensions"
 clone_dir = "src/django-mongodb-extensions"
 test_dirs = ["src/django-mongodb-extensions/django_mongodb_extensions/tests"]
 
-[tool.django_mongodb_cli.test.django-mongodb-extensions.apps_file]
+[tool.django-mongodb-cli.test.django-mongodb-extensions.apps_file]
 source = "test/apps/django_mongodb_extensions.py"
 target = "src/django-mongodb-extensions/django_mongodb_extensions/mongo_apps.py"
 
-[tool.django_mongodb_cli.test.django-mongodb-extensions.settings.test]
+[tool.django-mongodb-cli.test.django-mongodb-extensions.settings.test]
 source = "test/settings/django_mongodb_extensions.py"
 target = "src/django-mongodb-extensions/django_mongodb_extensions/mongo_settings.py"
 
-[tool.django_mongodb_cli.test.django-mongodb-extensions.settings.migrations]
+[tool.django-mongodb-cli.test.django-mongodb-extensions.settings.migrations]
 source = "test/extensions/debug_toolbar_settings.py"
 target = "src/django-mongodb-extensions/django_mongodb_extensions/mongo_settings.py"
 
-[tool.django_mongodb_cli.test.django-mongodb-extensions.settings.module]
+[tool.django-mongodb-cli.test.django-mongodb-extensions.settings.module]
 test = "django_mongodb_extensions.mongo_settings"
 migrations = "django_mongodb_extensions.mongo_settings"
 
-[tool.django_mongodb_cli.test.django-allauth]
+[tool.django-mongodb-cli.test.django-allauth]
 test_command = "pytest"
 test_dir = "src/django-allauth"
 clone_dir = "src/django-allauth"
@@ -259,33 +276,34 @@ test_dirs = [
   "src/django-allauth/tests"
 ]
 
-[tool.django_mongodb_cli.test.django-allauth.apps_file]
+[tool.django-mongodb-cli.test.django-allauth.apps_file]
 source = "test/apps/allauth.py"
 target = "src/django-allauth/allauth/mongo_apps.py"
 
-[tool.django_mongodb_cli.test.django-allauth.settings.test]
+[tool.django-mongodb-cli.test.django-allauth.settings.test]
 source = "test/settings/allauth.py"
 target = "src/django-allauth/allauth/mongo_settings.py"
 
-[tool.django_mongodb_cli.test.django-allauth.settings.migrations]
+[tool.django-mongodb-cli.test.django-allauth.settings.migrations]
 source = "test/settings/allauth.py"
 target = "src/django-allauth/allauth/mongo_settings.py"
 
-[tool.django_mongodb_cli.test.django-allauth.settings.module]
+[tool.django-mongodb-cli.test.django-allauth.settings.module]
 test = "allauth.mongo_settings"
 migrations = "allauth.mongo_settings"
 
-[tool.django_mongodb_cli.test.django-allauth.migrations_dir]
+[tool.django-mongodb-cli.test.django-allauth.migrations_dir]
 source = "mongo_migrations"
 target = "src/django-allauth/allauth/mongo_migrations"
 
-[[tool.django_mongodb_cli.origin.django-mongodb-backend]]
+[[tool.django-mongodb-cli.origin.django-mongodb-backend]]
 user = "aclark4life"
 repo = "git+ssh://git@github.com/aclark4life/django-mongodb-backend"
 
-[[tool.django_mongodb_cli.origin.django-mongodb-backend]]
+[[tool.django-mongodb-cli.origin.django-mongodb-backend]]
 user = "mongodb"
 repo = "git+ssh://git@github.com/mongodb/django-mongodb-backend"
 
-[tool.django_mongodb_cli.evergreen.django-mongodb-backend]
+[tool.django-mongodb-cli.evergreen.django-mongodb-backend]
 project_name = "django-mongodb"
+tasks = ["run-tests"]

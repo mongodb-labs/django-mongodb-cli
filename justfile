@@ -11,6 +11,8 @@ git-clone:
     dm repo clone django --install
     dm repo clone django-mongodb-app
     dm repo clone django-mongodb-backend --install
+    dm repo origin django-mongodb-backend aclark4life
+    dm repo sync django-mongodb-backend
     dm repo clone django-mongodb-extensions --install
     dm repo clone django-mongodb-project
     dm repo clone mongo-python-driver --install

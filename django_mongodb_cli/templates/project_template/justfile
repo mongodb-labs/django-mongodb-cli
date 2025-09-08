@@ -1,0 +1,20 @@
+# https://just.systems
+
+default:
+    echo 'Hello, world!'
+
+[group('python')]
+install:
+    python -m pip install --upgrade pip
+    python -m pip install -e .
+alias i := install
+
+[group('django')]
+serve:
+    python manage.py runserver
+alias s := serve
+
+[group('django')]
+migrate:
+    python manage.py migrate
+alias m := migrate

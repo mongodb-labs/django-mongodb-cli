@@ -15,3 +15,10 @@ repos:
     -   id: ruff
         args: [ --fix ]
     -   id: ruff-format
+
+- repo: https://github.com/rtts/djhtml
+  rev: '3.0.7'
+  hooks:
+    - id: djhtml
+      entry: djhtml --tabwidth 2
+      files: ./django_mongodb_cli/templates/project_template/project_name/templates/default_urlconf.html

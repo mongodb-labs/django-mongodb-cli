@@ -53,6 +53,9 @@ class Repo:
     def err(self, text: str) -> None:
         self._msg(text, typer.colors.RED)
 
+    def title(self, text: str) -> None:
+        typer.echo(text)
+
     def run(self, args, cwd: Path | str | None = None, check: bool = True) -> bool:
         try:
             subprocess.run(args, cwd=str(cwd) if cwd else None, check=check)
@@ -135,7 +138,7 @@ class Repo:
         Clone a repository into the specified path.
         If the repository already exists, it will skip cloning.
         """
-        self.info(f"Cloning repository: {repo_name}")
+        self.info(f"Cloning {repo_name}")
 
         if repo_name not in self.map:
             self.err(f"Repository '{repo_name}' not found in configuration.")
@@ -257,6 +260,22 @@ class Repo:
         except Exception as e:
             self.err(f"❌ Failed to delete {repo_name}: {e}")
 
+    def fetch_repo(self, repo_name: str) -> None:
+        """
+        Fetch updates from the remote repository.
+        """
+        self.info(f"Fetching updates for repository: {repo_name}")
+        _, repo = self.ensure_repo(repo_name)
+        if not repo:
+            return
+        try:
+            for remote in repo.remotes:
+                self.info(f"Fetching from remote: {remote.name}")
+                remote.fetch()
+            self.ok(f"✅ Successfully fetched updates for {repo_name}.")
+        except GitCommandError as e:
+            self.err(f"❌ Failed to fetch updates: {e}")
+
     def get_repo_log(self, repo_name: str) -> None:
         """
         Get the commit log for the specified repository.
@@ -286,14 +305,13 @@ class Repo:
             return
 
         quiet = self.ctx.obj.get("quiet", False)
-        if not quiet:
-            self.info(f"Remotes for {repo_name}:")
+        self.info(f"Remotes for {repo_name}:")
         for remote in repo.remotes:
             try:
-                prefix = "" if quiet else f"- {remote.name} -> "
-                self.ok(f"{prefix}{remote.url}")
+                self.ok(f"- {remote.url}")
             except Exception as e:
-                self.err(f"Could not get remote URL: {e}")
+                if not quiet:
+                    self.err(f"Could not get remote URL: {e}")
 
     def get_map(self) -> dict:
         """
@@ -382,7 +400,6 @@ class Repo:
         """
         Get the origin URL of the specified repository.
         """
-        self.info(f"Getting origin for repository: {repo_name}")
         _, repo = self.ensure_repo(repo_name)
         if not repo:
             return ""
@@ -399,7 +416,7 @@ class Repo:
                         self.ok(f"Setting origin URL for {repo_name}: {origin_url}")
                     break
 
-        self.ok(f"Origin URL for {repo_name}: {origin_url}")
+        self.info(f"Origin URL: {origin_url}")
         return origin_url
 
     def get_repo_path(self, repo_name: str) -> Path:
@@ -416,7 +433,7 @@ class Repo:
         if not repo or not path:
             return
 
-        self.ok(f"Repository '{repo_name}' found at path: {path}")
+        self.title(f"{repo_name}")
         self.info(f"On branch: {repo.active_branch}")
 
         # Show origin
@@ -589,13 +606,27 @@ class Repo:
         except Exception as e:
             self.err(f"❌ Failed to remove remote '{remote_name}': {e}")
 
+    def set_default_repo(self, repo_name: str) -> None:
+        """
+        Set the default repository in the configuration file.
+        """
+        self.info(f"Setting default repository to: {repo_name}")
+        if repo_name not in self.map:
+            self.err(f"Repository '{repo_name}' not found in configuration.")
+            return
+        subprocess.run(
+            ["gh", "repo", "set-default"],
+            cwd=self.get_repo_path(repo_name),
+            check=True,
+        )
+
 
 class Package(Repo):
     def install_package(self, repo_name: str) -> None:
         """
         Install a package from the cloned repository.
         """
-        self.info(f"Installing package from repository: {repo_name}")
+        self.info(f"Installing {repo_name}")
         path, _ = self.ensure_repo(repo_name)
         if not path:
             return
@@ -607,8 +638,8 @@ class Package(Repo):
             path = Path(path / install_dir).resolve()
             self.info(f"Using custom install directory: {path}")
 
-        if self.run([os.sys.executable, "-m", "pip", "install", "-e", str(path)]):
-            self.ok(f"✅ Successfully installed package from {repo_name}.")
+        if self.run(["uv", "pip", "install", "-e", str(path)]):
+            self.ok(f"Installed {repo_name}")
 
     def uninstall_package(self, repo_name: str) -> None:
         """
@@ -783,8 +814,13 @@ class Test(Repo):
         if self.modules:
             test_command.extend(self.modules)
 
+        env = os.environ.copy()
+        env_vars_list = self.tool_cfg.get("test", {}).get(repo_name, {}).get("env_vars")
+        if env_vars_list:
+            env.update({item["name"]: str(item["value"]) for item in env_vars_list})
         self.info(f"Running tests in {test_dir} with command: {' '.join(test_command)}")
-        subprocess.run(test_command, cwd=test_dir)
+
+        subprocess.run(test_command, cwd=test_dir, env=env)
 
     def run_tests(self, repo_name: str) -> None:
         """

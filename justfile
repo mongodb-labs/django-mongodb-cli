@@ -10,6 +10,9 @@ alias i := install
 git-clone:
     dm repo clone django --install
     dm repo clone django-mongodb-backend --install
+    dm repo clone django-mongodb-demo --install
+    dm repo clone django-mongodb-extensions --install
+    dm repo clone drivers-evergreen-tools
     dm repo clone libmongocrypt --install
     dm repo clone mongo-python-driver --install
 
@@ -47,7 +50,7 @@ db-init:
 # install python dependencies and activate pre-commit hooks
 [group('python')]
 pip-install: check-venv
-    brew install libxml2 libxmlsec1 pkg-config
+    # brew install libxml2 libxmlsec1 pkg-config
     pip install lxml==5.3.2 --no-binary :all:
     pip install -U pip
     pip install -e .
@@ -92,8 +95,17 @@ sphinx-open:
     open docs/_build/index.html
 alias so := sphinx-open
 
-# ---------------------------------------- qe ----------------------------------------
+# ---------------------------------------- jira ----------------------------------------
 
-qe:
-    python qe.py
-alias q := qe
+INTPYTHON-527:
+    python jira/qe.py
+
+alias q := INTPYTHON-527
+
+PYTHON-5564:
+    python3.10 -m venv .venv
+    python3.10 -m pip install -U pip
+    python3.10 -m pip install src/mongo-python-driver
+    python3.10 jira/PYTHON-5564.py
+
+alias min := PYTHON-5564

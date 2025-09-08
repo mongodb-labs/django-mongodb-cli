@@ -4,6 +4,7 @@ from bson.binary import Binary
 
 # from django_mongodb_backend import encryption, parse_uri
 from django_mongodb_backend import parse_uri
+
 # from pymongo.encryption import AutoEncryptionOpts
 
 EXPECTED_ENCRYPTED_FIELDS_MAP = {

@@ -32,6 +32,7 @@ dependencies = [
     "pymongocrypt",
     "pymongo-auth-aws",
     "pytest",
+    "pytest-asyncio",
     "pytest-html",
     "python-webpack-boilerplate",
     "rich",
@@ -84,8 +85,11 @@ repos = [
 ]
 path = "src"
 
+[tool.django-mongodb-cli.install.libmongocrypt]
+install_dir = "bindings/python"
+
 [tool.django-mongodb-cli.test.mongo-python-driver]
-test_command = "just"
+test_command = "pytest"
 test_dir = "src/mongo-python-driver/test"
 clone_dir = "src/mongo-python-driver"
 test_dirs = ["src/mongo-python-driver/test"]

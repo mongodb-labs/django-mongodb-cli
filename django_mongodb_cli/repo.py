@@ -4,6 +4,8 @@ import os
 from .utils import Package, Repo, Test
 
 repo = typer.Typer()
+repo_remote = typer.Typer()
+repo.add_typer(repo_remote, name="remote")
 
 
 def repo_command(
@@ -33,52 +35,153 @@ def main(
     list_repos: bool = typer.Option(
         False, "--list-repos", "-l", help="List available repositories."
     ),
+    quiet: bool = typer.Option(
+        False, "--quiet", "-q", help="Suppress output messages."
+    ),
 ):
     if list_repos:
         Repo().list_repos()
         raise typer.Exit()  # End, no further action
+
+    ctx.ensure_object(dict)
+    ctx.obj["quiet"] = quiet
 
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
         raise typer.Exit()
 
 
+@repo_remote.callback(invoke_without_command=True)
+def remote(
+    ctx: typer.Context,
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(
+        False, "--all-repos", "-a", help="Show remotes of all repositories"
+    ),
+):
+    """
+    Show the git remotes for the specified repository.
+    If --all-repos is used, show remotes for all repositories.
+    """
+    repo = Repo()
+    repo.ctx = ctx
+    repo.ctx.obj["repo_name"] = repo_name
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Showing remotes for all repositories...",
+        missing_msg="Please specify a repository name or use -a,--all-repos to show remotes of all repositories.",
+        single_func=lambda repo_name: repo.get_repo_remote(repo_name),
+        all_func=lambda repo_name: repo.get_repo_remote(repo_name),
+    )
+
+
+@repo_remote.command("add")
+def remote_add(
+    ctx: typer.Context,
+    remote_name: str = typer.Argument(..., help="Name of the remote to add"),
+    remote_url: str = typer.Argument(..., help="URL of the remote to add"),
+):
+    """
+    Add a git remote to the specified repository.
+    """
+    repo = Repo()
+    repo.ctx = ctx
+    repo.remote_add(remote_name, remote_url)
+
+
+@repo_remote.command("remove")
+def remote_remove(
+    ctx: typer.Context,
+    remote_name: str = typer.Argument(..., help="Name of the remote to remove"),
+):
+    """
+    Remove a git remote from the specified repository.
+    """
+    repo = Repo()
+    repo.ctx = ctx
+    repo.remote_remove(remote_name)
+
+
 @repo.command()
 def branch(
+    ctx: typer.Context,
     repo_name: str = typer.Argument(None),
-    branch_name: str = typer.Argument(None),
+    branch_name: str = typer.Argument(None, help="Branch name"),
     list_branches: bool = typer.Option(
         False, "--list-branches", "-l", help="List branches of the repository"
     ),
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Show branches of all repositories"
     ),
+    delete_branch: bool = typer.Option(
+        False, "--delete-branch", "-d", help="Delete the specified branch"
+    ),
+    cloned_only: bool = typer.Option(
+        False, "--cloned-only", "-c", help="Show branches only for cloned repositories"
+    ),
 ):
     """
     Checkout or create a branch in a repository.
-    If branch_name is provided, switch to that branch or create it if it doesn't exist.
     If --all-repos is used, show branches for all repositories.
     """
     repo = Repo()
-    if branch_name:
-        repo.set_branch(branch_name)
-
-    # else:
-    #     typer.echo(
-    #         typer.style(
-    #             "Create or set branch cannot be used with --all-repos.",
-    #             fg=typer.colors.RED,
-    #         )
-    #     )
-    #     return
-
+    repo.ctx = ctx
+    repo_list = repo.map
+    if delete_branch and branch_name:
+        repo.delete_branch(repo_name, branch_name)
+        raise typer.Exit()
+    if cloned_only:
+        _, fs_repos = repo._list_repos()
+        repo_list = sorted(fs_repos)
     repo_command(
         all_repos,
         repo_name,
-        all_msg="Showing branches for all repositories...",
-        missing_msg="Please specify a repository name or use --all-repos to show branches of all repositories.",
-        single_func=lambda repo_name: repo.get_repo_branch(repo_name),
-        all_func=lambda repo_name: repo.get_repo_branch(repo_name),
+        all_msg=None,
+        missing_msg="Please specify a repository name or use -a,--all-repos to show branches of all repositories.",
+        single_func=lambda repo_name: repo.get_repo_branch(repo_name, branch_name),
+        all_func=lambda repo_name: repo.get_repo_branch(repo_name, branch_name),
+        repo_list=repo_list,
+    )
+
+
+@repo.command()
+def cd(
+    repo_name: str = typer.Argument(None),
+):
+    """
+    Change directory to the specified repository.
+    """
+
+    repo_command(
+        False,
+        repo_name,
+        all_msg=None,
+        missing_msg="Please specify a repository name.",
+        single_func=Repo().cd_repo,
+        all_func=Repo().cd_repo,
+    )
+
+
+@repo.command()
+def checkout(
+    repo_name: str = typer.Argument(None),
+    branch_name: str = typer.Argument(None, help="Branch name to checkout"),
+):
+    """
+    Checkout a branch in a repository.
+    """
+
+    def checkout_branch(name):
+        Repo().checkout_branch(repo_name, branch_name)
+
+    repo_command(
+        False,
+        repo_name,
+        all_msg=None,
+        missing_msg="Please specify a repository and branch name.",
+        single_func=checkout_branch,
+        all_func=checkout_branch,
     )
 
 
@@ -107,7 +210,7 @@ def clone(
         all_repos,
         repo_name,
         all_msg="Cloning all repositories...",
-        missing_msg="Please specify a repository name or use --all-repos to clone all repositories.",
+        missing_msg="Please specify a repository name or use -a,--all-repos to clone all repositories.",
         single_func=clone_repo,
         all_func=clone_repo,
     )
@@ -144,7 +247,7 @@ def commit(
 
 
 @repo.command()
-def delete(
+def rm(
     repo_name: str = typer.Argument(None),
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Delete all repositories"
@@ -168,10 +271,31 @@ def delete(
         all_repos,
         repo_name,
         all_msg="Deleting all repositories...",
-        missing_msg="Please specify a repository name or use --all-repos to delete all repositories.",
+        missing_msg="Please specify a repository name or use -a,--all-repos to delete all repositories.",
         single_func=do_delete,
         all_func=do_delete,
         fg=typer.colors.RED,  # Red for delete
+    )
+
+
+@repo.command()
+def diff(
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(
+        False, "--all-repos", "-a", help="Show diffs of all repositories"
+    ),
+):
+    """
+    Show the git diff for the specified repository.
+    If --all-repos is used, show diffs for all repositories.
+    """
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Showing diffs for all repositories...",
+        missing_msg="Please specify a repository name or use -a,--all-repos to show diffs of all repositories.",
+        single_func=lambda repo_name: Repo().get_repo_diff(repo_name),
+        all_func=lambda repo_name: Repo().get_repo_diff(repo_name),
     )
 
 
@@ -190,7 +314,7 @@ def install(
         all_repos,
         repo_name,
         all_msg="Installing all repositories...",
-        missing_msg="Please specify a repository name or use --all-repos to install all repositories.",
+        missing_msg="Please specify a repository name or use -a,--all-repos to install all repositories.",
         single_func=lambda repo_name: Package().install_package(repo_name),
         all_func=lambda repo_name: Package().install_package(repo_name),
     )
@@ -235,39 +359,6 @@ def open(
         missing_msg="Please specify a repository name or use --all-repos to open all repositories.",
         single_func=lambda repo_name: Repo().open_repo(repo_name),
         all_func=lambda repo_name: Repo().open_repo(repo_name),
-    )
-
-
-@repo.command()
-def origin(
-    repo_name: str = typer.Argument(None),
-    repo_user: str = typer.Argument(None),
-    all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Show origin of all repositories"
-    ),
-):
-    """
-    Show or set the origin of a repository.
-    """
-    repo = Repo()
-    if repo_user and all_repos:
-        typer.echo(
-            typer.style(
-                "Set origin cannot be used with --all-repos.",
-                fg=typer.colors.RED,
-            )
-        )
-        return
-    if repo_user:
-        repo.set_user(repo_user)
-
-    repo_command(
-        all_repos,
-        repo_name,
-        all_msg="Showing origin for all repositories...",
-        missing_msg="Please specify a repository name or use --all-repos to show origins of all repositories.",
-        single_func=lambda name: repo.get_repo_origin(name),
-        all_func=lambda repo_name: repo.get_repo_origin(repo_name),
     )
 
 
@@ -327,7 +418,7 @@ def reset(
         all_repos,
         repo_name,
         all_msg="Resetting all repositories...",
-        missing_msg="Please specify a repository name or use --all-repos to reset all repositories.",
+        missing_msg="Please specify a repository name or use -a,--all-repos to reset all repositories.",
         single_func=reset_repo,
         all_func=reset_repo,
     )
@@ -335,6 +426,7 @@ def reset(
 
 @repo.command()
 def status(
+    ctx: typer.Context,
     repo_name: str = typer.Argument(None),
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Show status of all repos"
@@ -345,11 +437,12 @@ def status(
     If --all-repos is used, show the status for all repositories.
     """
     repo = Repo()
+    repo.ctx = ctx
     repo_command(
         all_repos,
         repo_name,
         all_msg="Showing status for all repositories...",
-        missing_msg="Please specify a repository name or use --all-repos to show all repositories.",
+        missing_msg="Please specify a repository name or use -a,--all-repos to show all repositories.",
         single_func=lambda repo_name: repo.get_repo_status(repo_name),
         all_func=lambda repo_name: repo.get_repo_status(repo_name),
     )
@@ -357,6 +450,7 @@ def status(
 
 @repo.command()
 def sync(
+    ctx: typer.Context,
     repo_name: str = typer.Argument(None),
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Sync all repositories"
@@ -367,6 +461,7 @@ def sync(
     If --all-repos is used, sync all repositories.
     """
     repo = Repo()
+    repo.ctx = ctx
     if not repo.map:
         typer.echo(
             typer.style(
@@ -380,7 +475,7 @@ def sync(
         all_repos,
         repo_name,
         all_msg="Syncing all repositories...",
-        missing_msg="Please specify a repository name or use --all-repos to sync all repositories.",
+        missing_msg="Please specify a repository name or use -a,--all-repos to sync all repositories.",
         single_func=lambda repo_name: repo.sync_repo(repo_name),
         all_func=lambda repo_name: repo.sync_repo(repo_name),
     )
@@ -388,6 +483,7 @@ def sync(
 
 @repo.command()
 def test(
+    ctx: typer.Context,
     repo_name: str = typer.Argument(None),
     modules: list[str] = typer.Argument(None),
     keep_db: bool = typer.Option(
@@ -414,6 +510,7 @@ def test(
     If --setenv is used, set the DJANGO_SETTINGS_MODULE environment variable.
     """
     test_runner = Test()
+    test_runner.ctx = ctx
     if modules:
         test_runner.set_modules(modules)
     if keep_db:

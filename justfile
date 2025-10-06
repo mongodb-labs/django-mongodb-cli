@@ -102,10 +102,16 @@ INTPYTHON-527:
 
 alias q := INTPYTHON-527
 
-PYTHON-5564:
+PYTHON-5564 group="" package="":
     python3.10 -m venv .venv
     python3.10 -m pip install -U pip
-    python3.10 -m pip install src/mongo-python-driver
-    python3.10 jira/PYTHON-5564.py
-
-alias min := PYTHON-5564
+    python3.10 -m pip install requests src/mongo-python-driver
+    if [ -z "{{group}}" ] && [ -z "{{package}}" ]; then \
+        python3.10 jira/PYTHON-5564.py; \
+    elif [ -n "{{group}}" ] && [ -z "{{package}}" ]; then \
+        python3.10 jira/PYTHON-5564.py --group "{{group}}"; \
+    elif [ -z "{{group}}" ] && [ -n "{{package}}" ]; then \
+        python3.10 jira/PYTHON-5564.py --package "{{package}}"; \
+    else \
+        python3.10 jira/PYTHON-5564.py --group "{{group}}" --package "{{package}}"; \
+    fi

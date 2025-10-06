@@ -128,6 +128,9 @@ def branch(
     repo = Repo()
     repo.ctx = ctx
     repo_list = repo.map
+
+    # Repo().checkout_branch(repo_name, branch_name)
+
     if delete_branch and branch_name:
         repo.delete_branch(repo_name, branch_name)
         raise typer.Exit()
@@ -163,28 +166,6 @@ def cd(
         missing_msg="Please specify a repository name.",
         single_func=repo.cd_repo,
         all_func=repo.cd_repo,
-    )
-
-
-@repo.command()
-def checkout(
-    repo_name: str = typer.Argument(None),
-    branch_name: str = typer.Argument(None, help="Branch name to checkout"),
-):
-    """
-    Checkout a branch in a repository.
-    """
-
-    def checkout_branch(name):
-        Repo().checkout_branch(repo_name, branch_name)
-
-    repo_command(
-        False,
-        repo_name,
-        all_msg=None,
-        missing_msg="Please specify a repository and branch name.",
-        single_func=checkout_branch,
-        all_func=checkout_branch,
     )
 
 
@@ -225,10 +206,9 @@ def commit(
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Commit all repositories"
     ),
-    message: str = typer.Argument(None, help="Commit message"),
 ):
     """
-    Commit changes in a repository with message provided or prompt for message.
+    Commit changes in a repository
     """
 
     if all_repos:
@@ -237,7 +217,7 @@ def commit(
         )
 
     def do_commit(name):
-        Repo().commit_repo(name, message)
+        Repo().commit_repo(name)
 
     repo_command(
         all_repos,
@@ -503,16 +483,16 @@ def status(
 
 
 @repo.command()
-def sync(
+def pull(
     ctx: typer.Context,
     repo_name: str = typer.Argument(None),
     all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Sync all repositories"
+        False, "--all-repos", "-a", help="Pull all repositories"
     ),
 ):
     """
-    Sync a repository with its remote counterpart.
-    If --all-repos is used, sync all repositories.
+    Pull updates for the specified repository.
+    If --all-repos is used, pull updates for all repositories.
     """
     repo = Repo()
     repo.ctx = ctx
@@ -528,10 +508,43 @@ def sync(
     repo_command(
         all_repos,
         repo_name,
-        all_msg="Syncing all repositories...",
-        missing_msg="Please specify a repository name or use -a,--all-repos to sync all repositories.",
-        single_func=lambda repo_name: repo.sync_repo(repo_name),
-        all_func=lambda repo_name: repo.sync_repo(repo_name),
+        all_msg="Pulling all repositories...",
+        missing_msg="Please specify a repository name or use -a,--all-repos to pull all repositories.",
+        single_func=lambda repo_name: repo.pull(repo_name),
+        all_func=lambda repo_name: repo.pull(repo_name),
+    )
+
+
+@repo.command()
+def push(
+    ctx: typer.Context,
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(
+        False, "--all-repos", "-a", help="Push all repositories"
+    ),
+):
+    """
+    Push updates for the specified repository.
+    If --all-repos is used, push updates for all repositories.
+    """
+    repo = Repo()
+    repo.ctx = ctx
+    if not repo.map:
+        typer.echo(
+            typer.style(
+                f"No repositories found in {os.path.join(os.getcwd(), repo.pyproject_file)}.",
+                fg=typer.colors.RED,
+            )
+        )
+        raise typer.Exit()
+
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Pushing all repositories...",
+        missing_msg="Please specify a repository name or use -a,--all-repos to push all repositories.",
+        single_func=lambda repo_name: repo.push(repo_name),
+        all_func=lambda repo_name: repo.push(repo_name),
     )
 
 

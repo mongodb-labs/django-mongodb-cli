@@ -2,7 +2,6 @@ import os
 import re
 import shutil
 import subprocess
-import tempfile
 from pathlib import Path
 
 import toml
@@ -168,33 +167,7 @@ class Repo:
                 "No .pre-commit-config.yaml found. Skipping pre-commit hook installation."
             )
 
-    def _compose_commit_message(self, initial: str = "") -> str | None:
-        msg = initial.strip()
-        if msg:
-            return msg
-        editor = os.environ.get("EDITOR", "vi")
-        with tempfile.NamedTemporaryFile(suffix=".tmp", delete=False) as tf:
-            tf.write(
-                b"# Enter commit message. Lines starting with '#' will be ignored.\n"
-            )
-            tf.flush()
-            temp_name = tf.name
-        try:
-            subprocess.call([editor, temp_name])
-            with open(temp_name, "r", encoding="utf-8") as f:
-                lines = [ln for ln in f.readlines() if not ln.startswith("#")]
-            msg = "".join(lines).strip()
-            if not msg:
-                self.warn("Aborting commit due to empty commit message.")
-                return None
-            return msg
-        finally:
-            try:
-                os.unlink(temp_name)
-            except OSError:
-                pass
-
-    def commit_repo(self, repo_name: str, message: str = "") -> None:
+    def commit_repo(self, repo_name: str) -> None:
         """
         Commit changes to the specified repository with a commit message.
         If no message is given, open editor for the commit message.
@@ -203,14 +176,9 @@ class Repo:
         _, repo = self.ensure_repo(repo_name)
         if not repo:
             return
-
-        msg = self._compose_commit_message(message)
-        if msg is None:
-            return
-
         try:
             repo.git.add(A=True)
-            repo.git.commit(m=msg)
+            repo.git.commit()
             self.ok("✅ Commit created.")
         except GitCommandError as e:
             self.err(f"❌ Failed to commit changes: {e}")
@@ -271,7 +239,10 @@ class Repo:
         try:
             for remote in repo.remotes:
                 self.info(f"Fetching from remote: {remote.name}")
-                remote.fetch()
+                fetched = remote.fetch()
+                self.ok(f"Fetched {len(fetched)} objects from {remote.name}.")
+                for ref in fetched:
+                    self.info(f"  - {ref.commit.summary} ({ref.name})")
             self.ok(f"✅ Successfully fetched updates for {repo_name}.")
         except GitCommandError as e:
             self.err(f"❌ Failed to fetch updates: {e}")
@@ -291,8 +262,11 @@ class Repo:
                 "--date=relative",
                 "--graph",
             ).splitlines()
-            for entry in log_entries:
+            log_max = 10
+            for count, entry in enumerate(log_entries, start=1):
                 typer.echo(f"  - {entry}")
+                if count >= log_max:
+                    break
         except GitCommandError as e:
             self.err(f"❌ Failed to get log: {e}")
 
@@ -308,7 +282,7 @@ class Repo:
         self.info(f"Remotes for {repo_name}:")
         for remote in repo.remotes:
             try:
-                self.ok(f"- {remote.url}")
+                self.ok(f"- {remote.name} {remote.url}")
             except Exception as e:
                 if not quiet:
                     self.err(f"Could not get remote URL: {e}")
@@ -552,9 +526,9 @@ class Repo:
     def set_user(self, user: str) -> None:
         self.user = user
 
-    def sync_repo(self, repo_name: str) -> None:
+    def pull(self, repo_name: str) -> None:
         """
-        Synchronize the repository by pulling the latest changes and then pushing local changes.
+        Pull the latest changes
         """
         _, repo = self.ensure_repo(repo_name)
         if not repo:
@@ -564,11 +538,24 @@ class Repo:
             repo.remotes.origin.pull()
             self.ok(f"✅ Successfully pulled latest changes for {repo_name}.")
 
+        except Exception as e:
+            self.err(f"❌ Failed to pull {repo_name}: {e}")
+
+    def push(self, repo_name: str) -> None:
+        """
+        Push the latest commits to the remote repository.
+        """
+
+        _, repo = self.ensure_repo(repo_name)
+        if not repo:
+            return
+
+        try:
             current_branch = repo.active_branch.name
             repo.remotes.origin.push(refspec=current_branch)
             self.ok(f"✅ Successfully pushed latest commits to {repo_name}.")
         except Exception as e:
-            self.err(f"❌ Failed to synchronize {repo_name}: {e}")
+            self.err(f"❌ Failed to push {repo_name}: {e}")
 
     def remote_add(self, remote_name: str, remote_url: str) -> None:
         """
@@ -586,8 +573,15 @@ class Repo:
             self.ok(
                 f"✅ Successfully added remote '{remote_name}' with URL '{remote_url}'."
             )
-        except Exception as e:
-            self.err(f"❌ Failed to add remote '{remote_name}': {e}")
+        except Exception:
+            self.info(
+                f"Removing remote '{remote_name}' from repository: {self.ctx.obj.get('repo_name')}"
+            )
+            repo.delete_remote(remote_name)
+            repo.create_remote(remote_name, remote_url)
+            self.ok(
+                f"✅ Successfully added remote '{remote_name}' with URL '{remote_url}'."
+            )
 
     def remote_remove(self, remote_name: str) -> None:
         """

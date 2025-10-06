@@ -1,26 +1,24 @@
 from pathlib import Path
+
 import os
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-# PROJECT_DIR = BASE_DIR / "{{ project_name }}"
+base_dir = Path(__file__).resolve().parent.parent
+frontend_dir = Path(__file__).resolve().parent.parent.parent
 
-SECRET_KEY = "replace-this-with-a-secret-key"
-DEBUG = True
 ALLOWED_HOSTS = []
+DEBUG = True
+DEFAULT_AUTO_FIELD = "django_mongodb_backend.fields.ObjectIdAutoField"
+SECRET_KEY = "your-secret-key"
 
 INSTALLED_APPS = [
-    # Default Django apps with custom DEFAULT_AUTO_FIELD set to ObjectIdAutoField
     "{{ project_name }}.apps.MongoDBAdminConfig",
     "{{ project_name }}.apps.MongoDBAuthConfig",
     "{{ project_name }}.apps.MongoDBContentTypesConfig",
-    # Default Django apps
+    "debug_toolbar",
+    "django_mongodb_extensions",  # MQL Panel for Debug Toolbar
     "django.contrib.messages",
     "django.contrib.sessions",
     "django.contrib.staticfiles",
-    # Third-party apps
-    "debug_toolbar",
-    "django_mongodb_demo",
-    "django_mongodb_extensions",
     "webpack_boilerplate",
 ]
 
@@ -36,7 +34,7 @@ ROOT_URLCONF = "{{ project_name }}.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [base_dir / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -55,12 +53,12 @@ DATABASES = {
         "ENGINE": "django_mongodb_backend",
         "HOST": os.getenv("MONGODB_URI"),
         "NAME": "{{ project_name }}",
-    }
+    },
 }
 
 STATIC_URL = "static/"
 
-# Debug Toolbar Configuration
+# Debug toolbar
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
@@ -72,8 +70,6 @@ DEBUG_TOOLBAR_PANELS = [
     "debug_toolbar.panels.settings.SettingsPanel",
     "debug_toolbar.panels.headers.HeadersPanel",
     "debug_toolbar.panels.request.RequestPanel",
-    # "debug_toolbar.panels.sql.SQLPanel",
-    "django_mongodb_extensions.debug_toolbar.panels.MQLPanel",
     "debug_toolbar.panels.staticfiles.StaticFilesPanel",
     "debug_toolbar.panels.templates.TemplatesPanel",
     "debug_toolbar.panels.alerts.AlertsPanel",
@@ -81,18 +77,18 @@ DEBUG_TOOLBAR_PANELS = [
     "debug_toolbar.panels.signals.SignalsPanel",
     "debug_toolbar.panels.redirects.RedirectsPanel",
     "debug_toolbar.panels.profiling.ProfilingPanel",
+    "django_mongodb_extensions.debug_toolbar.panels.MQLPanel",
 ]
 
-FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent
+# Webpack
 STATICFILES_DIRS = [
-    FRONTEND_DIR / "frontend/build",
+    frontend_dir / "frontend/build",
 ]
 
 WEBPACK_LOADER = {
-    "MANIFEST_FILE": FRONTEND_DIR / "frontend/build/manifest.json",
+    "MANIFEST_FILE": frontend_dir / "frontend/build/manifest.json",
 }
 
-DEFAULT_AUTO_FIELD = "django_mongodb_backend.fields.ObjectIdAutoField"
 MIGRATION_MODULES = {
     "admin": "{{ project_name }}.migrations.admin",
     "auth": "{{ project_name }}.migrations.auth",

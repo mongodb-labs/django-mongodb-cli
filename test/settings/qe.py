@@ -9,16 +9,21 @@ MONGODB_URI = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
 DATABASES = {
     "default": {
         "ENGINE": "django_mongodb_backend",
-        "NAME": "django_mongodb_backend",
+        "NAME": "djangotests",
+        "HOST": MONGODB_URI,
+    },
+    "other": {
+        "ENGINE": "django_mongodb_backend",
+        "NAME": "other",
         "HOST": MONGODB_URI,
     },
     "encrypted": {
         "ENGINE": "django_mongodb_backend",
-        "NAME": "encrypted",
+        "NAME": "djangotests_encrypted",
         "HOST": MONGODB_URI,
         "OPTIONS": {
             "auto_encryption_opts": AutoEncryptionOpts(
-                key_vault_namespace="encrypted.keyvault",
+                key_vault_namespace="djangotests_encrypted.__keyVault",
                 kms_providers={
                     "local": {"key": os.urandom(96)},
                 },

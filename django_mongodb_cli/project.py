@@ -84,6 +84,9 @@ dev = [
     "pytest-django",
     "ruff",
 ]
+encryption = [
+    "pymongocrypt",
+]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "{project_name}.settings.base"
@@ -114,7 +117,7 @@ def remove_project(name: str, directory: Path = Path(".")):
         typer.echo(f"❌ Project {name} does not exist.", err=True)
 
 
-def _django_admin_cmd(
+def _django_manage_command(
     name: str,
     directory: Path,
     *args: str,
@@ -132,12 +135,11 @@ def _django_admin_cmd(
 
     parent_dir = project_path.parent.resolve()
     env = os.environ.copy()
-    env["DJANGO_SETTINGS_MODULE"] = f"{name}.{
-        repo._tool_cfg.get('project', {})
-        .get('settings', {})
-        .get('path', 'settings.base')
-    }"
+    env["DJANGO_SETTINGS_MODULE"] = (
+        f"{name}.{repo._tool_cfg.get('project', {}).get('settings', {}).get('path', 'settings.base')}"
+    )
     env["PYTHONPATH"] = str(name) + os.pathsep + env.get("PYTHONPATH", "")
+    typer.echo(f"🔧 Using DJANGO_SETTINGS_MODULE={env['DJANGO_SETTINGS_MODULE']}")
     if extra_env:
         env.update(extra_env)
 
@@ -206,7 +208,7 @@ def run_project(
     with MONGODB_URI set in the environment if provided.
     """
     typer.echo(f"🚀 Running project '{name}' on http://{host}:{port}")
-    _django_admin_cmd(
+    _django_manage_command(
         name,
         directory / name,
         "runserver",
@@ -238,7 +240,9 @@ def migrate_project(
         cmd.append(migration_name)
 
     typer.echo(f"📦 Applying migrations for project '{name}'")
-    _django_admin_cmd(name, directory, *cmd, extra_env=_build_mongodb_env(mongodb_uri))
+    _django_manage_command(
+        name, directory, *cmd, extra_env=_build_mongodb_env(mongodb_uri)
+    )
 
 
 @project.command("makemigrations")
@@ -259,11 +263,13 @@ def makemigrations_project(
         cmd.append(app_label)
 
     typer.echo(f"🛠️ Making migrations for project '{name}'")
-    _django_admin_cmd(name, directory, *cmd, extra_env=_build_mongodb_env(mongodb_uri))
+    _django_manage_command(
+        name, directory, *cmd, extra_env=_build_mongodb_env(mongodb_uri)
+    )
 
 
-@project.command("admin")
-def admin_command(
+@project.command("manage")
+def manage_command(
     name: str,
     directory: Path = Path("."),
     command: str = typer.Argument(None),
@@ -276,10 +282,10 @@ def admin_command(
     Run any django-admin command for a project.
 
     Examples:
-        dm project admin mysite shell
-        dm project admin mysite createsuperuser
-        dm project admin mysite --mongodb-uri mongodb+srv://user:pwd@cluster
-        dm project admin mysite
+        dm project manage mysite shell
+        dm project manage mysite createsuperuser
+        dm project manage mysite --mongodb-uri mongodb+srv://user:pwd@cluster
+        dm project manage mysite
     """
     if args is None:
         args = []
@@ -293,10 +299,10 @@ def admin_command(
 
     if command:
         typer.echo(f"⚙️  Running django-admin {command} {' '.join(args)} for '{name}'")
-        _django_admin_cmd(name, directory, command, *args)
+        _django_manage_command(name, directory, command, *args)
     else:
         typer.echo(f"ℹ️  Running django-admin with no arguments for '{name}'")
-        _django_admin_cmd(name, directory)
+        _django_manage_command(name, directory)
 
 
 @project.command("su")
@@ -331,7 +337,7 @@ def create_superuser(
     extra_env = _build_mongodb_env(mongodb_uri) or {}
     extra_env["DJANGO_SUPERUSER_PASSWORD"] = password
 
-    _django_admin_cmd(
+    _django_manage_command(
         name,
         directory,
         "createsuperuser",

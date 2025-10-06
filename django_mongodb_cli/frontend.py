@@ -5,7 +5,7 @@ import subprocess
 import importlib.resources as resources
 import os
 
-frontend = typer.Typer(help="Manage Django apps.")
+frontend = typer.Typer(help="Manage Django frontends.")
 
 
 @frontend.command("create")

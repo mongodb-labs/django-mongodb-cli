@@ -340,5 +340,5 @@ project_name = "django-mongodb"
 tasks = ["run-tests"]
 
 [tool.django-mongodb-cli.project.settings]
-# path = "settings.qe"
-path = "settings.base"
+# path = "settings.base"
+path = "settings.qe"

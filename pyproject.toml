@@ -86,6 +86,7 @@ repos = [
     "mongo @ git+ssh://git@github.com/mongodb/mongo@master",
     "drivers-evergreen-tools @ git+ssh://git@github.com/mongodb-labs/drivers-evergreen-tools@master",
     "docs @ git+ssh://git@github.com/mongodb/docs@main",
+    "docs-sample-apps @ git+ssh://git@github.com/mongodb/docs-sample-apps@main",
     "flask-pymongo @ git+ssh://git@github.com/mongodb-labs/flask-pymongo",
     "mongo-arrow @ git+ssh://git@github.com/mongodb-labs/mongo-arrow@main",
     "mongo-orchestration @ git+ssh://git@github.com/mongodb-labs/mongo-orchestration@master",

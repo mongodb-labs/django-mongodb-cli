@@ -2,7 +2,6 @@ import os
 import re
 import shutil
 import subprocess
-import tempfile
 from pathlib import Path
 
 import toml
@@ -52,6 +51,9 @@ class Repo:
 
     def err(self, text: str) -> None:
         self._msg(text, typer.colors.RED)
+
+    def title(self, text: str) -> None:
+        typer.echo(text)
 
     def run(self, args, cwd: Path | str | None = None, check: bool = True) -> bool:
         try:
@@ -135,7 +137,7 @@ class Repo:
         Clone a repository into the specified path.
         If the repository already exists, it will skip cloning.
         """
-        self.info(f"Cloning repository: {repo_name}")
+        self.info(f"Cloning {repo_name}")
 
         if repo_name not in self.map:
             self.err(f"Repository '{repo_name}' not found in configuration.")
@@ -165,33 +167,7 @@ class Repo:
                 "No .pre-commit-config.yaml found. Skipping pre-commit hook installation."
             )
 
-    def _compose_commit_message(self, initial: str = "") -> str | None:
-        msg = initial.strip()
-        if msg:
-            return msg
-        editor = os.environ.get("EDITOR", "vi")
-        with tempfile.NamedTemporaryFile(suffix=".tmp", delete=False) as tf:
-            tf.write(
-                b"# Enter commit message. Lines starting with '#' will be ignored.\n"
-            )
-            tf.flush()
-            temp_name = tf.name
-        try:
-            subprocess.call([editor, temp_name])
-            with open(temp_name, "r", encoding="utf-8") as f:
-                lines = [ln for ln in f.readlines() if not ln.startswith("#")]
-            msg = "".join(lines).strip()
-            if not msg:
-                self.warn("Aborting commit due to empty commit message.")
-                return None
-            return msg
-        finally:
-            try:
-                os.unlink(temp_name)
-            except OSError:
-                pass
-
-    def commit_repo(self, repo_name: str, message: str = "") -> None:
+    def commit_repo(self, repo_name: str) -> None:
         """
         Commit changes to the specified repository with a commit message.
         If no message is given, open editor for the commit message.
@@ -200,14 +176,9 @@ class Repo:
         _, repo = self.ensure_repo(repo_name)
         if not repo:
             return
-
-        msg = self._compose_commit_message(message)
-        if msg is None:
-            return
-
         try:
             repo.git.add(A=True)
-            repo.git.commit(m=msg)
+            repo.git.commit()
             self.ok("✅ Commit created.")
         except GitCommandError as e:
             self.err(f"❌ Failed to commit changes: {e}")
@@ -257,6 +228,25 @@ class Repo:
         except Exception as e:
             self.err(f"❌ Failed to delete {repo_name}: {e}")
 
+    def fetch_repo(self, repo_name: str) -> None:
+        """
+        Fetch updates from the remote repository.
+        """
+        self.info(f"Fetching updates for repository: {repo_name}")
+        _, repo = self.ensure_repo(repo_name)
+        if not repo:
+            return
+        try:
+            for remote in repo.remotes:
+                self.info(f"Fetching from remote: {remote.name}")
+                fetched = remote.fetch()
+                self.ok(f"Fetched {len(fetched)} objects from {remote.name}.")
+                for ref in fetched:
+                    self.info(f"  - {ref.commit.summary} ({ref.name})")
+            self.ok(f"✅ Successfully fetched updates for {repo_name}.")
+        except GitCommandError as e:
+            self.err(f"❌ Failed to fetch updates: {e}")
+
     def get_repo_log(self, repo_name: str) -> None:
         """
         Get the commit log for the specified repository.
@@ -272,8 +262,11 @@ class Repo:
                 "--date=relative",
                 "--graph",
             ).splitlines()
-            for entry in log_entries:
+            log_max = 10
+            for count, entry in enumerate(log_entries, start=1):
                 typer.echo(f"  - {entry}")
+                if count >= log_max:
+                    break
         except GitCommandError as e:
             self.err(f"❌ Failed to get log: {e}")
 
@@ -286,14 +279,13 @@ class Repo:
             return
 
         quiet = self.ctx.obj.get("quiet", False)
-        if not quiet:
-            self.info(f"Remotes for {repo_name}:")
+        self.info(f"Remotes for {repo_name}:")
         for remote in repo.remotes:
             try:
-                prefix = "" if quiet else f"- {remote.name} -> "
-                self.ok(f"{prefix}{remote.url}")
+                self.ok(f"- {remote.name} {remote.url}")
             except Exception as e:
-                self.err(f"Could not get remote URL: {e}")
+                if not quiet:
+                    self.err(f"Could not get remote URL: {e}")
 
     def get_map(self) -> dict:
         """
@@ -382,7 +374,6 @@ class Repo:
         """
         Get the origin URL of the specified repository.
         """
-        self.info(f"Getting origin for repository: {repo_name}")
         _, repo = self.ensure_repo(repo_name)
         if not repo:
             return ""
@@ -399,7 +390,7 @@ class Repo:
                         self.ok(f"Setting origin URL for {repo_name}: {origin_url}")
                     break
 
-        self.ok(f"Origin URL for {repo_name}: {origin_url}")
+        self.info(f"Origin URL: {origin_url}")
         return origin_url
 
     def get_repo_path(self, repo_name: str) -> Path:
@@ -416,7 +407,7 @@ class Repo:
         if not repo or not path:
             return
 
-        self.ok(f"Repository '{repo_name}' found at path: {path}")
+        self.title(f"{repo_name}")
         self.info(f"On branch: {repo.active_branch}")
 
         # Show origin
@@ -535,9 +526,9 @@ class Repo:
     def set_user(self, user: str) -> None:
         self.user = user
 
-    def sync_repo(self, repo_name: str) -> None:
+    def pull(self, repo_name: str) -> None:
         """
-        Synchronize the repository by pulling the latest changes and then pushing local changes.
+        Pull the latest changes
         """
         _, repo = self.ensure_repo(repo_name)
         if not repo:
@@ -547,11 +538,24 @@ class Repo:
             repo.remotes.origin.pull()
             self.ok(f"✅ Successfully pulled latest changes for {repo_name}.")
 
+        except Exception as e:
+            self.err(f"❌ Failed to pull {repo_name}: {e}")
+
+    def push(self, repo_name: str) -> None:
+        """
+        Push the latest commits to the remote repository.
+        """
+
+        _, repo = self.ensure_repo(repo_name)
+        if not repo:
+            return
+
+        try:
             current_branch = repo.active_branch.name
             repo.remotes.origin.push(refspec=current_branch)
             self.ok(f"✅ Successfully pushed latest commits to {repo_name}.")
         except Exception as e:
-            self.err(f"❌ Failed to synchronize {repo_name}: {e}")
+            self.err(f"❌ Failed to push {repo_name}: {e}")
 
     def remote_add(self, remote_name: str, remote_url: str) -> None:
         """
@@ -569,8 +573,15 @@ class Repo:
             self.ok(
                 f"✅ Successfully added remote '{remote_name}' with URL '{remote_url}'."
             )
-        except Exception as e:
-            self.err(f"❌ Failed to add remote '{remote_name}': {e}")
+        except Exception:
+            self.info(
+                f"Removing remote '{remote_name}' from repository: {self.ctx.obj.get('repo_name')}"
+            )
+            repo.delete_remote(remote_name)
+            repo.create_remote(remote_name, remote_url)
+            self.ok(
+                f"✅ Successfully added remote '{remote_name}' with URL '{remote_url}'."
+            )
 
     def remote_remove(self, remote_name: str) -> None:
         """
@@ -589,13 +600,27 @@ class Repo:
         except Exception as e:
             self.err(f"❌ Failed to remove remote '{remote_name}': {e}")
 
+    def set_default_repo(self, repo_name: str) -> None:
+        """
+        Set the default repository in the configuration file.
+        """
+        self.info(f"Setting default repository to: {repo_name}")
+        if repo_name not in self.map:
+            self.err(f"Repository '{repo_name}' not found in configuration.")
+            return
+        subprocess.run(
+            ["gh", "repo", "set-default"],
+            cwd=self.get_repo_path(repo_name),
+            check=True,
+        )
+
 
 class Package(Repo):
     def install_package(self, repo_name: str) -> None:
         """
         Install a package from the cloned repository.
         """
-        self.info(f"Installing package from repository: {repo_name}")
+        self.info(f"Installing {repo_name}")
         path, _ = self.ensure_repo(repo_name)
         if not path:
             return
@@ -607,8 +632,8 @@ class Package(Repo):
             path = Path(path / install_dir).resolve()
             self.info(f"Using custom install directory: {path}")
 
-        if self.run([os.sys.executable, "-m", "pip", "install", "-e", str(path)]):
-            self.ok(f"✅ Successfully installed package from {repo_name}.")
+        if self.run(["uv", "pip", "install", "-e", str(path)]):
+            self.ok(f"Installed {repo_name}")
 
     def uninstall_package(self, repo_name: str) -> None:
         """
@@ -783,8 +808,13 @@ class Test(Repo):
         if self.modules:
             test_command.extend(self.modules)
 
+        env = os.environ.copy()
+        env_vars_list = self.tool_cfg.get("test", {}).get(repo_name, {}).get("env_vars")
+        if env_vars_list:
+            env.update({item["name"]: str(item["value"]) for item in env_vars_list})
         self.info(f"Running tests in {test_dir} with command: {' '.join(test_command)}")
-        subprocess.run(test_command, cwd=test_dir)
+
+        subprocess.run(test_command, cwd=test_dir, env=env)
 
     def run_tests(self, repo_name: str) -> None:
         """

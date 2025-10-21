@@ -5,7 +5,7 @@ from .utils import Package, Repo, Test
 
 repo = typer.Typer()
 repo_remote = typer.Typer()
-repo.add_typer(repo_remote, name="remote")
+repo.add_typer(repo_remote, name="remote", help="Manage Git repositories")
 
 
 def repo_command(
@@ -69,7 +69,7 @@ def remote(
     repo_command(
         all_repos,
         repo_name,
-        all_msg="Showing remotes for all repositories...",
+        all_msg=None,
         missing_msg="Please specify a repository name or use -a,--all-repos to show remotes of all repositories.",
         single_func=lambda repo_name: repo.get_repo_remote(repo_name),
         all_func=lambda repo_name: repo.get_repo_remote(repo_name),
@@ -128,6 +128,9 @@ def branch(
     repo = Repo()
     repo.ctx = ctx
     repo_list = repo.map
+
+    # Repo().checkout_branch(repo_name, branch_name)
+
     if delete_branch and branch_name:
         repo.delete_branch(repo_name, branch_name)
         raise typer.Exit()
@@ -147,41 +150,22 @@ def branch(
 
 @repo.command()
 def cd(
+    ctx: typer.Context,
     repo_name: str = typer.Argument(None),
 ):
     """
     Change directory to the specified repository.
     """
+    repo = Repo()
+    repo.ctx = ctx
 
     repo_command(
         False,
         repo_name,
         all_msg=None,
         missing_msg="Please specify a repository name.",
-        single_func=Repo().cd_repo,
-        all_func=Repo().cd_repo,
-    )
-
-
-@repo.command()
-def checkout(
-    repo_name: str = typer.Argument(None),
-    branch_name: str = typer.Argument(None, help="Branch name to checkout"),
-):
-    """
-    Checkout a branch in a repository.
-    """
-
-    def checkout_branch(name):
-        Repo().checkout_branch(repo_name, branch_name)
-
-    repo_command(
-        False,
-        repo_name,
-        all_msg=None,
-        missing_msg="Please specify a repository and branch name.",
-        single_func=checkout_branch,
-        all_func=checkout_branch,
+        single_func=repo.cd_repo,
+        all_func=repo.cd_repo,
     )
 
 
@@ -222,10 +206,9 @@ def commit(
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Commit all repositories"
     ),
-    message: str = typer.Argument(None, help="Commit message"),
 ):
     """
-    Commit changes in a repository with message provided or prompt for message.
+    Commit changes in a repository
     """
 
     if all_repos:
@@ -234,7 +217,7 @@ def commit(
         )
 
     def do_commit(name):
-        Repo().commit_repo(name, message)
+        Repo().commit_repo(name)
 
     repo_command(
         all_repos,
@@ -247,7 +230,7 @@ def commit(
 
 
 @repo.command()
-def rm(
+def delete(
     repo_name: str = typer.Argument(None),
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Delete all repositories"
@@ -300,6 +283,30 @@ def diff(
 
 
 @repo.command()
+def fetch(
+    ctx: typer.Context,
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(
+        False, "--all-repos", "-a", help="Fetch all repositories"
+    ),
+):
+    """
+    Fetch updates for the specified repository.
+    If --all-repos is used, fetch updates for all repositories.
+    """
+    repo = Repo()
+    repo.ctx = ctx
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg=None,
+        missing_msg="Please specify a repository name or use -a,--all-repos to fetch all repositories.",
+        single_func=lambda repo_name: repo.fetch_repo(repo_name),
+        all_func=lambda repo_name: repo.fetch_repo(repo_name),
+    )
+
+
+@repo.command()
 def install(
     repo_name: str = typer.Argument(None),
     all_repos: bool = typer.Option(
@@ -343,6 +350,7 @@ def log(
 
 @repo.command()
 def open(
+    ctx: typer.Context,
     repo_name: str = typer.Argument(None),
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Open all repositories"
@@ -352,13 +360,15 @@ def open(
     Open the specified repository in the default web browser.
     If --all-repos is used, open all repositories.
     """
+    repo = Repo()
+    repo.ctx = ctx
     repo_command(
         all_repos,
         repo_name,
         all_msg="Opening all repositories...",
         missing_msg="Please specify a repository name or use --all-repos to open all repositories.",
-        single_func=lambda repo_name: Repo().open_repo(repo_name),
-        all_func=lambda repo_name: Repo().open_repo(repo_name),
+        single_func=lambda repo_name: repo.open_repo(repo_name),
+        all_func=lambda repo_name: repo.open_repo(repo_name),
     )
 
 
@@ -401,6 +411,7 @@ def pr(
 
 @repo.command()
 def reset(
+    ctx: typer.Context,
     repo_name: str = typer.Argument(None),
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Reset all repositories"
@@ -412,7 +423,9 @@ def reset(
     """
 
     def reset_repo(name):
-        Repo().reset_repo(name)
+        repo = Repo()
+        repo.ctx = ctx
+        repo.reset_repo(name)
 
     repo_command(
         all_repos,
@@ -421,6 +434,27 @@ def reset(
         missing_msg="Please specify a repository name or use -a,--all-repos to reset all repositories.",
         single_func=reset_repo,
         all_func=reset_repo,
+    )
+
+
+@repo.command()
+def set_default(
+    repo_name: str = typer.Argument(None),
+):
+    """
+    Set the specified repository as the default repository.
+    """
+
+    def set_default(name):
+        Repo().set_default_repo(name)
+
+    repo_command(
+        False,
+        repo_name,
+        all_msg=None,
+        missing_msg="Please specify a repository name.",
+        single_func=set_default,
+        all_func=set_default,
     )
 
 
@@ -441,7 +475,7 @@ def status(
     repo_command(
         all_repos,
         repo_name,
-        all_msg="Showing status for all repositories...",
+        all_msg=None,
         missing_msg="Please specify a repository name or use -a,--all-repos to show all repositories.",
         single_func=lambda repo_name: repo.get_repo_status(repo_name),
         all_func=lambda repo_name: repo.get_repo_status(repo_name),
@@ -449,16 +483,16 @@ def status(
 
 
 @repo.command()
-def sync(
+def pull(
     ctx: typer.Context,
     repo_name: str = typer.Argument(None),
     all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Sync all repositories"
+        False, "--all-repos", "-a", help="Pull all repositories"
     ),
 ):
     """
-    Sync a repository with its remote counterpart.
-    If --all-repos is used, sync all repositories.
+    Pull updates for the specified repository.
+    If --all-repos is used, pull updates for all repositories.
     """
     repo = Repo()
     repo.ctx = ctx
@@ -474,10 +508,43 @@ def sync(
     repo_command(
         all_repos,
         repo_name,
-        all_msg="Syncing all repositories...",
-        missing_msg="Please specify a repository name or use -a,--all-repos to sync all repositories.",
-        single_func=lambda repo_name: repo.sync_repo(repo_name),
-        all_func=lambda repo_name: repo.sync_repo(repo_name),
+        all_msg="Pulling all repositories...",
+        missing_msg="Please specify a repository name or use -a,--all-repos to pull all repositories.",
+        single_func=lambda repo_name: repo.pull(repo_name),
+        all_func=lambda repo_name: repo.pull(repo_name),
+    )
+
+
+@repo.command()
+def push(
+    ctx: typer.Context,
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(
+        False, "--all-repos", "-a", help="Push all repositories"
+    ),
+):
+    """
+    Push updates for the specified repository.
+    If --all-repos is used, push updates for all repositories.
+    """
+    repo = Repo()
+    repo.ctx = ctx
+    if not repo.map:
+        typer.echo(
+            typer.style(
+                f"No repositories found in {os.path.join(os.getcwd(), repo.pyproject_file)}.",
+                fg=typer.colors.RED,
+            )
+        )
+        raise typer.Exit()
+
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Pushing all repositories...",
+        missing_msg="Please specify a repository name or use -a,--all-repos to push all repositories.",
+        single_func=lambda repo_name: repo.push(repo_name),
+        all_func=lambda repo_name: repo.push(repo_name),
     )
 
 
@@ -501,6 +568,10 @@ def test(
         "-s",
         help="Set DJANGO_SETTINGS_MODULE environment variable",
     ),
+    mongodb_uri: str = typer.Option(
+        None,
+        help="Optional MongoDB connection URI. Falls back to $MONGODB_URI if not provided.",
+    ),
 ):
     """
     Run tests for a repository.
@@ -509,6 +580,17 @@ def test(
     If --keyword is provided, run tests with the specified keyword.
     If --setenv is used, set the DJANGO_SETTINGS_MODULE environment variable.
     """
+
+    # --- NEW: Determine MongoDB URI ---
+    if not mongodb_uri:
+        mongodb_uri = os.getenv("MONGODB_URI")  # fallback to environment variable
+    if mongodb_uri:
+        os.environ["MONGODB_URI"] = mongodb_uri
+        typer.echo(f"🔗 Using MONGODB_URI: {mongodb_uri}")
+    else:
+        typer.echo("⚠️ MONGODB_URI not provided. Using Django's default DB settings.")
+
+    # --- Existing test runner setup ---
     test_runner = Test()
     test_runner.ctx = ctx
     if modules:

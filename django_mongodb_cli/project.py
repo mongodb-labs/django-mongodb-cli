@@ -228,6 +228,10 @@ def migrate_project(
         None,
         help="Optional MongoDB connection URI. Falls back to $MONGODB_URI if not provided.",
     ),
+    database: str = typer.Option(
+        None,
+        help="Specify the database to migrate.",
+    ),
 ):
     """
     Run Django migrations using django-admin instead of manage.py.
@@ -238,7 +242,8 @@ def migrate_project(
         cmd.append(app_label)
     if migration_name:
         cmd.append(migration_name)
-
+    if database:
+        cmd.append(f"--database={database}")
     typer.echo(f"📦 Applying migrations for project '{name}'")
     _django_manage_command(
         name, directory, *cmd, extra_env=_build_mongodb_env(mongodb_uri)
@@ -277,6 +282,10 @@ def manage_command(
     mongodb_uri: str = typer.Option(
         None, "--mongodb-uri", help="MongoDB connection URI"
     ),
+    database: str = typer.Option(
+        None,
+        help="Specify the database to use.",
+    ),
 ):
     """
     Run any django-admin command for a project.
@@ -296,6 +305,9 @@ def manage_command(
         import os
 
         os.environ["MONGODB_URI"] = mongodb_uri
+
+    if database:
+        args.append(f"--database={database}")
 
     if command:
         typer.echo(f"⚙️  Running django-admin {command} {' '.join(args)} for '{name}'")

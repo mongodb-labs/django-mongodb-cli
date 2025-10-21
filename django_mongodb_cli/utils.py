@@ -418,12 +418,11 @@ class Repo:
         Get the diff of a repository.
         """
 
-        self.get_repo_status(repo_name)
-
         path, repo = self.ensure_repo(repo_name)
         if not repo or not path:
             return
 
+        self.title(f"{repo_name}:")
         unstaged = repo.index.diff(None)
         if unstaged:
             self.warn("\nChanges not staged for commit:")

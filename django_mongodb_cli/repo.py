@@ -263,6 +263,7 @@ def delete(
 
 @repo.command()
 def diff(
+    ctx: typer.Context,
     repo_name: str = typer.Argument(None),
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Show diffs of all repositories"
@@ -272,13 +273,15 @@ def diff(
     Show the git diff for the specified repository.
     If --all-repos is used, show diffs for all repositories.
     """
+    repo = Repo()
+    repo.ctx = ctx
     repo_command(
         all_repos,
         repo_name,
         all_msg="Showing diffs for all repositories...",
         missing_msg="Please specify a repository name or use -a,--all-repos to show diffs of all repositories.",
-        single_func=lambda repo_name: Repo().get_repo_diff(repo_name),
-        all_func=lambda repo_name: Repo().get_repo_diff(repo_name),
+        single_func=lambda repo_name: repo.get_repo_diff(repo_name),
+        all_func=lambda repo_name: repo.get_repo_diff(repo_name),
     )
 
 

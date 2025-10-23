@@ -1,19 +1,23 @@
+from django_mongodb_backend.utils import model_has_encrypted_fields
+
+
 class EncryptedRouter:
+    def allow_migrate(self, db, app_label, model_name=None, **hints):
+        if hints.get("model"):
+            if model_has_encrypted_fields(hints["model"]):
+                return db == "encrypted"
+            else:
+                return db == "default"
+        return None
+
     def db_for_read(self, model, **hints):
-        if model._meta.app_label == "django_mongodb_demo":
+        if model_has_encrypted_fields(model):
             return "encrypted"
+        return "default"
+
+    def kms_provider(self, model):
+        if model_has_encrypted_fields(model):
+            return "local"
         return None
 
     db_for_write = db_for_read
-
-    def allow_migrate(self, db, app_label, model_name=None, **hints):
-        if app_label == "django_mongodb_demo":
-            print("allow_migrate for django_mongodb_demo:", db)
-            return db == "encrypted"
-        # Don't create other app's models in the encrypted database.
-        if db == "encrypted":
-            return False
-        return None
-
-    def kms_provider(self, model, **hints):
-        return "local"

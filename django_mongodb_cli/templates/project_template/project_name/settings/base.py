@@ -70,6 +70,7 @@ DEBUG_TOOLBAR_PANELS = [
     "debug_toolbar.panels.settings.SettingsPanel",
     "debug_toolbar.panels.headers.HeadersPanel",
     "debug_toolbar.panels.request.RequestPanel",
+    "django_mongodb_extensions.debug_toolbar.panels.MQLPanel",
     "debug_toolbar.panels.staticfiles.StaticFilesPanel",
     "debug_toolbar.panels.templates.TemplatesPanel",
     "debug_toolbar.panels.alerts.AlertsPanel",
@@ -77,7 +78,6 @@ DEBUG_TOOLBAR_PANELS = [
     "debug_toolbar.panels.signals.SignalsPanel",
     "debug_toolbar.panels.redirects.RedirectsPanel",
     "debug_toolbar.panels.profiling.ProfilingPanel",
-    "django_mongodb_extensions.debug_toolbar.panels.MQLPanel",
 ]
 
 # Webpack

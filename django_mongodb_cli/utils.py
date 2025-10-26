@@ -607,11 +607,14 @@ class Repo:
         if repo_name not in self.map:
             self.err(f"Repository '{repo_name}' not found in configuration.")
             return
-        subprocess.run(
-            ["gh", "repo", "set-default"],
-            cwd=self.get_repo_path(repo_name),
-            check=True,
-        )
+        try:
+            subprocess.run(
+                ["gh", "repo", "set-default"],
+                cwd=self.get_repo_path(repo_name),
+                check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            self.err(f"❌ Failed to set default repository: {e}")
 
 
 class Package(Repo):

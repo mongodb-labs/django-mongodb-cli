@@ -102,6 +102,13 @@ path = "src"
 [tool.django-mongodb-cli.install.libmongocrypt]
 install_dir = "bindings/python"
 
+[tool.django-mongodb-cli.install.langchain-mongodb]
+install_dir = "libs/langchain-mongodb"
+
+[tool.django-mongodb-cli.test.langchain-mongodb]
+test_command = "pytest"
+test_dir = "src/langchain-mongodb/libs/langchain-mongodb/tests"
+
 [tool.django-mongodb-cli.test.mongo-python-driver]
 test_command = "just"
 test_dir = "src/mongo-python-driver/test"

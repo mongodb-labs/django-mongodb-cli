@@ -45,6 +45,12 @@ dependencies = [
     "wagtail",
 ]
 
+[project.optional-dependencies]
+docs = [
+    "furo",
+    "sphinx-copybutton",
+]
+
 [project.scripts]
 dm = "django_mongodb_cli:dm"
 

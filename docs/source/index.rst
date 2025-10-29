@@ -2,26 +2,25 @@
 Django MongoDB CLI
 ==================
 
-.. note::
-
-    This documentation is for MongoDB staff and developers of Django third
-    party libraries interested in supporting
-    :ref:`Django MongoDB Backend <django-mongodb-backend>`.
-
-    End users of :ref:`Django MongoDB Backend <django-mongodb-backend>`
-    should read the `Django MongoDB Backend documentation`_.
-
 About
------
+=====
 
-This library provides the ``dm`` command which can be used for:
+This library is for developers of third party Django libraries who want to add
+compatibility with :ref:`Django MongoDB Backend <django-mongodb-backend>`.
 
-- :ref:`Running third party library test suites <third-party-libraries>` with
-  :ref:`Django MongoDB Backend <django-mongodb-backend>` and
-  :ref:`MongoDB's Django fork <mongodb-django-fork>`.
+The ``dm`` command line tool provides utilities for running tests for:
+
+- :ref:`Third party libraries <third-party-libraries>`
+- :ref:`Django MongoDB Backend <django-mongodb-backend>`
+- :ref:`MongoDB's Django fork <mongodb-django-fork>`
+
+.. admonition:: End users of Django MongoDB Backend
+
+    Please read the documentation for :ref:`Django MongoDB Backend
+    <django-mongodb-backend>`.
 
 Table of Contents
------------------
+=================
 
 .. toctree::
    third-party-library-support/index

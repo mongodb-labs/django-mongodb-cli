@@ -4,10 +4,12 @@ from .base import *  # noqa
 from pymongo.encryption_options import AutoEncryptionOpts
 from bson import ObjectId
 
+import os
+
 # Queryable Encryption
 INSTALLED_APPS += [  # noqa
     "django_mongodb_backend",
-    "django_mongodb_demo",
+    "demo.medical_records",
 ]
 
 DATABASES["encrypted"] = {  # noqa
@@ -22,6 +24,8 @@ DATABASES["encrypted"] = {  # noqa
                 }
             },
             key_vault_namespace="{{ project_name }}_encrypted.__keyVault",
+            crypt_shared_lib_path=os.getenv("CRYPT_SHARED_LIB_PATH"),
+            crypt_shared_lib_required=True,
         ),
     },
 }

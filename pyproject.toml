@@ -2,7 +2,13 @@
 name = "django-mongodb-cli"
 version = "0.1.0"
 dependencies = [
-    # --- allauth ---
+    "GitPython",
+    "toml",
+    "typer",
+]
+
+[project.optional-dependencies]
+django-allauth = [
     "django-ninja",
     "fido2",
     "psycopg2",
@@ -10,43 +16,21 @@ dependencies = [
     "python3-saml",
     "pyjwt[crypto]",
     "requests-oauthlib",
-
-    # --- DRF ---
-    "pytest-django",
-    "setuptools",
-
-    # --- debug toolbar ---
+]
+django-debug-toolbar = [
     "django-debug-toolbar",
     "html5lib",
     "pytest-django",
-
-    # --- filter ---
-    "pytz",
-
-    # --- everything else ---
-    "GitPython",
-    "Sphinx",
-    "black",
-    "django-extensions",
-    "dj-database-url",
-    "djhtml",
-    "faker",
-    "pymongocrypt",
-    "pymongo-auth-aws",
-    "pytest",
-    "pytest-asyncio",
-    "pytest-html",
-    "python-webpack-boilerplate",
-    "rich",
-    "sphinx-autobuild",
-    "sphinx-copybutton",
-    "toml",
-    "typer",
-    "wagtail",
 ]
-
-[project.optional-dependencies]
+django-filter = [
+    "pytz",
+]
+django-rest-framework = [
+    "pytest-django",
+    "setuptools",
+]
 docs = [
+    "Sphinx",
     "furo",
     "sphinx-copybutton",
 ]
@@ -55,58 +39,65 @@ docs = [
 dm = "django_mongodb_cli:dm"
 
 [tool.setuptools]
-packages = ["django_mongodb_cli"]
+packages = ["django_mongodb_cli", "demo"]
 
 [tool.setuptools.package-data]
 "django_mongodb_cli" = ["templates/**/*"]
 
 [tool.django-mongodb-cli]
 repos = [
-    # 1. Third-Party Libs
-    "django-allauth @ git+ssh://git@github.com/pennersr/django-allauth@main",
-    "xmlsec @ git+ssh://git@github.com/xmlsec/python-xmlsec@main",
-    "django-rest-framework @ git+ssh://git@github.com/encode/django-rest-framework@main",
-    "django-filter @ git+ssh://git@github.com/carltongibson/django-filter@main",
-    "django-debug-toolbar @ git+ssh://git@github.com/django-commons/django-debug-toolbar@main",
-    "python-webpack-boilerplate @ git+ssh://git@github.com/AccordBox/python-webpack-boilerplate@master",
-    "wagtail @ git+ssh://git@github.com/mongodb-forks/wagtail@main",
-    "wagtail-mongodb-project @ git+ssh://git@github.com/mongodb-labs/wagtail-mongodb-project@main",
-
-    # 2. Django MongoDB Backend
     "django @ git+ssh://git@github.com/mongodb-forks/django@mongodb-5.2.x",
+    "django-allauth @ git+ssh://git@github.com/pennersr/django-allauth@main",
+    "django-debug-toolbar @ git+ssh://git@github.com/django-commons/django-debug-toolbar@main",
+    "django-filter @ git+ssh://git@github.com/carltongibson/django-filter@main",
     "django-mongodb-app @ git+ssh://git@github.com/mongodb-labs/django-mongodb-app@5.2.x",
     "django-mongodb-backend @ git+ssh://git@github.com/mongodb/django-mongodb-backend@main",
+    "django-mongodb-demo @ git+ssh://git@github.com/aclark4life/django-mongodb-demo@main",
     "django-mongodb-extensions @ git+ssh://git@github.com/mongodb-labs/django-mongodb-extensions@main",
-    "django-mongodb-polls @ git+ssh://git@github.com/aclark4life/django-mongodb-polls@main",
     "django-mongodb-project @ git+ssh://git@github.com/mongodb-labs/django-mongodb-project@5.2.x",
     "django-mongodb-project-benchmark @ git+ssh://git@github.com/NoahStapp/django-mongodb-backend-benchmark.git@main",
-    "libmongocrypt @ git+ssh://git@github.com/mongodb-labs/libmongocrypt@master",
-    "mongo-python-driver @ git+ssh://git@github.com/mongodb/mongo-python-driver@master",
-    "pymongo-auth-aws @ git+ssh://git@github.com/mongodb/pymongo-auth-aws@master",
-
-    # 3. LangChain
-    "langchain-mongodb @ git+ssh://git@github.com/langchain-ai/langchain-mongodb@main",
-    "pymongo-search-utils@ git+ssh://git@github.com/mongodb-labs/pymongo-search-utils@main",
-
-    # 4. MongoDB
-    "mongo @ git+ssh://git@github.com/mongodb/mongo@master",
-    "drivers-evergreen-tools @ git+ssh://git@github.com/mongodb-labs/drivers-evergreen-tools@master",
+    "django-rest-framework @ git+ssh://git@github.com/encode/django-rest-framework@main",
     "docs @ git+ssh://git@github.com/mongodb/docs@main",
     "docs-sample-apps @ git+ssh://git@github.com/mongodb/docs-sample-apps@main",
+    "drivers-evergreen-tools @ git+ssh://git@github.com/mongodb-labs/drivers-evergreen-tools@master",
     "flask-pymongo @ git+ssh://git@github.com/mongodb-labs/flask-pymongo",
+    "GenAI-Showcase @ git+ssh://git@github.com/aclark4life/GenAI-Showcase.git@main",
+    "langchain-mongodb @ git+ssh://git@github.com/langchain-ai/langchain-mongodb@main",
+    "libmongocrypt @ git+ssh://git@github.com/mongodb-labs/libmongocrypt@master",
+    "llm-mongogpt @ git+https://https://github.com/10gen/llm-mongogpt.git",
+    "mongo @ git+ssh://git@github.com/mongodb/mongo@master",
     "mongo-arrow @ git+ssh://git@github.com/mongodb-labs/mongo-arrow@main",
     "mongo-orchestration @ git+ssh://git@github.com/mongodb-labs/mongo-orchestration@master",
+    "mongo-python-driver @ git+ssh://git@github.com/mongodb/mongo-python-driver@master",
+    "pymongo-auth-aws @ git+ssh://git@github.com/mongodb/pymongo-auth-aws@master",
+    "pymongo-search-utils@ git+ssh://git@github.com/mongodb-labs/pymongo-search-utils@main",
+    "python-webpack-boilerplate @ git+ssh://git@github.com/AccordBox/python-webpack-boilerplate@master",
     "specifications @ git+ssh://git@github.com/mongodb/specifications@master",
+    "test-supercharge-action @ git+ssh://git@github.com/aclark4life/test-supercharge-action.git",
+    "wagtail @ git+ssh://git@github.com/mongodb-forks/wagtail@main",
+    "wagtail-mongodb-project @ git+ssh://git@github.com/mongodb-labs/wagtail-mongodb-project@main",
     "winkerberos @ git+ssh://git@github.com/mongodb-labs/winkerberos@main",
-
-    # 5. Other
-    "django-mongodb-demo @ git+ssh://git@github.com/aclark4life/django-mongodb-demo@main",
-    "GenAI-Showcase @ git+ssh://git@github.com/aclark4life/GenAI-Showcase.git@main",
+    "xmlsec @ git+ssh://git@github.com/xmlsec/python-xmlsec@main",
 ]
 path = "src"
 
 [tool.django-mongodb-cli.install.libmongocrypt]
 install_dir = "bindings/python"
+
+[tool.django-mongodb-cli.install.mongo-arrow]
+install_dir = "bindings/python"
+
+[[tool.django-mongodb-cli.install.mongo-arrow.env_vars]]
+name = "LDFLAGS"
+value = "-L/opt/homebrew/opt/mongo-c-driver@1/lib"
+
+[[tool.django-mongodb-cli.install.mongo-arrow.env_vars]]
+name = "CPPFLAGS"
+value = "-I/opt/homebrew/opt/mongo-c-driver@1/include"
+
+[[tool.django-mongodb-cli.install.mongo-arrow.env_vars]]
+name = "PKG_CONFIG_PATH"
+value = "/opt/homebrew/opt/mongo-c-driver@1/lib/pkgconfig"
 
 [tool.django-mongodb-cli.install.langchain-mongodb]
 install_dir = "libs/langchain-mongodb"
@@ -114,6 +105,10 @@ install_dir = "libs/langchain-mongodb"
 [tool.django-mongodb-cli.test.langchain-mongodb]
 test_command = "pytest"
 test_dir = "src/langchain-mongodb/libs/langchain-mongodb/tests"
+
+[tool.django-mongodb-cli.test.pymongo-search-utils]
+test_command = "pytest"
+test_dir = "src/pymongo-search-utils/tests"
 
 [tool.django-mongodb-cli.test.mongo-python-driver]
 test_command = "just"
@@ -339,7 +334,6 @@ migrations = "allauth.mongo_settings"
 [tool.django-mongodb-cli.test.django-allauth.migrations_dir]
 source = "mongo_migrations"
 target = "src/django-allauth/allauth/mongo_migrations"
-
 
 [[tool.django-mongodb-cli.origin.django-mongodb-backend]]
 user = "aclark4life"

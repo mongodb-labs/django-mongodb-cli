@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 import importlib.resources as resources
 import os
+import sys
 from .frontend import add_frontend as _add_frontend
 from .utils import Repo
 
@@ -38,7 +39,45 @@ def add_project(
             name,
         ]
         typer.echo(f"📦 Creating project: {name}")
-        subprocess.run(cmd, check=True)
+
+        # Run django-admin in a way that surfaces a clean, user-friendly error
+        # instead of a full Python traceback when Django is missing or
+        # misconfigured in the current environment.
+        try:
+            result = subprocess.run(
+                cmd,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+        except FileNotFoundError:
+            typer.echo(
+                "❌ 'django-admin' command not found. Make sure Django is installed "
+                "in this environment and that 'django-admin' is on your PATH.",
+                err=True,
+            )
+            raise typer.Exit(code=1)
+
+        if result.returncode != 0:
+            # Try to show a concise reason (e.g. "ModuleNotFoundError: No module named 'django'")
+            reason = None
+            if result.stderr:
+                lines = [
+                    line.strip() for line in result.stderr.splitlines() if line.strip()
+                ]
+                if lines:
+                    reason = lines[-1]
+
+            typer.echo(
+                "❌ Failed to create project using django-admin. "
+                "This usually means Django is not installed or is misconfigured "
+                "in the current Python environment.",
+                err=True,
+            )
+            if reason:
+                typer.echo(f"   Reason: {reason}", err=True)
+
+            raise typer.Exit(code=result.returncode)
 
     # Add pyproject.toml after project creation
     _create_pyproject_toml(project_path, name)
@@ -106,15 +145,83 @@ packages = ["{project_name}"]
 
 @project.command("remove")
 def remove_project(name: str, directory: Path = Path(".")):
-    """
-    Delete a Django project by name.
+    """Delete a Django project by name.
+
+    This will first attempt to uninstall the project package using pip in the
+    current Python environment, then remove the project directory.
     """
     target = directory / name
-    if target.exists() and target.is_dir():
-        shutil.rmtree(target)
-        typer.echo(f"🗑️ Removed project {name}")
-    else:
+
+    if not target.exists() or not target.is_dir():
         typer.echo(f"❌ Project {name} does not exist.", err=True)
+        return
+
+    # Try to uninstall the package from the current environment before
+    # removing the project directory. Failures here are non-fatal so that
+    # filesystem cleanup still proceeds.
+    uninstall_cmd = [sys.executable, "-m", "pip", "uninstall", "-y", name]
+    typer.echo(f"📦 Uninstalling project package '{name}' with pip")
+    try:
+        result = subprocess.run(uninstall_cmd, check=False)
+        if result.returncode != 0:
+            typer.echo(
+                f"⚠️ pip uninstall exited with code {result.returncode}. "
+                "Proceeding to remove project files.",
+                err=True,
+            )
+    except FileNotFoundError:
+        typer.echo(
+            "⚠️ Could not run pip to uninstall the project package. "
+            "Proceeding to remove project files.",
+            err=True,
+        )
+
+    shutil.rmtree(target)
+    typer.echo(f"🗑️ Removed project {name}")
+
+
+@project.command("install")
+def install_project(name: str, directory: Path = Path(".")):
+    """Install a generated Django project by running ``pip install .`` in its directory.
+
+    Example:
+        dm project install qe
+    """
+    project_path = directory / name
+
+    if not project_path.exists() or not project_path.is_dir():
+        typer.echo(
+            f"❌ Project '{name}' does not exist at {project_path}.",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    typer.echo(f"📦 Installing project '{name}' with pip (cwd={project_path})")
+
+    # Use the current Python interpreter to ensure we install into the
+    # same environment that is running the CLI.
+    cmd = [sys.executable, "-m", "pip", "install", "."]
+    try:
+        result = subprocess.run(
+            cmd,
+            cwd=project_path,
+            check=False,
+        )
+    except FileNotFoundError:
+        typer.echo(
+            "❌ Could not run pip. Make sure Python and pip are available in this environment.",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    if result.returncode != 0:
+        typer.echo(
+            f"❌ pip install failed with exit code {result.returncode}.",
+            err=True,
+        )
+        raise typer.Exit(code=result.returncode)
+
+    typer.echo(f"✅ Successfully installed project '{name}'")
 
 
 def _django_manage_command(

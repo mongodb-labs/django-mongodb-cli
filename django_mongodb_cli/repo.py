@@ -3,7 +3,7 @@ import os
 
 from .utils import Package, Repo, Test
 
-repo = typer.Typer()
+repo = typer.Typer(help="Manage Git repositories")
 repo_remote = typer.Typer()
 repo.add_typer(repo_remote, name="remote", help="Manage Git repositories")
 
@@ -35,9 +35,7 @@ def main(
     list_repos: bool = typer.Option(
         False, "--list-repos", "-l", help="List available repositories."
     ),
-    quiet: bool = typer.Option(
-        False, "--quiet", "-q", help="Suppress output messages."
-    ),
+    quiet: bool = typer.Option(True, "--quiet", "-q", help="Suppress output messages."),
 ):
     if list_repos:
         Repo().list_repos()
@@ -104,7 +102,28 @@ def remote_remove(
 
 
 @repo.command()
-def branch(
+def cd(
+    ctx: typer.Context,
+    repo_name: str = typer.Argument(None),
+):
+    """
+    Change directory to the specified repository.
+    """
+    repo = Repo()
+    repo.ctx = ctx
+
+    repo_command(
+        False,
+        repo_name,
+        all_msg=None,
+        missing_msg="Please specify a repository name.",
+        single_func=repo.cd_repo,
+        all_func=repo.cd_repo,
+    )
+
+
+@repo.command()
+def checkout(
     ctx: typer.Context,
     repo_name: str = typer.Argument(None),
     branch_name: str = typer.Argument(None, help="Branch name"),
@@ -129,7 +148,14 @@ def branch(
     repo.ctx = ctx
     repo_list = repo.map
 
-    # Repo().checkout_branch(repo_name, branch_name)
+    if (all_repos and not list_branches) or (all_repos and repo_name):
+        typer.echo(
+            typer.style(
+                "Cannot use --all-repos with repo name or without --list-branches.",
+                fg=typer.colors.RED,
+            )
+        )
+        raise typer.Exit()
 
     if delete_branch and branch_name:
         repo.delete_branch(repo_name, branch_name)
@@ -141,31 +167,10 @@ def branch(
         all_repos,
         repo_name,
         all_msg=None,
-        missing_msg="Please specify a repository name or use -a,--all-repos to show branches of all repositories.",
+        missing_msg="Please specify a repository name or use -a,--all-repos with -l,list-repos to show branches of all repositories.",
         single_func=lambda repo_name: repo.get_repo_branch(repo_name, branch_name),
         all_func=lambda repo_name: repo.get_repo_branch(repo_name, branch_name),
         repo_list=repo_list,
-    )
-
-
-@repo.command()
-def cd(
-    ctx: typer.Context,
-    repo_name: str = typer.Argument(None),
-):
-    """
-    Change directory to the specified repository.
-    """
-    repo = Repo()
-    repo.ctx = ctx
-
-    repo_command(
-        False,
-        repo_name,
-        all_msg=None,
-        missing_msg="Please specify a repository name.",
-        single_func=repo.cd_repo,
-        all_func=repo.cd_repo,
     )
 
 
@@ -230,7 +235,8 @@ def commit(
 
 
 @repo.command()
-def delete(
+def remove(
+    ctx: typer.Context,
     repo_name: str = typer.Argument(None),
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Delete all repositories"
@@ -244,11 +250,13 @@ def delete(
     If --all-repos is used, delete all repositories.
     If --uninstall is used, uninstall the package before deleting.
     """
+    repo = Repo()
+    repo.ctx = ctx
 
     def do_delete(name):
         if uninstall:
             Package().uninstall_package(name)
-        Repo().delete_repo(name)
+        repo.delete_repo(name)
 
     repo_command(
         all_repos,

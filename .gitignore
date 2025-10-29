@@ -4,3 +4,6 @@ django_mongodb_cli/__pycache__/
 .idea
 server.log
 mongocryptd.pid
+.python-version
+build/
+uv.lock

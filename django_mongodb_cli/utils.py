@@ -55,9 +55,15 @@ class Repo:
     def title(self, text: str) -> None:
         typer.echo(text)
 
-    def run(self, args, cwd: Path | str | None = None, check: bool = True) -> bool:
+    def run(
+        self,
+        args,
+        cwd: Path | str | None = None,
+        check: bool = True,
+        env: str | None = None,
+    ) -> bool:
         try:
-            subprocess.run(args, cwd=str(cwd) if cwd else None, check=check)
+            subprocess.run(args, cwd=str(cwd) if cwd else None, check=check, env=env)
             return True
         except subprocess.CalledProcessError as e:
             self.err(f"Command failed: {' '.join(str(a) for a in args)} ({e})")
@@ -68,7 +74,7 @@ class Repo:
     ) -> tuple[Path | None, GitRepo | None]:
         path = self.get_repo_path(repo_name)
         if must_exist and not path.exists():
-            if not self.ctx.obj.get("quiet", False):
+            if not self.ctx.obj.get("quiet", True):
                 self.err(f"Repository '{repo_name}' not found at path: {path}")
             return None, None
         repo = self.get_repo(str(path)) if path.exists() else None
@@ -221,6 +227,7 @@ class Repo:
         self.info(f"Deleting repository: {repo_name}")
         path, _ = self.ensure_repo(repo_name)
         if not path:
+            self.err(f"❌ Failed to delete {repo_name}: path not found.")
             return
         try:
             shutil.rmtree(path)
@@ -278,7 +285,7 @@ class Repo:
         if not repo:
             return
 
-        quiet = self.ctx.obj.get("quiet", False)
+        quiet = self.ctx.obj.get("quiet", True)
         self.info(f"Remotes for {repo_name}:")
         for remote in repo.remotes:
             try:
@@ -506,9 +513,13 @@ class Repo:
             self.ok(f"✅ Successfully opened {repo_name} in browser.")
 
     def reset_repo(self, repo_name: str) -> None:
-        self.info(f"Resetting repository: {repo_name}")
         _, repo = self.ensure_repo(repo_name)
+        quiet = self.ctx.obj.get("quiet", True)
+        if not quiet:
+            self.info(f"Resetting repository: {repo_name}")
         if not repo:
+            if not quiet:
+                self.err(f"❌ Failed to reset {repo_name}: path not found.")
             return
         try:
             repo.git.reset("--hard")
@@ -570,7 +581,7 @@ class Repo:
         try:
             repo.create_remote(remote_name, remote_url)
             self.ok(
-                f"✅ Successfully added remote '{remote_name}' with URL '{remote_url}'."
+                f"Successfully added remote '{remote_name}' with URL '{remote_url}'."
             )
         except Exception:
             self.info(
@@ -579,7 +590,7 @@ class Repo:
             repo.delete_remote(remote_name)
             repo.create_remote(remote_name, remote_url)
             self.ok(
-                f"✅ Successfully added remote '{remote_name}' with URL '{remote_url}'."
+                f"Successfully added remote '{remote_name}' with URL '{remote_url}'."
             )
 
     def remote_remove(self, remote_name: str) -> None:
@@ -634,7 +645,16 @@ class Package(Repo):
             path = Path(path / install_dir).resolve()
             self.info(f"Using custom install directory: {path}")
 
-        if self.run(["uv", "pip", "install", "-e", str(path)]):
+        env = os.environ.copy()
+        env_vars_list = (
+            self.tool_cfg.get("install", {}).get(repo_name, {}).get("env_vars")
+        )
+        if env_vars_list:
+            typer.echo("Setting environment variables for installation:")
+            typer.echo(env_vars_list)
+            env.update({item["name"]: str(item["value"]) for item in env_vars_list})
+
+        if self.run(["uv", "pip", "install", "-e", str(path)], env=env):
             self.ok(f"Installed {repo_name}")
 
     def uninstall_package(self, repo_name: str) -> None:
@@ -751,7 +771,7 @@ class Test(Repo):
                 test_files = [
                     f for f in files if f.endswith(".py") and not f.startswith("__")
                 ]
-                quiet = self.ctx.obj.get("quiet", False)
+                quiet = self.ctx.obj.get("quiet", True)
 
                 if not quiet or test_files:
                     self.ok(f"\n📂 {display_path}")
@@ -826,9 +846,9 @@ class Test(Repo):
             self._list_tests(repo_name)
             return
 
-        self.info(f"Running tests for repository: {repo_name}")
         path, _ = self.ensure_repo(repo_name)
         if not path:
+            self.err(f"❌ Failed to run tests for {repo_name}: path not found.")
             return
 
         self._run_tests(repo_name)

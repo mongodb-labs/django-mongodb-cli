@@ -418,12 +418,11 @@ class Repo:
         Get the diff of a repository.
         """
 
-        self.get_repo_status(repo_name)
-
         path, repo = self.ensure_repo(repo_name)
         if not repo or not path:
             return
 
+        self.title(f"{repo_name}:")
         unstaged = repo.index.diff(None)
         if unstaged:
             self.warn("\nChanges not staged for commit:")
@@ -608,11 +607,14 @@ class Repo:
         if repo_name not in self.map:
             self.err(f"Repository '{repo_name}' not found in configuration.")
             return
-        subprocess.run(
-            ["gh", "repo", "set-default"],
-            cwd=self.get_repo_path(repo_name),
-            check=True,
-        )
+        try:
+            subprocess.run(
+                ["gh", "repo", "set-default"],
+                cwd=self.get_repo_path(repo_name),
+                check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            self.err(f"❌ Failed to set default repository: {e}")
 
 
 class Package(Repo):

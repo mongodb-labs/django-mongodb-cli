@@ -2,21 +2,22 @@ from bson.codec_options import CodecOptions
 from pymongo import MongoClient
 from pymongo.encryption import ClientEncryption, AutoEncryptionOpts
 from pymongo.errors import EncryptedCollectionError
+import os
 
-from django_mongodb_backend.encryption import KMS_PROVIDERS
-
-KEY_VAULT_NAMESPACE = "encryption.__keyVault"
 
 client = MongoClient(
     auto_encryption_opts=AutoEncryptionOpts(
-        key_vault_namespace=KEY_VAULT_NAMESPACE,
-        kms_providers=KMS_PROVIDERS,
+        key_vault_namespace="encryption.__keyVault",
+        kms_providers={"local": {"key": os.urandom(96)}},
     )
 )
 
 codec_options = CodecOptions()
 client_encryption = ClientEncryption(
-    KMS_PROVIDERS, KEY_VAULT_NAMESPACE, client, codec_options
+    client.options.auto_encryption_opts._kms_providers,
+    client.options.auto_encryption_opts._key_vault_namespace,
+    client,
+    codec_options,
 )
 
 COLLECTION_NAME = "patient"

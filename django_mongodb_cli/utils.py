@@ -9,11 +9,6 @@ import typer
 from git import GitCommandError
 from git import Repo as GitRepo
 
-URL_PATTERN = re.compile(r"git\+ssh://(?:[^@]+@)?([^/]+)/([^@]+)")
-BRANCH_PATTERN = re.compile(
-    r"git\+ssh://git@github\.com/[^/]+/[^@]+@([a-zA-Z0-9_\-\.]+)\b"
-)
-
 
 class Repo:
     """
@@ -95,10 +90,23 @@ class Repo:
 
     @staticmethod
     def parse_git_url(raw: str) -> tuple[str, str]:
-        m_branch = BRANCH_PATTERN.search(raw)
-        branch = m_branch.group(1) if m_branch else "main"
-        m_url = URL_PATTERN.search(raw)
-        url = m_url.group(0) if m_url else raw
+        branch = "main"
+        url = raw
+
+        # Check for branch specified at the end of the URL, e.g., '...repo.git@my-branch'
+        match_branch = re.search(r"@([a-zA-Z0-9_\-\.]+)*$", url)
+        if match_branch:
+            branch = match_branch.group(1)
+            url = url[: match_branch.start()]  # Remove branch part from URL
+
+        # Remove 'git+' prefix if present
+        if url.startswith("git+"):
+            url = url[4:]
+
+        # Remove duplicate 'https://' or 'http://'
+        # This handles cases like 'https://https://github.com/...' or 'http://http://github.com'
+        url = re.sub(r"^(http(s)?://)(http(s)?://)", r"\1", url)
+
         return url, branch
 
     def copy_file(
@@ -458,7 +466,7 @@ class Repo:
         except GitCommandError as e:
             self.err(f"❌ Failed to diff working tree: {e}")
 
-    def _list_repos(self) -> set:
+    def _list_repos(self) -> tuple[set, set]:
         map_repos = set(self.map.keys())
 
         try:
@@ -466,7 +474,7 @@ class Repo:
             fs_repos = {entry for entry in fs_entries if (self.path / entry).is_dir()}
         except Exception as e:
             self.err(f"❌ Failed to list repositories in filesystem: {e}")
-            return
+            return set(), set()
 
         return map_repos, fs_repos
 
@@ -503,11 +511,21 @@ class Repo:
     def open_repo(self, repo_name: str) -> None:
         """
         Open the specified repository with `gh browse` command.
+
+        If the repository directory does not exist, emit a clear error message and
+        exit with a non-zero status code so callers can detect the failure.
         """
         self.info(f"Opening repository: {repo_name}")
+
         path, _ = self.ensure_repo(repo_name)
         if not path:
-            return
+            # `ensure_repo` may already have printed something depending on the
+            # current "quiet" setting, but for an explicit "open" request we
+            # always want a visible error and a failing exit code.
+            self.err(
+                f"❌ Repository '{repo_name}' does not exist at {self.get_repo_path(repo_name)}"
+            )
+            raise typer.Exit(code=1)
 
         if self.run(["gh", "browse"], cwd=path):
             self.ok(f"✅ Successfully opened {repo_name} in browser.")
@@ -613,19 +631,46 @@ class Repo:
     def set_default_repo(self, repo_name: str) -> None:
         """
         Set the default repository in the configuration file.
+
+        This uses the GitHub CLI (`gh repo set-default`). If the repository
+        directory does not exist or the `gh` binary is missing/fails, emit a
+        clear error and exit with a non-zero status instead of raising a
+        traceback.
         """
         self.info(f"Setting default repository to: {repo_name}")
         if repo_name not in self.map:
             self.err(f"Repository '{repo_name}' not found in configuration.")
-            return
+            raise typer.Exit(code=1)
+
+        path = self.get_repo_path(repo_name)
+        if not path.exists():
+            self.err(
+                f"❌ Repository directory '{path}' does not exist. Clone it first with `dm repo clone {repo_name}`."
+            )
+            raise typer.Exit(code=1)
+
         try:
             subprocess.run(
                 ["gh", "repo", "set-default"],
-                cwd=self.get_repo_path(repo_name),
+                cwd=path,
                 check=True,
             )
+            self.ok(f"✅ Default repository set to: {repo_name}.")
+        except FileNotFoundError:
+            # Either the `gh` executable or the repo path is missing; by this
+            # point we have already validated the path, so treat it as a
+            # missing GitHub CLI binary.
+            self.err(
+                "❌ Failed to set default repository: GitHub CLI 'gh' was not found. "
+                "Install it from https://cli.github.com/ and ensure 'gh' is on your PATH."
+            )
+            raise typer.Exit(code=1)
         except subprocess.CalledProcessError as e:
+            self.err(f"❌ Failed to set default repository via 'gh': {e}")
+            raise typer.Exit(code=1)
+        except Exception as e:
             self.err(f"❌ Failed to set default repository: {e}")
+            raise typer.Exit(code=1)
 
 
 class Package(Repo):

@@ -39,7 +39,7 @@ docs = [
 dm = "django_mongodb_cli:dm"
 
 [tool.setuptools]
-packages = ["django_mongodb_cli"]
+packages = ["django_mongodb_cli", "demo"]
 
 [tool.setuptools.package-data]
 "django_mongodb_cli" = ["templates/**/*"]
@@ -64,6 +64,7 @@ repos = [
     "GenAI-Showcase @ git+ssh://git@github.com/aclark4life/GenAI-Showcase.git@main",
     "langchain-mongodb @ git+ssh://git@github.com/langchain-ai/langchain-mongodb@main",
     "libmongocrypt @ git+ssh://git@github.com/mongodb-labs/libmongocrypt@master",
+    "llm-mongogpt @ git+https://https://github.com/10gen/llm-mongogpt.git",
     "mongo @ git+ssh://git@github.com/mongodb/mongo@master",
     "mongo-arrow @ git+ssh://git@github.com/mongodb-labs/mongo-arrow@main",
     "mongo-orchestration @ git+ssh://git@github.com/mongodb-labs/mongo-orchestration@master",

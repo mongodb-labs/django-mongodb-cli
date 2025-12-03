@@ -8,7 +8,7 @@ import os
 app = typer.Typer(help="Manage Django apps.")
 
 
-@app.command("create")
+@app.command("add")
 def add_app(name: str, project_name: str, directory: Path = Path(".")):
     """
     Create a new Django app inside an existing project using bundled templates.

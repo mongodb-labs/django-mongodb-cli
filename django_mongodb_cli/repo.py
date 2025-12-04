@@ -449,6 +449,18 @@ def reset(
 
 
 @repo.command()
+def show(
+    ctx: typer.Context,
+    repo_name: str = typer.Argument(..., help="Repository name"),
+    commit_hash: str = typer.Argument(..., help="Commit hash to show"),
+):
+    """Show the git diff for a specific commit hash in the given repository."""
+    repo = Repo()
+    repo.ctx = ctx
+    repo.show_commit(repo_name, commit_hash)
+
+
+@repo.command()
 def set_default(
     repo_name: str = typer.Argument(None),
 ):

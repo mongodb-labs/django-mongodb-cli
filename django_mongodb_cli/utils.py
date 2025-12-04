@@ -466,6 +466,19 @@ class Repo:
         except GitCommandError as e:
             self.err(f"❌ Failed to diff working tree: {e}")
 
+    def show_commit(self, repo_name: str, commit_hash: str) -> None:
+        """Show the diff for a specific commit hash in the given repository."""
+        self.info(f"Showing diff for {repo_name}@{commit_hash}")
+        path, repo = self.ensure_repo(repo_name)
+        if not repo or not path:
+            return
+
+        try:
+            output = repo.git.show(commit_hash)
+            typer.echo(output)
+        except GitCommandError as e:
+            self.err(f"❌ Failed to show commit {commit_hash}: {e}")
+
     def _list_repos(self) -> tuple[set, set]:
         map_repos = set(self.map.keys())
 

@@ -6,6 +6,34 @@ from pymongo.encryption import AutoEncryptionOpts
 
 MONGODB_URI = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
 
+# Configure KMS providers.
+#
+# We prefer AWS when FLE_AWS_KEY/FLE_AWS_SECRET are set, mirroring
+# src/mongo-python-driver/test/helpers_shared.py. Otherwise we fall back
+# to a local KMS for convenience in local development.
+AWS_CREDS = {
+    "accessKeyId": os.environ.get("FLE_AWS_KEY", ""),
+    "secretAccessKey": os.environ.get("FLE_AWS_SECRET", ""),
+}
+_USE_AWS_KMS = any(AWS_CREDS.values())
+
+if _USE_AWS_KMS:
+    # Use the same demo key ARN and region as the PyMongo QE tests.
+    _AWS_REGION = os.environ.get("FLE_AWS_KMS_REGION", "us-east-1")
+    _AWS_KEY_ARN = os.environ.get(
+        "FLE_AWS_KMS_KEY_ARN",
+        "arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0",
+    )
+    KMS_PROVIDERS = {"aws": AWS_CREDS}
+    KMS_CREDENTIALS = {"aws": {"key": _AWS_KEY_ARN, "region": _AWS_REGION}}
+    DEFAULT_KMS_PROVIDER = "aws"
+else:
+    # Local-only fallback
+    KMS_PROVIDERS = {"local": {"key": os.urandom(96)}}
+    KMS_CREDENTIALS = {"local": {}}
+    DEFAULT_KMS_PROVIDER = "local"
+
+
 DATABASES = {
     "default": {
         "ENGINE": "django_mongodb_backend",
@@ -24,16 +52,10 @@ DATABASES = {
         "OPTIONS": {
             "auto_encryption_opts": AutoEncryptionOpts(
                 key_vault_namespace="djangotests_encrypted.__keyVault",
-                kms_providers={
-                    "local": {
-                        "key": os.urandom(96),
-                    },
-                },
+                kms_providers=KMS_PROVIDERS,
             ),
         },
-        "KMS_CREDENTIALS": {
-            "aws": {},
-        },
+        "KMS_CREDENTIALS": KMS_CREDENTIALS,
     },
 }
 
@@ -57,7 +79,7 @@ class EncryptedRouter:
         return None
 
     def kms_provider(self, model):
-        return "local"
+        return DEFAULT_KMS_PROVIDER
 
 
 DATABASE_ROUTERS = ["django_mongodb_backend.routers.MongoRouter", EncryptedRouter()]

@@ -55,8 +55,16 @@ class Repo:
         args,
         cwd: Path | str | None = None,
         check: bool = True,
-        env: str | None = None,
+        env: dict[str, str] | None = None,
     ) -> bool:
+        """Run a subprocess with optional working directory and environment.
+
+        Args:
+            args: Command and arguments to run.
+            cwd: Optional working directory.
+            check: Whether to raise on non-zero exit code.
+            env: Optional environment mapping to pass to the subprocess.
+        """
         try:
             subprocess.run(args, cwd=str(cwd) if cwd else None, check=check, env=env)
             return True
@@ -81,6 +89,14 @@ class Repo:
 
     def test_cfg(self, repo_name: str) -> dict:
         return self.tool_cfg.get("test", {}).get(repo_name, {}) or {}
+
+    def run_cfg(self, repo_name: str) -> dict:
+        """Return configuration for arbitrary repo commands.
+
+        The config is read from [tool.django-mongodb-cli.run.<repo_name>] in
+        pyproject.toml and can contain keys like ``env_vars``.
+        """
+        return self.tool_cfg.get("run", {}).get(repo_name, {}) or {}
 
     def evergreen_cfg(self, repo_name: str) -> dict:
         return self.tool_cfg.get("evergreen", {}).get(repo_name, {}) or {}
@@ -262,9 +278,13 @@ class Repo:
         except GitCommandError as e:
             self.err(f"❌ Failed to fetch updates: {e}")
 
-    def get_repo_log(self, repo_name: str) -> None:
-        """
-        Get the commit log for the specified repository.
+    def get_repo_log(self, repo_name: str, max_lines: int | None = None) -> None:
+        """Print the commit log for the specified repository.
+
+        Args:
+            repo_name: Logical name of the repository.
+            max_lines: Maximum number of log entries to display. If ``None``,
+                a default of 10 entries is used.
         """
         self.info(f"Getting commit log for repository: {repo_name}")
         _, repo = self.ensure_repo(repo_name)
@@ -277,7 +297,7 @@ class Repo:
                 "--date=relative",
                 "--graph",
             ).splitlines()
-            log_max = 10
+            log_max = max_lines if max_lines is not None else 10
             for count, entry in enumerate(log_entries, start=1):
                 typer.echo(f"  - {entry}")
                 if count >= log_max:
@@ -465,6 +485,19 @@ class Repo:
                 typer.echo(working_tree_diff)
         except GitCommandError as e:
             self.err(f"❌ Failed to diff working tree: {e}")
+
+    def show_commit(self, repo_name: str, commit_hash: str) -> None:
+        """Show the diff for a specific commit hash in the given repository."""
+        self.info(f"Showing diff for {repo_name}@{commit_hash}")
+        path, repo = self.ensure_repo(repo_name)
+        if not repo or not path:
+            return
+
+        try:
+            output = repo.git.show(commit_hash)
+            typer.echo(output)
+        except GitCommandError as e:
+            self.err(f"❌ Failed to show commit {commit_hash}: {e}")
 
     def _list_repos(self) -> tuple[set, set]:
         map_repos = set(self.map.keys())

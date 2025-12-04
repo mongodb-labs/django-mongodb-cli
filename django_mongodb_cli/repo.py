@@ -1,5 +1,6 @@
 import typer
 import os
+import shlex
 
 from .utils import Package, Repo, Test
 
@@ -106,9 +107,7 @@ def cd(
     ctx: typer.Context,
     repo_name: str = typer.Argument(None),
 ):
-    """
-    Change directory to the specified repository.
-    """
+    """Change directory to the specified repository."""
     repo = Repo()
     repo.ctx = ctx
 
@@ -120,6 +119,52 @@ def cd(
         single_func=repo.cd_repo,
         all_func=repo.cd_repo,
     )
+
+
+@repo.command()
+def run(
+    ctx: typer.Context,
+    repo_name: str = typer.Argument(..., help="Repository name"),
+    command: list[str] = typer.Argument(
+        ..., metavar="CMD...", help="Command (and args) to run in the repo directory"
+    ),
+):
+    """Run an arbitrary command inside the repository directory.
+
+    Examples:
+      dm repo run mongo-python-driver just setup tests encryption
+      dm repo run mongo-python-driver "just setup tests encryption"
+
+    Environment variables can be configured per-repo under
+    ``[tool.django-mongodb-cli.run.<repo_name>.env_vars]`` in ``pyproject.toml``.
+    """
+    repo = Repo()
+    repo.ctx = ctx
+
+    # Allow a single shell-style string (e.g. "just setup tests encryption").
+    if len(command) == 1:
+        command = shlex.split(command[0])
+
+    path, _ = repo.ensure_repo(repo_name)
+    if not path:
+        return
+
+    # Build environment from current process plus any configured env_vars.
+    env = os.environ.copy()
+    run_cfg = repo.run_cfg(repo_name)
+    env_vars_list = run_cfg.get("env_vars")
+    if env_vars_list:
+        repo.info("Setting environment variables from pyproject.toml:")
+        for item in env_vars_list:
+            name = item.get("name")
+            value = str(item.get("value"))
+            if name is None:
+                continue
+            env[name] = value
+            typer.echo(f"  {name}={value}")
+
+    repo.info(f"Running in {path}: {' '.join(command)}")
+    repo.run(command, cwd=path, env=env)
 
 
 @repo.command()
@@ -344,9 +389,19 @@ def log(
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Show logs of all repositories"
     ),
+    n: int = typer.Option(
+        10,
+        "-n",
+        "--lines",
+        min=1,
+        help="Number of log entries to show (per repository)",
+    ),
 ):
     """
     Show logs for the specified repository.
+
+    By default, shows the last 10 entries. Use ``-n/--lines`` to change the
+    number of entries displayed (per repository).
     If --all-repos is used, show logs for all repositories.
     """
     repo_command(
@@ -354,8 +409,8 @@ def log(
         repo_name,
         all_msg="Showing logs for all repositories...",
         missing_msg="Please specify a repository name or use --all-repos to show logs of all repositories.",
-        single_func=lambda repo_name: Repo().get_repo_log(repo_name),
-        all_func=lambda repo_name: Repo().get_repo_log(repo_name),
+        single_func=lambda repo_name: Repo().get_repo_log(repo_name, n),
+        all_func=lambda repo_name: Repo().get_repo_log(repo_name, n),
     )
 
 
@@ -446,6 +501,18 @@ def reset(
         single_func=reset_repo,
         all_func=reset_repo,
     )
+
+
+@repo.command()
+def show(
+    ctx: typer.Context,
+    repo_name: str = typer.Argument(..., help="Repository name"),
+    commit_hash: str = typer.Argument(..., help="Commit hash to show"),
+):
+    """Show the git diff for a specific commit hash in the given repository."""
+    repo = Repo()
+    repo.ctx = ctx
+    repo.show_commit(repo_name, commit_hash)
 
 
 @repo.command()

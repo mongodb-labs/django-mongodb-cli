@@ -55,8 +55,16 @@ class Repo:
         args,
         cwd: Path | str | None = None,
         check: bool = True,
-        env: str | None = None,
+        env: dict[str, str] | None = None,
     ) -> bool:
+        """Run a subprocess with optional working directory and environment.
+
+        Args:
+            args: Command and arguments to run.
+            cwd: Optional working directory.
+            check: Whether to raise on non-zero exit code.
+            env: Optional environment mapping to pass to the subprocess.
+        """
         try:
             subprocess.run(args, cwd=str(cwd) if cwd else None, check=check, env=env)
             return True
@@ -81,6 +89,14 @@ class Repo:
 
     def test_cfg(self, repo_name: str) -> dict:
         return self.tool_cfg.get("test", {}).get(repo_name, {}) or {}
+
+    def run_cfg(self, repo_name: str) -> dict:
+        """Return configuration for arbitrary repo commands.
+
+        The config is read from [tool.django-mongodb-cli.run.<repo_name>] in
+        pyproject.toml and can contain keys like ``env_vars``.
+        """
+        return self.tool_cfg.get("run", {}).get(repo_name, {}) or {}
 
     def evergreen_cfg(self, repo_name: str) -> dict:
         return self.tool_cfg.get("evergreen", {}).get(repo_name, {}) or {}

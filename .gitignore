@@ -7,3 +7,4 @@ mongocryptd.pid
 .python-version
 build/
 uv.lock
+secrets-export.sh

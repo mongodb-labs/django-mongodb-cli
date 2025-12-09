@@ -158,6 +158,22 @@ value = "/Users/alex.clark/Developer/django-mongodb-cli/src/drivers-evergreen-to
 name = "AWS_PROFILE"
 value = "my-profile"
 
+[[tool.django-mongodb-cli.test.django.env_vars]]
+name = "MONGODB_URI"
+value = "mongodb://localhost:64437/?directConnection=true"
+
+[[tool.django-mongodb-cli.run.mongo-python-driver.env_vars]]
+name = "DRIVERS_TOOLS"
+value = "/Users/alex.clark/Developer/django-mongodb-cli/src/drivers-evergreen-tools"
+
+[[tool.django-mongodb-cli.run.mongo-python-driver.env_vars]]
+name = "MONGODB_URI"
+value = "mongodb://localhost:64437/?directConnection=true"
+
+[[tool.django-mongodb-cli.run.mongo-python-driver.env_vars]]
+name = "AWS_PROFILE"
+value = "my-profile"
+
 [tool.django-mongodb-cli.test.django.migrations_dir]
 source = "mongo_migrations"
 target = "src/django/tests/mongo_migrations"

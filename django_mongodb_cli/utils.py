@@ -278,9 +278,13 @@ class Repo:
         except GitCommandError as e:
             self.err(f"❌ Failed to fetch updates: {e}")
 
-    def get_repo_log(self, repo_name: str) -> None:
-        """
-        Get the commit log for the specified repository.
+    def get_repo_log(self, repo_name: str, max_lines: int | None = None) -> None:
+        """Print the commit log for the specified repository.
+
+        Args:
+            repo_name: Logical name of the repository.
+            max_lines: Maximum number of log entries to display. If ``None``,
+                a default of 10 entries is used.
         """
         self.info(f"Getting commit log for repository: {repo_name}")
         _, repo = self.ensure_repo(repo_name)
@@ -293,7 +297,7 @@ class Repo:
                 "--date=relative",
                 "--graph",
             ).splitlines()
-            log_max = 10
+            log_max = max_lines if max_lines is not None else 10
             for count, entry in enumerate(log_entries, start=1):
                 typer.echo(f"  - {entry}")
                 if count >= log_max:

@@ -76,12 +76,12 @@ alias s := django-runserver
 
 [group('django')]
 django-migrate:
-    dm proj migrate
+    dm project migrate
 alias m := django-migrate
 
 [group('django')]
 django-createsuperuser:
-    dm proj su
+    dm project su
 alias su := django-createsuperuser
 
 # ---------------------------------------- mongodb ----------------------------------------

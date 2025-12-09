@@ -389,9 +389,19 @@ def log(
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Show logs of all repositories"
     ),
+    n: int = typer.Option(
+        10,
+        "-n",
+        "--lines",
+        min=1,
+        help="Number of log entries to show (per repository)",
+    ),
 ):
     """
     Show logs for the specified repository.
+
+    By default, shows the last 10 entries. Use ``-n/--lines`` to change the
+    number of entries displayed (per repository).
     If --all-repos is used, show logs for all repositories.
     """
     repo_command(
@@ -399,8 +409,8 @@ def log(
         repo_name,
         all_msg="Showing logs for all repositories...",
         missing_msg="Please specify a repository name or use --all-repos to show logs of all repositories.",
-        single_func=lambda repo_name: Repo().get_repo_log(repo_name),
-        all_func=lambda repo_name: Repo().get_repo_log(repo_name),
+        single_func=lambda repo_name: Repo().get_repo_log(repo_name, n),
+        all_func=lambda repo_name: Repo().get_repo_log(repo_name, n),
     )
 
 

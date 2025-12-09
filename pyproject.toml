@@ -138,9 +138,25 @@ test_dir = "src/django/tests"
 clone_dir = "src/django"
 test_dirs = [ "src/django/tests", "src/django-mongodb-backend/tests" ]
 
-[[tool.django-mongodb-cli.test.django.env_vars]]
-name = "PYMONGOCRYPT_LIB"
-value = "/opt/homebrew/lib/libmongocrypt.dylib"
+#[[tool.django-mongodb-cli.test.django.env_vars]]
+#name = "PYMONGOCRYPT_LIB"
+#value = "/opt/homebrew/lib/libmongocrypt.dylib"
+
+#[[tool.django-mongodb-cli.test.django.env_vars]]
+#name = "MONGODB_URI"
+#value = "mongodb://localhost:64437/?directConnection=true"
+
+[[tool.django-mongodb-cli.run.mongo-python-driver.env_vars]]
+name = "DRIVERS_TOOLS"
+value = "/Users/alex.clark/Developer/django-mongodb-cli/src/drivers-evergreen-tools"
+
+#[[tool.django-mongodb-cli.run.mongo-python-driver.env_vars]]
+#name = "MONGODB_URI"
+#value = "mongodb://localhost:64437/?directConnection=true"
+
+[[tool.django-mongodb-cli.run.mongo-python-driver.env_vars]]
+name = "AWS_PROFILE"
+value = "my-profile"
 
 [[tool.django-mongodb-cli.test.django.env_vars]]
 name = "MONGODB_URI"
@@ -361,6 +377,10 @@ repo = "git+ssh://git@github.com/mongodb/django-mongodb-backend"
 
 [tool.django-mongodb-cli.evergreen.django-mongodb-backend]
 project_name = "django-mongodb"
+tasks = ["run-tests"]
+
+[tool.django-mongodb-cli.evergreen.mongo-python-driver]
+project_name = "mongo-python-driver"
 tasks = ["run-tests"]
 
 [tool.django-mongodb-cli.project.settings]

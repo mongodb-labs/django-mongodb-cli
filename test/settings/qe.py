@@ -28,11 +28,10 @@ if _USE_AWS_KMS:
     KMS_CREDENTIALS = {"aws": {"key": _AWS_KEY_ARN, "region": _AWS_REGION}}
     DEFAULT_KMS_PROVIDER = "aws"
 else:
-    pass
-    # Local-only fallback: matches the original configuration.
-    # KMS_PROVIDERS = {"local": {"key": os.urandom(96)}}
-    # KMS_CREDENTIALS = {"aws": {}}
-    # DEFAULT_KMS_PROVIDER = "local"
+    # Local-only fallback
+    KMS_PROVIDERS = {"local": {"key": os.urandom(96)}}
+    KMS_CREDENTIALS = {"local": {}}
+    DEFAULT_KMS_PROVIDER = "local"
 
 
 DATABASES = {

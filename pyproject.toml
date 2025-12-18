@@ -46,7 +46,7 @@ packages = ["django_mongodb_cli", "demo"]
 
 [tool.django-mongodb-cli]
 repos = [
-    "django @ git+ssh://git@github.com/mongodb-forks/django@mongodb-5.2.x",
+    "django @ git+ssh://git@github.com/mongodb-forks/django@mongodb-6.0.x",
     "django-allauth @ git+ssh://git@github.com/pennersr/django-allauth@main",
     "django-debug-toolbar @ git+ssh://git@github.com/django-commons/django-debug-toolbar@main",
     "django-filter @ git+ssh://git@github.com/carltongibson/django-filter@main",
@@ -65,10 +65,13 @@ repos = [
     "langchain-mongodb @ git+ssh://git@github.com/langchain-ai/langchain-mongodb@main",
     "libmongocrypt @ git+ssh://git@github.com/mongodb-labs/libmongocrypt@master",
     "llm-mongogpt @ git+https://https://github.com/10gen/llm-mongogpt.git",
+    "llm-tools-mongodb @ git+https://https://github.com/aclark4life/llm-tools-mongodb.git",
     "mongo @ git+ssh://git@github.com/mongodb/mongo@master",
     "mongo-arrow @ git+ssh://git@github.com/mongodb-labs/mongo-arrow@main",
     "mongo-orchestration @ git+ssh://git@github.com/mongodb-labs/mongo-orchestration@master",
     "mongo-python-driver @ git+ssh://git@github.com/mongodb/mongo-python-driver@master",
+    "mongodb-community-search-setup @ git+ssh://git@github.com/mongodb-js/mongodb-community-search-setup.git",
+    "mongot @ git+ssh://git@github.com/10gen/mongot.git@master",
     "pymongo-auth-aws @ git+ssh://git@github.com/mongodb/pymongo-auth-aws@master",
     "pymongo-search-utils@ git+ssh://git@github.com/mongodb-labs/pymongo-search-utils@main",
     "python-webpack-boilerplate @ git+ssh://git@github.com/AccordBox/python-webpack-boilerplate@master",
@@ -158,17 +161,17 @@ value = "/Users/alex.clark/Developer/django-mongodb-cli/src/drivers-evergreen-to
 name = "AWS_PROFILE"
 value = "my-profile"
 
-[[tool.django-mongodb-cli.test.django.env_vars]]
-name = "MONGODB_URI"
-value = "mongodb://localhost:64437/?directConnection=true"
+# [[tool.django-mongodb-cli.test.django.env_vars]]
+# name = "MONGODB_URI"
+# value = "mongodb://localhost:64437/?directConnection=true"
 
 [[tool.django-mongodb-cli.run.mongo-python-driver.env_vars]]
 name = "DRIVERS_TOOLS"
 value = "/Users/alex.clark/Developer/django-mongodb-cli/src/drivers-evergreen-tools"
 
-[[tool.django-mongodb-cli.run.mongo-python-driver.env_vars]]
-name = "MONGODB_URI"
-value = "mongodb://localhost:64437/?directConnection=true"
+# [[tool.django-mongodb-cli.run.mongo-python-driver.env_vars]]
+# name = "MONGODB_URI"
+# value = "mongodb://localhost:64437/?directConnection=true"
 
 [[tool.django-mongodb-cli.run.mongo-python-driver.env_vars]]
 name = "AWS_PROFILE"

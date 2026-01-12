@@ -4,8 +4,11 @@ import shlex
 
 from .utils import Package, Repo, Test
 
-repo = typer.Typer(help="Manage Git repositories")
-repo_remote = typer.Typer()
+repo = typer.Typer(
+    help="Manage Git repositories",
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
+repo_remote = typer.Typer(context_settings={"help_option_names": ["-h", "--help"]})
 repo.add_typer(repo_remote, name="remote", help="Manage Git repositories")
 
 
@@ -53,26 +56,30 @@ def main(
 @repo_remote.callback(invoke_without_command=True)
 def remote(
     ctx: typer.Context,
-    repo_name: str = typer.Argument(None),
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Show remotes of all repositories"
     ),
 ):
     """
-    Show the git remotes for the specified repository.
-    If --all-repos is used, show remotes for all repositories.
+    Show the git remotes for repositories.
+    Use --all-repos to show remotes for all repositories.
     """
     repo = Repo()
     repo.ctx = ctx
-    repo.ctx.obj["repo_name"] = repo_name
-    repo_command(
-        all_repos,
-        repo_name,
-        all_msg=None,
-        missing_msg="Please specify a repository name or use -a,--all-repos to show remotes of all repositories.",
-        single_func=lambda repo_name: repo.get_repo_remote(repo_name),
-        all_func=lambda repo_name: repo.get_repo_remote(repo_name),
-    )
+    
+    # If a subcommand is being invoked, just set up context and return
+    if ctx.invoked_subcommand is not None:
+        return
+    
+    # If no subcommand, show remotes based on options
+    if all_repos:
+        # Show remotes for all repos
+        for repo_name in repo.map:
+            repo.get_repo_remote(repo_name)
+    else:
+        # Show help since we removed the ability to pass repo_name directly
+        typer.echo(ctx.get_help())
+        raise typer.Exit()
 
 
 @repo_remote.command("add")

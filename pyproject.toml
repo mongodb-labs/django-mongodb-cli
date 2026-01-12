@@ -81,6 +81,22 @@ repos = [
 ]
 path = "src"
 
+[tool.django-mongodb-cli.groups]
+django = [
+    "django",
+    "django-mongodb-backend",
+    "django-mongodb-extensions",
+    "libmongocrypt",
+    "mongo-python-driver",
+]
+langchain = [
+    "langchain-mongodb",
+    "pymongo-search-utils",
+]
+mongo-arrow = [
+    "mongo-arrow",
+]
+
 [tool.django-mongodb-cli.install.libmongocrypt]
 install_dir = "bindings/python"
 

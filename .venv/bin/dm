@@ -1,8 +1,0 @@
-#!/home/runner/work/django-mongodb-cli/django-mongodb-cli/.venv/bin/python
-# -*- coding: utf-8 -*-
-import re
-import sys
-from django_mongodb_cli import dm
-if __name__ == '__main__':
-    sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
-    sys.exit(dm())

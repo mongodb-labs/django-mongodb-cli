@@ -96,6 +96,7 @@ django = [
 langchain = [
     "langchain-mongodb",
     "pymongo-search-utils",
+    "mongodb-community-search-setup",
 ]
 mongo-arrow = [
     "mongo-arrow",

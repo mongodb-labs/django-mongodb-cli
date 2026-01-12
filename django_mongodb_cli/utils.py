@@ -372,11 +372,12 @@ class Repo:
             return
         
         self.info(f"Setting up remotes for {repo_name}:")
+        # Create a mapping from remote names to remote objects for easy lookup
         existing_remotes = {r.name: r for r in repo.remotes}
         for remote_name, remote_url in repo_remotes.items():
             try:
                 # Parse the URL to remove git+ prefix if present
-                url, _ = self.parse_git_url(remote_url)
+                url, parsed_branch = self.parse_git_url(remote_url)
                 
                 # Check if remote already exists
                 if remote_name in existing_remotes:

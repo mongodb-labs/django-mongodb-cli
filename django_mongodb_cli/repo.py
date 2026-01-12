@@ -150,6 +150,38 @@ def remote_setup(
         )
         raise typer.Exit(1)
     
+    # Check that all repositories in the group have been cloned
+    missing_repos = []
+    for repo_name in group_repos:
+        repo_path = repo.get_repo_path(repo_name)
+        if not repo_path.exists():
+            missing_repos.append(repo_name)
+        elif not (repo_path / ".git").exists():
+            # Directory exists but is not a git repository
+            missing_repos.append(repo_name)
+    
+    if missing_repos:
+        typer.echo(
+            typer.style(
+                f"❌ Cannot setup remotes for group '{group}'. The following repositories have not been cloned yet:",
+                fg=typer.colors.RED,
+            )
+        )
+        for repo_name in missing_repos:
+            typer.echo(
+                typer.style(
+                    f"  - {repo_name}",
+                    fg=typer.colors.RED,
+                )
+            )
+        typer.echo(
+            typer.style(
+                f"\nPlease clone the missing repositories first with: dm repo clone --group {group}",
+                fg=typer.colors.YELLOW,
+            )
+        )
+        raise typer.Exit(1)
+    
     typer.echo(
         typer.style(
             f"Setting up remotes for repositories in group '{group}'",

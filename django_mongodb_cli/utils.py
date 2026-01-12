@@ -335,6 +335,74 @@ class Repo:
                 result[name.strip()] = url.strip()
         return result
 
+    def get_groups(self) -> dict:
+        """
+        Return a dict mapping group_name to list of repo names from
+        [tool.django-mongodb-cli.groups].
+        """
+        return self.tool_cfg.get("groups", {}) or {}
+
+    def get_group_repos(self, group_name: str) -> list:
+        """
+        Get the list of repository names for a specific group.
+        Returns an empty list if the group doesn't exist.
+        """
+        groups = self.get_groups()
+        return groups.get(group_name, [])
+
+    def list_groups(self) -> None:
+        """
+        List all available repository groups.
+        """
+        groups = self.get_groups()
+        if not groups:
+            self.warn("No repository groups configured.")
+            return
+        
+        self.info("Available repository groups:")
+        for group_name, repos in groups.items():
+            repo_list = ", ".join(repos)
+            self.ok(f"  {group_name}: {repo_list}")
+
+    def get_group_remotes(self, group_name: str) -> dict:
+        """
+        Get remote configuration for repos in a group.
+        Returns a dict mapping repo_name to dict of remote_name -> remote_url.
+        """
+        remotes_cfg = self.tool_cfg.get("remotes", {}).get(group_name, {}) or {}
+        return remotes_cfg
+
+    def setup_repo_remotes(self, repo_name: str, group_name: str) -> None:
+        """
+        Set up git remotes for a repository based on group configuration.
+        """
+        remotes_cfg = self.get_group_remotes(group_name)
+        repo_remotes = remotes_cfg.get(repo_name, {})
+        
+        if not repo_remotes:
+            self.warn(f"No remote configuration found for {repo_name} in group {group_name}")
+            return
+        
+        _, repo = self.ensure_repo(repo_name)
+        if not repo:
+            return
+        
+        self.info(f"Setting up remotes for {repo_name}:")
+        existing_remotes = {r.name for r in repo.remotes}
+        for remote_name, remote_url in repo_remotes.items():
+            try:
+                # Check if remote already exists
+                if remote_name in existing_remotes:
+                    self.warn(f"  Remote '{remote_name}' already exists, skipping")
+                    continue
+                
+                # Parse the URL to remove git+ prefix if present
+                url, _ = self.parse_git_url(remote_url)
+                repo.create_remote(remote_name, url)
+                self.ok(f"  Added remote '{remote_name}': {url}")
+            except Exception as e:
+                self.err(f"  Failed to add remote '{remote_name}': {e}")
+
     def get_repo_branch(self, repo_name: str, branch_name: str) -> list:
         """
         Get branches for the specified repository.

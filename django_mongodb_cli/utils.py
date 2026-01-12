@@ -135,22 +135,6 @@ class Repo:
     # Repo operations
     # -----------------------------
 
-    def cd_repo(self, repo_name: str) -> None:
-        """
-        Change directory to the specified repository.
-        """
-        self.info(f"Changing directory to repository: {repo_name}")
-        path, _ = self.ensure_repo(repo_name)
-        if not path:
-            return
-
-        try:
-            os.chdir(path)
-            self.ok(f"✅ Changed directory to {path}.")
-            subprocess.run(os.environ.get("SHELL", "/bin/zsh"))
-        except Exception as e:
-            self.err(f"❌ Failed to change directory: {e}")
-
     def checkout_branch(self, repo_name: str, branch_name) -> None:
         _, repo = self.ensure_repo(repo_name)
         try:

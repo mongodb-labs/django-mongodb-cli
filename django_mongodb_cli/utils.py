@@ -372,20 +372,30 @@ class Repo:
             return
         
         self.info(f"Setting up remotes for {repo_name}:")
-        existing_remotes = {r.name for r in repo.remotes}
+        # Create a mapping from remote names to remote objects for easy lookup
+        existing_remotes = {r.name: r for r in repo.remotes}
         for remote_name, remote_url in repo_remotes.items():
             try:
+                # Parse the URL to remove git+ prefix if present
+                url, parsed_branch = self.parse_git_url(remote_url)
+                
                 # Check if remote already exists
                 if remote_name in existing_remotes:
-                    self.warn(f"  Remote '{remote_name}' already exists, skipping")
-                    continue
-                
-                # Parse the URL to remove git+ prefix if present
-                url, _ = self.parse_git_url(remote_url)
-                repo.create_remote(remote_name, url)
-                self.ok(f"  Added remote '{remote_name}': {url}")
+                    existing_remote = existing_remotes[remote_name]
+                    current_url = existing_remote.url
+                    
+                    # Update if URL is different
+                    if current_url != url:
+                        existing_remote.set_url(url)
+                        self.ok(f"  Updated remote '{remote_name}': {url} (was: {current_url})")
+                    else:
+                        self.info(f"  Remote '{remote_name}' already configured with correct URL")
+                else:
+                    # Add new remote
+                    repo.create_remote(remote_name, url)
+                    self.ok(f"  Added remote '{remote_name}': {url}")
             except Exception as e:
-                self.err(f"  Failed to add remote '{remote_name}': {e}")
+                self.err(f"  Failed to configure remote '{remote_name}': {e}")
 
     def get_repo_branch(self, repo_name: str, branch_name: str) -> list:
         """

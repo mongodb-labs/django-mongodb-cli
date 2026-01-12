@@ -125,3 +125,7 @@ PYTHON-5564 group="" package="":
     else \
         python3.10 jira/PYTHON-5564.py --group "{{group}}" --package "{{package}}"; \
     fi
+
+[group('jira')]
+INTPYTHON-808:
+    uv run jira/INTPYTHON-808.py

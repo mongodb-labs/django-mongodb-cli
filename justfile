@@ -15,6 +15,10 @@ git-remote repo:
     @dm repo remote setup --group {{repo}}
     @dm repo set-default --group {{repo}}
 
+
+p:
+    nvim pyproject.toml
+
 # ---------------------------------------- django ----------------------------------------
 
 [group('django')]

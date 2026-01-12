@@ -102,6 +102,77 @@ def remote_remove(
     repo.remote_remove(remote_name)
 
 
+@repo_remote.command("setup")
+def remote_setup(
+    ctx: typer.Context,
+    group: str = typer.Option(
+        None, "--group", "-g", help="Setup remotes for all repositories in a group"
+    ),
+    list_groups: bool = typer.Option(
+        False, "--list-groups", "-l", help="List available repository groups"
+    ),
+):
+    """
+    Setup git remotes for repositories in a group.
+    Use --group to specify which group to configure.
+    Use --list-groups to see available groups.
+    """
+    repo = Repo()
+    repo.ctx = ctx
+    
+    if list_groups:
+        repo.list_groups()
+        raise typer.Exit()
+    
+    if not group:
+        typer.echo(
+            typer.style(
+                "Please specify a group with --group or use --list-groups to see available groups.",
+                fg=typer.colors.YELLOW,
+            )
+        )
+        raise typer.Exit(1)
+    
+    group_repos = repo.get_group_repos(group)
+    if not group_repos:
+        typer.echo(
+            typer.style(
+                f"Group '{group}' not found. Use --list-groups to see available groups.",
+                fg=typer.colors.RED,
+            )
+        )
+        raise typer.Exit(1)
+    
+    typer.echo(
+        typer.style(
+            f"Setting up remotes for repositories in group '{group}'",
+            fg=typer.colors.CYAN,
+        )
+    )
+    
+    for repo_name in group_repos:
+        repo.setup_repo_remotes(repo_name, group)
+    
+    # Fetch from all remotes after setting them up
+    typer.echo(
+        typer.style(
+            f"\nFetching from remotes for group '{group}'...",
+            fg=typer.colors.CYAN,
+        )
+    )
+    for repo_name in group_repos:
+        path, git_repo = repo.ensure_repo(repo_name)
+        if git_repo:
+            repo.fetch_repo(repo_name)
+    
+    typer.echo(
+        typer.style(
+            f"✅ Finished setting up remotes for group '{group}'",
+            fg=typer.colors.GREEN,
+        )
+    )
+
+
 @repo.command()
 def cd(
     ctx: typer.Context,
@@ -225,15 +296,60 @@ def clone(
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Clone all repositories"
     ),
+    group: str = typer.Option(
+        None, "--group", "-g", help="Clone a group of repositories"
+    ),
     install: bool = typer.Option(
         False, "--install", "-i", help="Install after cloning"
     ),
+    list_groups: bool = typer.Option(
+        False, "--list-groups", "-l", help="List available repository groups"
+    ),
 ):
     """
-    Clone a repository.
+    Clone a repository or group of repositories.
     If --all-repos is used, clone all repositories.
+    If --group is used, clone all repositories in the specified group.
     If --install is used, install the package after cloning.
+    If --list-groups is used, list available repository groups.
     """
+    repo_instance = Repo()
+    
+    if list_groups:
+        repo_instance.list_groups()
+        raise typer.Exit()
+    
+    if group:
+        # Clone all repos in the specified group
+        group_repos = repo_instance.get_group_repos(group)
+        if not group_repos:
+            typer.echo(
+                typer.style(
+                    f"Group '{group}' not found. Use --list-groups to see available groups.",
+                    fg=typer.colors.RED,
+                )
+            )
+            raise typer.Exit(1)
+        
+        typer.echo(
+            typer.style(
+                f"Cloning repositories in group '{group}': {', '.join(group_repos)}",
+                fg=typer.colors.CYAN,
+            )
+        )
+        
+        for repo in group_repos:
+            repo_instance.clone_repo(repo)
+            if install:
+                Package().install_package(repo)
+        
+        typer.echo(
+            typer.style(
+                f"✅ Finished cloning group '{group}'",
+                fg=typer.colors.GREEN,
+            )
+        )
+        return
 
     def clone_repo(name):
         Repo().clone_repo(name)
@@ -244,7 +360,7 @@ def clone(
         all_repos,
         repo_name,
         all_msg="Cloning all repositories...",
-        missing_msg="Please specify a repository name or use -a,--all-repos to clone all repositories.",
+        missing_msg="Please specify a repository name, use --group to clone a group, use --list-groups to see available groups, or use -a,--all-repos to clone all repositories.",
         single_func=clone_repo,
         all_func=clone_repo,
     )
@@ -518,10 +634,43 @@ def show(
 @repo.command()
 def set_default(
     repo_name: str = typer.Argument(None),
+    group: str = typer.Option(
+        None, "--group", "-g", help="Set default branch for all repositories in a group"
+    ),
 ):
     """
     Set the specified repository as the default repository.
+    If --group is used, set default branch for all repositories in the group.
     """
+    if group:
+        repo_instance = Repo()
+        group_repos = repo_instance.get_group_repos(group)
+        if not group_repos:
+            typer.echo(
+                typer.style(
+                    f"Group '{group}' not found.",
+                    fg=typer.colors.RED,
+                )
+            )
+            raise typer.Exit(1)
+        
+        typer.echo(
+            typer.style(
+                f"Setting default branch for repositories in group '{group}'",
+                fg=typer.colors.CYAN,
+            )
+        )
+        
+        for repo in group_repos:
+            repo_instance.set_default_repo(repo)
+        
+        typer.echo(
+            typer.style(
+                f"✅ Finished setting default branch for group '{group}'",
+                fg=typer.colors.GREEN,
+            )
+        )
+        return
 
     def set_default(name):
         Repo().set_default_repo(name)
@@ -530,7 +679,7 @@ def set_default(
         False,
         repo_name,
         all_msg=None,
-        missing_msg="Please specify a repository name.",
+        missing_msg="Please specify a repository name or use --group to set default for a group.",
         single_func=set_default,
         all_func=set_default,
     )

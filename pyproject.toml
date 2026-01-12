@@ -84,6 +84,48 @@ repos = [
 ]
 path = "src"
 
+# Repository groups for organizing related repos
+[tool.django-mongodb-cli.groups]
+django = [
+    "django",
+    "django-mongodb-backend",
+    "django-mongodb-extensions",
+    "libmongocrypt",
+    "mongo-python-driver",
+]
+langchain = [
+    "langchain-mongodb",
+    "pymongo-search-utils",
+]
+mongo-arrow = [
+    "mongo-arrow",
+]
+
+# Git remote configuration for repository groups
+[tool.django-mongodb-cli.remotes.django.django-mongodb-backend]
+origin = "git+ssh://git@github.com/aclark4life/django-mongodb-backend"
+upstream = "git+ssh://git@github.com/mongodb/django-mongodb-backend"
+
+[tool.django-mongodb-cli.remotes.django.django-mongodb-extensions]
+origin = "git+ssh://git@github.com/aclark4life/django-mongodb-extensions"
+upstream = "git+ssh://git@github.com/mongodb-labs/django-mongodb-extensions"
+
+[tool.django-mongodb-cli.remotes.pymongo.mongo-python-driver]
+origin = "git+ssh://git@github.com/aclark4life/mongo-python-driver"
+upstream = "git+ssh://git@github.com/mongodb/mongo-python-driver"
+
+[tool.django-mongodb-cli.remotes.langchain.langchain-mongodb]
+origin = "git+ssh://git@github.com/aclark4life/langchain-mongodb"
+upstream = "git+ssh://git@github.com/langchain-ai/langchain-mongodb"
+
+[tool.django-mongodb-cli.remotes.langchain.pymongo-search-utils]
+origin = "git+ssh://git@github.com/aclark4life/pymongo-search-utils"
+upstream = "git+ssh://git@github.com/mongodb-labs/pymongo-search-utils"
+
+[tool.django-mongodb-cli.remotes.mongo-arrow.mongo-arrow]
+origin = "git+ssh://git@github.com/aclark4life/mongo-arrow"
+upstream = "git+ssh://git@github.com/mongodb-labs/mongo-arrow"
+
 [tool.django-mongodb-cli.install.libmongocrypt]
 install_dir = "bindings/python"
 

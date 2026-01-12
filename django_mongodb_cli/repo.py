@@ -338,10 +338,11 @@ def clone(
             )
         )
         
+        package_instance = Package() if install else None
         for repo in group_repos:
             repo_instance.clone_repo(repo)
             if install:
-                Package().install_package(repo)
+                package_instance.install_package(repo)
         
         typer.echo(
             typer.style(

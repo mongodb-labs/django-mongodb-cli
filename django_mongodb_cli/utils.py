@@ -388,10 +388,11 @@ class Repo:
             return
         
         self.info(f"Setting up remotes for {repo_name}:")
+        existing_remotes = {r.name for r in repo.remotes}
         for remote_name, remote_url in repo_remotes.items():
             try:
                 # Check if remote already exists
-                if remote_name in [r.name for r in repo.remotes]:
+                if remote_name in existing_remotes:
                     self.warn(f"  Remote '{remote_name}' already exists, skipping")
                     continue
                 

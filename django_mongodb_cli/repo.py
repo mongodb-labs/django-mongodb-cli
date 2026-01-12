@@ -64,18 +64,18 @@ def remote(
     Show the git remotes for repositories.
     Use --all-repos to show remotes for all repositories.
     """
-    repo = Repo()
-    repo.ctx = ctx
-    
+    repo_manager = Repo()
+    repo_manager.ctx = ctx
+
     # If a subcommand is being invoked, just set up context and return
     if ctx.invoked_subcommand is not None:
         return
-    
+
     # If no subcommand, show remotes based on options
     if all_repos:
         # Show remotes for all repos
-        for repo_name in repo.map:
-            repo.get_repo_remote(repo_name)
+        for repo_name in repo_manager.map:
+            repo_manager.get_repo_remote(repo_name)
     else:
         # Show help since we removed the ability to pass repo_name directly
         typer.echo(ctx.get_help())

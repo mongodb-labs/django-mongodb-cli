@@ -213,25 +213,6 @@ def remote_setup(
 
 
 @repo.command()
-def cd(
-    ctx: typer.Context,
-    repo_name: str = typer.Argument(None),
-):
-    """Change directory to the specified repository."""
-    repo = Repo()
-    repo.ctx = ctx
-
-    repo_command(
-        False,
-        repo_name,
-        all_msg=None,
-        missing_msg="Please specify a repository name.",
-        single_func=repo.cd_repo,
-        all_func=repo.cd_repo,
-    )
-
-
-@repo.command()
 def run(
     ctx: typer.Context,
     repo_name: str = typer.Argument(..., help="Repository name"),

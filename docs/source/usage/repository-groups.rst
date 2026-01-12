@@ -34,12 +34,18 @@ Setting Up Remotes
 
 After cloning, you can setup git remotes for all repositories in a group::
 
-    dm repo remote setup --group django
+    dm repo remote - setup --group django
+
+Note: The ``-`` is a placeholder for the repository name argument since we're using the ``setup`` subcommand.
 
 This will:
 
 1. Add configured remotes (origin and upstream) for each repository
 2. Fetch from all remotes
+
+To list available groups::
+
+    dm repo remote - setup --list-groups
 
 Setting Default Branches
 -------------------------

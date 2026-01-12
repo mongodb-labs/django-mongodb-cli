@@ -32,8 +32,8 @@ dm repo clone --list-groups
 # Clone all repositories in a group
 dm repo clone --group django --install
 
-# Setup git remotes for a group
-dm repo remote setup --group django
+# Setup git remotes for a group (note: - is a placeholder for the repo name)
+dm repo remote - setup --group django
 
 # Set default branch for all repos in a group
 dm repo set-default --group django

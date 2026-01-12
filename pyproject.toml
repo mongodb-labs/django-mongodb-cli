@@ -56,6 +56,7 @@ repos = [
     "django-mongodb-extensions @ git+ssh://git@github.com/mongodb-labs/django-mongodb-extensions@main",
     "django-mongodb-project @ git+ssh://git@github.com/mongodb-labs/django-mongodb-project@5.2.x",
     "django-mongodb-project-benchmark @ git+ssh://git@github.com/NoahStapp/django-mongodb-backend-benchmark.git@main",
+    "django-mongodb-uat@ git+ssh://git@github.com/aclark4life/django-mongodb-uat@main",
     "django-rest-framework @ git+ssh://git@github.com/encode/django-rest-framework@main",
     "docs @ git+ssh://git@github.com/mongodb/docs@main",
     "docs-sample-apps @ git+ssh://git@github.com/mongodb/docs-sample-apps@main",

@@ -154,7 +154,9 @@ groups = ["dev"]
 
 [tool.django-mongodb-cli.test.langchain-mongodb]
 test_command = "pytest"
-test_dirs = ["src/langchain-mongodb/libs/langchain-mongodb/tests"]
+test_dirs = ["src/langchain-mongodb/libs/langchain-mongodb/tests",
+    "src/langchain-mongodb/libs/langgraph-store-mongodb/tests",
+]
 
 [tool.django-mongodb-cli.test.pymongo-search-utils]
 test_command = "pytest"

@@ -943,12 +943,6 @@ class Test(Repo):
         test_config = self.tool_cfg.get("test", {}).get(repo_name, {})
         test_dirs = test_config.get("test_dirs", [])
 
-        # Fallback to test_dir if test_dirs is not specified
-        if not test_dirs:
-            test_dir = test_config.get("test_dir")
-            if test_dir:
-                test_dirs = [test_dir]
-
         if not test_dirs:
             self.err(f"No test directories configured for {repo_name}.")
             return
@@ -1002,16 +996,13 @@ class Test(Repo):
             return
 
         # Determine the working directory for running tests
-        # Priority: clone_dir > test_dir > first entry in test_dirs
+        # Priority: clone_dir > first entry in test_dirs
         clone_dir = self.test_settings.get("clone_dir")
         test_dirs = self.test_settings.get("test_dirs", [])
-        test_dir = self.test_settings.get("test_dir")
 
         # Determine cwd (current working directory)
         if clone_dir and os.path.exists(clone_dir):
             cwd = clone_dir
-        elif test_dir and os.path.exists(test_dir):
-            cwd = test_dir
         elif test_dirs and os.path.exists(test_dirs[0]):
             cwd = test_dirs[0]
         else:

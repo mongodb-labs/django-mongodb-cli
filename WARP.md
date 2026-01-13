@@ -195,7 +195,7 @@ Tests are generally run *in external repositories* managed by this CLI; there ar
 
 Testing behavior is driven by the `[tool.django-mongodb-cli.test.<repo_name>]` blocks in `pyproject.toml`. `django_mongodb_cli.utils.Test` reads this configuration to decide:
 - Which command to run (`pytest`, `./runtests.py`, or `just`).
-- Which directory to run tests from (`test_dir`).
+- Which directories to run tests from (`test_dirs`).
 - Any additional options (`test_options`, `env_vars`, `settings.module`, etc.).
 
 The high-level command is:
@@ -206,7 +206,7 @@ dm repo test <repo_name> [modules...] [--keepdb] [--keyword PATTERN] [--list-tes
 
 Notes:
 - If `--mongodb-uri` is provided (or `MONGODB_URI` is already set), it is exported to the environment before running tests.
-- If `--list-tests` is passed, the tool recursively walks `test_dir` and prints discovered Python test files instead of executing them.
+- If `--list-tests` is passed, the tool recursively walks the configured `test_dirs` and prints discovered Python test files instead of executing them.
 - If one or more `modules` are given, they are appended to the underlying test command, allowing you to scope test runs to a specific test module or package.
 
 Example patterns (adapt to a specific repo and path):
@@ -223,7 +223,7 @@ Example patterns (adapt to a specific repo and path):
   dm repo test django-rest-framework
   ```
 
-- Run a single test module (path is relative to the configured `test_dir` for that repo):
+- Run a single test module (path is relative to the configured `test_dirs` for that repo):
 
   ```bash path=null start=null
   dm repo test <repo_name> path/to/test_module.py
@@ -276,7 +276,7 @@ The primary purpose of this repository is to provide the `dm` CLI, which helps m
 - `repos` — list of `"name @ git+ssh://..."` strings parsed into a mapping of logical repo names to Git URLs.
 - `install.<repo_name>` — per-repo installation metadata (e.g., `install_dir`, extra `env_vars`). Used by `Package.install_package` when called via `dm repo install` or `dm repo clone --install`.
 - `test.<repo_name>` — per-repo test configuration, used by `Test.run_tests` and `dm repo test` to:
-  - Determine `test_dir` and optional `test_dirs`.
+  - Determine `test_dirs` for the test directories.
   - Specify `test_command` (`pytest`, `./runtests.py`, or `just`).
   - Provide additional `test_options`, settings modules, and environment variables.
   - Configure templates for MongoDB-specific settings files, migrations, and app configs that are copied into external repos prior to running tests.

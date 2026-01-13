@@ -154,15 +154,14 @@ groups = ["dev"]
 
 [tool.django-mongodb-cli.test.langchain-mongodb]
 test_command = "pytest"
-test_dir = "src/langchain-mongodb/libs/langchain-mongodb/tests"
+test_dirs = ["src/langchain-mongodb/libs/langchain-mongodb/tests"]
 
 [tool.django-mongodb-cli.test.pymongo-search-utils]
 test_command = "pytest"
-test_dir = "src/pymongo-search-utils/tests"
+test_dirs = ["src/pymongo-search-utils/tests"]
 
 [tool.django-mongodb-cli.test.mongo-python-driver]
 test_command = "just"
-test_dir = "src/mongo-python-driver/test"
 clone_dir = "src/mongo-python-driver"
 test_dirs = ["src/mongo-python-driver/test"]
 
@@ -184,7 +183,6 @@ test_options = [
     "--debug-sql",
     "--noinput",
 ]
-test_dir = "src/django/tests"
 clone_dir = "src/django"
 test_dirs = [ "src/django/tests", "src/django-mongodb-backend/tests" ]
 
@@ -243,7 +241,6 @@ migrations = "mongo_settings"
 
 [tool.django-mongodb-cli.test.django-filter]
 test_command = "./runtests.py"
-test_dir = "src/django-filter"
 clone_dir = "src/django-filter"
 test_dirs = ["src/django-filter/tests"]
 
@@ -269,7 +266,6 @@ migrations = "tests.settings"
 
 [tool.django-mongodb-cli.test.django-rest-framework]
 test_command = "./runtests.py"
-test_dir = "src/django-rest-framework"
 clone_dir = "src/django-rest-framework"
 test_dirs = ["src/django-rest-framework/tests"]
 
@@ -295,7 +291,6 @@ migrations = "tests.conftest"
 
 [tool.django-mongodb-cli.test.wagtail]
 test_command = "./runtests.py"
-test_dir = "src/wagtail"
 clone_dir = "src/wagtail"
 test_dirs = [
   "src/wagtail/wagtail/tests",
@@ -324,7 +319,6 @@ migrations = "wagtail.test.mongo_settings"
 
 [tool.django-mongodb-cli.test.django-debug-toolbar]
 test_command = "pytest"
-test_dir = "src/django-debug-toolbar"
 clone_dir = "src/django-debug-toolbar"
 test_dirs = ["src/django-debug-toolbar/tests"]
 
@@ -346,7 +340,6 @@ migrations = "debug_toolbar.mongo_settings"
 
 [tool.django-mongodb-cli.test.django-mongodb-extensions]
 test_command = "pytest"
-test_dir = "src/django-mongodb-extensions"
 clone_dir = "src/django-mongodb-extensions"
 test_dirs = ["src/django-mongodb-extensions/django_mongodb_extensions/tests"]
 
@@ -368,7 +361,6 @@ migrations = "django_mongodb_extensions.mongo_settings"
 
 [tool.django-mongodb-cli.test.django-allauth]
 test_command = "pytest"
-test_dir = "src/django-allauth"
 clone_dir = "src/django-allauth"
 test_dirs = [
   "src/django-allauth/allauth/usersessions/tests",

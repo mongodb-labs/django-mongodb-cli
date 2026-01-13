@@ -1024,7 +1024,7 @@ class Test(Repo):
             test_command.extend(["--settings", test_settings_module])
 
         if test_command_name == "pytest":
-            test_command.extend(["-v"])
+            test_command.extend(["-v", "--continue-on-collection-errors"])
 
         if test_options:
             test_command.extend(test_options)

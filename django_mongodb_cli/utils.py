@@ -1036,6 +1036,9 @@ class Test(Repo):
             test_command.extend(["-k", self.keyword])
         if self.modules:
             test_command.extend(self.modules)
+        elif test_command_name == "pytest" and test_dirs:
+            # When no specific modules are provided, pass all test_dirs to pytest
+            test_command.extend(test_dirs)
 
         env = os.environ.copy()
         env_vars_list = self.tool_cfg.get("test", {}).get(repo_name, {}).get("env_vars")

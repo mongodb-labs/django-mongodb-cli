@@ -940,43 +940,57 @@ class Test(Repo):
         """
         List all test files (recursively) and subdirectories for the specified repository.
         """
-        test_dir = self.tool_cfg.get("test", {}).get(repo_name, {}).get("test_dir")
+        test_config = self.tool_cfg.get("test", {}).get(repo_name, {})
+        test_dirs = test_config.get("test_dirs", [])
 
-        self.info(f"Listing tests for repository `{repo_name}` in `{test_dir}`:")
+        # Fallback to test_dir if test_dirs is not specified
+        if not test_dirs:
+            test_dir = test_config.get("test_dir")
+            if test_dir:
+                test_dirs = [test_dir]
 
-        if not test_dir or not os.path.exists(test_dir):
-            self.err(f"Test directory '{test_dir}' does not exist for {repo_name}.")
+        if not test_dirs:
+            self.err(f"No test directories configured for {repo_name}.")
             return
+
+        self.info(f"Listing tests for repository `{repo_name}` in {len(test_dirs)} directory(ies):")
 
         try:
             found_any = False
-            for root, dirs, files in os.walk(test_dir):
-                # Ignore __pycache__ dirs
-                dirs[:] = [d for d in dirs if not d.startswith("__")]
-                dirs.sort()
+            for test_dir in test_dirs:
+                if not os.path.exists(test_dir):
+                    self.warn(f"Test directory '{test_dir}' does not exist for {repo_name}.")
+                    continue
 
-                rel_path = os.path.relpath(root, test_dir)
-                display_path = "." if rel_path == "." else rel_path
+                self.ok(f"\n📁 {test_dir}")
 
-                test_files = [
-                    f for f in files if f.endswith(".py") and not f.startswith("__")
-                ]
-                quiet = self.ctx.obj.get("quiet", True)
+                for root, dirs, files in os.walk(test_dir):
+                    # Ignore __pycache__ dirs
+                    dirs[:] = [d for d in dirs if not d.startswith("__")]
+                    dirs.sort()
 
-                if not quiet or test_files:
-                    self.ok(f"\n📂 {display_path}")
+                    rel_path = os.path.relpath(root, test_dir)
+                    display_path = "." if rel_path == "." else rel_path
 
-                if test_files:
-                    found_any = True
-                    for test_file in sorted(test_files):
-                        typer.echo(f"  - {test_file}")
-                else:
-                    if not quiet:
-                        typer.echo("  (no test files)")
+                    test_files = [
+                        f for f in files if f.endswith(".py") and not f.startswith("__")
+                    ]
+                    quiet = self.ctx.obj.get("quiet", True)
+
+                    if not quiet or test_files:
+                        self.ok(f"\n  📂 {display_path}")
+
+                    if test_files:
+                        found_any = True
+                        for test_file in sorted(test_files):
+                            typer.echo(f"    - {test_file}")
+                    else:
+                        if not quiet:
+                            typer.echo("    (no test files)")
 
             if not found_any:
                 self.warn(
-                    f"No Python test files found in {test_dir} (including subdirectories) for {repo_name}."
+                    f"No Python test files found in configured test directories for {repo_name}."
                 )
         except Exception as e:
             self.err(f"❌ Failed to list tests for {repo_name}: {e}")
@@ -987,9 +1001,21 @@ class Test(Repo):
             self.warn(f"No test settings found for {repo_name}.")
             return
 
+        # Determine the working directory for running tests
+        # Priority: clone_dir > test_dir > first entry in test_dirs
+        clone_dir = self.test_settings.get("clone_dir")
+        test_dirs = self.test_settings.get("test_dirs", [])
         test_dir = self.test_settings.get("test_dir")
-        if not test_dir or not os.path.exists(test_dir):
-            self.err(f"Test directory '{test_dir}' does not exist for {repo_name}.")
+
+        # Determine cwd (current working directory)
+        if clone_dir and os.path.exists(clone_dir):
+            cwd = clone_dir
+        elif test_dir and os.path.exists(test_dir):
+            cwd = test_dir
+        elif test_dirs and os.path.exists(test_dirs[0]):
+            cwd = test_dirs[0]
+        else:
+            self.err(f"No valid working directory found for {repo_name}.")
             return
 
         # Prepare environment/files
@@ -1024,9 +1050,9 @@ class Test(Repo):
         env_vars_list = self.tool_cfg.get("test", {}).get(repo_name, {}).get("env_vars")
         if env_vars_list:
             env.update({item["name"]: str(item["value"]) for item in env_vars_list})
-        self.info(f"Running tests in {test_dir} with command: {' '.join(test_command)}")
+        self.info(f"Running tests in {cwd} with command: {' '.join(test_command)}")
 
-        subprocess.run(test_command, cwd=test_dir, env=env)
+        subprocess.run(test_command, cwd=cwd, env=env)
 
     def run_tests(self, repo_name: str) -> None:
         """

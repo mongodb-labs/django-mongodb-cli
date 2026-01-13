@@ -1036,7 +1036,7 @@ class Test(Repo):
             test_command.extend(["-k", self.keyword])
         if self.modules:
             test_command.extend(self.modules)
-        elif test_command[0] == "pytest" and test_dirs:
+        elif test_command and test_command[0] == "pytest" and test_dirs:
             # When no specific modules are provided, pass all test_dirs to pytest
             test_command.extend(test_dirs)
 

@@ -150,7 +150,7 @@ value = "/opt/homebrew/opt/mongo-c-driver@1/lib/pkgconfig"
 install_dir = "libs/langchain-mongodb"
 # Optional: Install extras and PEP 735 dependency groups from pyproject.toml
 # extras = ["community"]
-# groups = ["dev", "test"]
+groups = ["dev"]
 
 [tool.django-mongodb-cli.test.langchain-mongodb]
 test_command = "pytest"

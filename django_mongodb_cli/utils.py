@@ -1032,20 +1032,29 @@ class Test(Repo):
             test_command.extend(["--keepdb"])
         if self.keyword:
             test_command.extend(["-k", self.keyword])
-        if self.modules:
-            test_command.extend(self.modules)
-        elif test_command and test_command[0] == "pytest" and test_dirs:
-            # When no specific modules are provided, pass all test_dirs to pytest
-            # Note: We check test_command[0] rather than test_command_name to handle
-            # cases where test_command_name is None (which defaults to pytest)
-            test_command.extend(test_dirs)
-
+        
+        # Prepare environment variables
         env = os.environ.copy()
         env_vars_list = self.tool_cfg.get("test", {}).get(repo_name, {}).get("env_vars")
         if env_vars_list:
             env.update({item["name"]: str(item["value"]) for item in env_vars_list})
-        self.info(f"Running tests in {cwd} with command: {' '.join(test_command)}")
+        
+        if self.modules:
+            test_command.extend(self.modules)
+        elif test_command and test_command[0] == "pytest" and test_dirs:
+            # When no specific modules are provided, run pytest separately for each test_dir
+            # This avoids import errors when one test directory has problematic imports
+            # but allows all tests to run
+            for test_dir in test_dirs:
+                test_cmd = test_command.copy()
+                test_cmd.append(test_dir)
+                self.info(f"Running tests in {cwd} with command: {' '.join(test_cmd)}")
+                result = subprocess.run(test_cmd, cwd=cwd, env=env)
+                if result.returncode != 0:
+                    self.warn(f"Tests in {test_dir} failed with return code {result.returncode}")
+            return  # Early return since we already ran the tests
 
+        self.info(f"Running tests in {cwd} with command: {' '.join(test_command)}")
         subprocess.run(test_command, cwd=cwd, env=env)
 
     def run_tests(self, repo_name: str) -> None:

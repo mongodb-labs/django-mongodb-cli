@@ -942,7 +942,7 @@ class Test(Repo):
         """
         test_config = self.tool_cfg.get("test", {}).get(repo_name, {})
         test_dirs = test_config.get("test_dirs", [])
-        
+
         # Fallback to test_dir if test_dirs is not specified
         if not test_dirs:
             test_dir = test_config.get("test_dir")
@@ -963,7 +963,7 @@ class Test(Repo):
                     continue
 
                 self.ok(f"\n📁 {test_dir}")
-                
+
                 for root, dirs, files in os.walk(test_dir):
                     # Ignore __pycache__ dirs
                     dirs[:] = [d for d in dirs if not d.startswith("__")]
@@ -1006,7 +1006,7 @@ class Test(Repo):
         clone_dir = self.test_settings.get("clone_dir")
         test_dirs = self.test_settings.get("test_dirs", [])
         test_dir = self.test_settings.get("test_dir")
-        
+
         # Determine cwd (current working directory)
         if clone_dir and os.path.exists(clone_dir):
             cwd = clone_dir

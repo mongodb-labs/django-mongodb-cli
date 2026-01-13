@@ -335,19 +335,6 @@ class Repo:
                 result[name.strip()] = url.strip()
         return result
 
-    def get_group_repos(self, group_name: str) -> list[str]:
-        """
-        Return a list of repository names for the specified group.
-        Groups are defined in [tool.django-mongodb-cli.groups].
-        """
-        groups = self.tool_cfg.get("groups", {}) or {}
-        if group_name not in groups:
-            self.err(f"Group '{group_name}' not found in configuration.")
-            available_groups = ", ".join(groups.keys()) if groups else "none"
-            self.info(f"Available groups: {available_groups}")
-            return []
-        return groups[group_name]
-
     def get_repo_branch(self, repo_name: str, branch_name: str) -> list:
         """
         Get branches for the specified repository.

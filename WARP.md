@@ -137,8 +137,6 @@ Frontend helpers assume a `frontend` app inside the Django project (or another d
 
 External repositories and their Git URLs are defined under `[tool.django-mongodb-cli.repos]` in the root `pyproject.toml`. By default they are cloned under `path = "src"` from that same config.
 
-Repository groups can be defined under `[tool.django-mongodb-cli.groups]` to simplify working with related repositories. For example, the `django` group includes all Django-related repositories.
-
 Key patterns:
 
 - List known repos from config and filesystem:
@@ -152,21 +150,11 @@ Key patterns:
   ```bash path=null start=null
   dm repo clone <repo_name> [--install]
   dm repo clone --all-repos [--install]
-  dm repo clone --group <group_name> [--install]
   ```
 
   Clone behavior (paths, branches, etc.) is driven by `Repo.get_map()` and `Repo.parse_git_url()` in `django_mongodb_cli/utils.py`.
 
-- Set up Git remotes and defaults via `dm repo remote` and `dm repo set-default`:
-
-  ```bash path=null start=null
-  dm repo remote <repo_name>
-  dm repo remote --group <group_name>
-  dm repo set-default <repo_name>
-  dm repo set-default --group <group_name>
-  ```
-
-  These commands also support `--all-repos` to operate on all repositories. Groups like `django`, `langchain`, and `mongo-arrow` provide convenient shortcuts for common repository collections.
+- Set up Git remotes and defaults via `dm repo remote` and `dm repo set-default` (these are wrapped in convenient `just git-remote` recipes for common groups like `django`, `langchain`, `mongo-arrow`).
 
 - Inspect and maintain repos:
 

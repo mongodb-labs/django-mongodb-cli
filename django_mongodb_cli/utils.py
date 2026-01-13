@@ -1012,7 +1012,7 @@ class Test(Repo):
             cwd = clone_dir
         elif test_dir and os.path.exists(test_dir):
             cwd = test_dir
-        elif test_dirs and len(test_dirs) > 0 and os.path.exists(test_dirs[0]):
+        elif test_dirs and os.path.exists(test_dirs[0]):
             cwd = test_dirs[0]
         else:
             self.err(f"No valid working directory found for {repo_name}.")

@@ -792,22 +792,56 @@ class Package(Repo):
             env.update({item["name"]: str(item["value"]) for item in env_vars_list})
 
         # Install the base package
-        if self.run(["uv", "pip", "install", "-e", str(path)], env=env):
-            self.ok(f"Installed {repo_name}")
+        if not self.run(["uv", "pip", "install", "-e", str(path)], env=env):
+            self.err(f"Failed to install {repo_name}")
+            return
         
-        # Install optional dependency groups if specified
+        self.ok(f"Installed {repo_name}")
+        
+        # Install optional extras if specified
+        extras = install_cfg.get("extras")
+        if extras:
+            if not isinstance(extras, list):
+                self.warn(f"'extras' for {repo_name} should be a list, got {type(extras).__name__}")
+            else:
+                for extra in extras:
+                    # Validate extra name contains only safe characters
+                    if not isinstance(extra, str) or not extra.replace("-", "").replace("_", "").isalnum():
+                        self.warn(f"Skipping invalid extra name: {extra}")
+                        continue
+                    
+                    self.info(f"Installing optional extra: {extra}")
+                    # Install extras using the standard [extra] syntax
+                    extra_path = f"{path}[{extra}]"
+                    if self.run(["uv", "pip", "install", "-e", extra_path], env=env):
+                        self.ok(f"Installed {repo_name}[{extra}]")
+                    else:
+                        self.warn(f"Failed to install {repo_name}[{extra}]")
+        
+        # Install dependency groups if specified (PEP 735)
         groups = install_cfg.get("groups")
         if groups:
             if not isinstance(groups, list):
                 self.warn(f"'groups' for {repo_name} should be a list, got {type(groups).__name__}")
             else:
-                for group in groups:
-                    self.info(f"Installing optional dependency group: {group}")
-                    group_path = f"{path}[{group}]"
-                    if self.run(["uv", "pip", "install", "-e", group_path], env=env):
-                        self.ok(f"Installed {repo_name}[{group}]")
-                    else:
-                        self.warn(f"Failed to install {repo_name}[{group}]")
+                # Check if pyproject.toml exists in the path
+                pyproject_path = path / "pyproject.toml"
+                if not pyproject_path.exists():
+                    self.warn(f"No pyproject.toml found at {path}, skipping dependency groups")
+                else:
+                    for group in groups:
+                        # Validate group name contains only safe characters
+                        if not isinstance(group, str) or not group.replace("-", "").replace("_", "").isalnum():
+                            self.warn(f"Skipping invalid group name: {group}")
+                            continue
+                        
+                        self.info(f"Installing dependency group: {group}")
+                        # Use pip install --group with pyproject.toml:group format
+                        group_arg = f"{pyproject_path}:{group}"
+                        if self.run(["pip", "install", "--group", group_arg], env=env):
+                            self.ok(f"Installed dependency group {group} for {repo_name}")
+                        else:
+                            self.warn(f"Failed to install dependency group {group} for {repo_name}")
 
     def uninstall_package(self, repo_name: str) -> None:
         """

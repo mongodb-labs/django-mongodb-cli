@@ -135,22 +135,6 @@ class Repo:
     # Repo operations
     # -----------------------------
 
-    def cd_repo(self, repo_name: str) -> None:
-        """
-        Change directory to the specified repository.
-        """
-        self.info(f"Changing directory to repository: {repo_name}")
-        path, _ = self.ensure_repo(repo_name)
-        if not path:
-            return
-
-        try:
-            os.chdir(path)
-            self.ok(f"✅ Changed directory to {path}.")
-            subprocess.run(os.environ.get("SHELL", "/bin/zsh"))
-        except Exception as e:
-            self.err(f"❌ Failed to change directory: {e}")
-
     def checkout_branch(self, repo_name: str, branch_name) -> None:
         _, repo = self.ensure_repo(repo_name)
         try:
@@ -334,6 +318,84 @@ class Repo:
                 name, url = repo.split("@", 1)
                 result[name.strip()] = url.strip()
         return result
+
+    def get_groups(self) -> dict:
+        """
+        Return a dict mapping group_name to list of repo names from
+        [tool.django-mongodb-cli.groups].
+        """
+        return self.tool_cfg.get("groups", {}) or {}
+
+    def get_group_repos(self, group_name: str) -> list:
+        """
+        Get the list of repository names for a specific group.
+        Returns an empty list if the group doesn't exist.
+        """
+        groups = self.get_groups()
+        return groups.get(group_name, [])
+
+    def list_groups(self) -> None:
+        """
+        List all available repository groups.
+        """
+        groups = self.get_groups()
+        if not groups:
+            self.warn("No repository groups configured.")
+            return
+        
+        self.info("Available repository groups:")
+        for group_name, repos in groups.items():
+            repo_list = ", ".join(repos)
+            self.ok(f"  {group_name}: {repo_list}")
+
+    def get_group_remotes(self, group_name: str) -> dict:
+        """
+        Get remote configuration for repos in a group.
+        Returns a dict mapping repo_name to dict of remote_name -> remote_url.
+        """
+        remotes_cfg = self.tool_cfg.get("remotes", {}).get(group_name, {}) or {}
+        return remotes_cfg
+
+    def setup_repo_remotes(self, repo_name: str, group_name: str) -> None:
+        """
+        Set up git remotes for a repository based on group configuration.
+        """
+        remotes_cfg = self.get_group_remotes(group_name)
+        repo_remotes = remotes_cfg.get(repo_name, {})
+        
+        if not repo_remotes:
+            self.warn(f"No remote configuration found for {repo_name} in group {group_name}")
+            return
+        
+        _, repo = self.ensure_repo(repo_name)
+        if not repo:
+            return
+        
+        self.info(f"Setting up remotes for {repo_name}:")
+        # Create a mapping from remote names to remote objects for easy lookup
+        existing_remotes = {r.name: r for r in repo.remotes}
+        for remote_name, remote_url in repo_remotes.items():
+            try:
+                # Parse the URL to remove git+ prefix if present
+                url, parsed_branch = self.parse_git_url(remote_url)
+                
+                # Check if remote already exists
+                if remote_name in existing_remotes:
+                    existing_remote = existing_remotes[remote_name]
+                    current_url = existing_remote.url
+                    
+                    # Update if URL is different
+                    if current_url != url:
+                        existing_remote.set_url(url)
+                        self.ok(f"  Updated remote '{remote_name}': {url} (was: {current_url})")
+                    else:
+                        self.info(f"  Remote '{remote_name}' already configured with correct URL")
+                else:
+                    # Add new remote
+                    repo.create_remote(remote_name, url)
+                    self.ok(f"  Added remote '{remote_name}': {url}")
+            except Exception as e:
+                self.err(f"  Failed to configure remote '{remote_name}': {e}")
 
     def get_repo_branch(self, repo_name: str, branch_name: str) -> list:
         """

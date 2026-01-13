@@ -2,18 +2,18 @@
 name = "example_project (overwritten by `dm project`)"
 version = "0.1.0"
 description = "An example Python project"
-authors = [
-    { name = "Your Name", email = "" },
-]
 readme = "README.md"
+requires-python = ">=3.7"
 license = { file = "LICENSE" }
-dependencies = [
-    "requests>=2.25.1",
-    "numpy>=1.19.5",
+authors = [
+  { name = "Your Name", email = "" },
 ]
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
 ]
-requires-python = ">=3.7"
+dependencies = [
+  "numpy>=1.19.5",
+  "requests>=2.25.1",
+]

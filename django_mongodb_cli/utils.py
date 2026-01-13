@@ -1038,6 +1038,8 @@ class Test(Repo):
             test_command.extend(self.modules)
         elif test_command and test_command[0] == "pytest" and test_dirs:
             # When no specific modules are provided, pass all test_dirs to pytest
+            # Note: We check test_command[0] rather than test_command_name to handle
+            # cases where test_command_name is None (which defaults to pytest)
             test_command.extend(test_dirs)
 
         env = os.environ.copy()

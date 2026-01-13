@@ -778,24 +778,36 @@ class Package(Repo):
         if not path:
             return
 
-        install_dir = (
-            self.tool_cfg.get("install", {}).get(repo_name, {}).get("install_dir")
-        )
+        install_cfg = self.tool_cfg.get("install", {}).get(repo_name, {})
+        install_dir = install_cfg.get("install_dir")
         if install_dir:
             path = Path(path / install_dir).resolve()
             self.info(f"Using custom install directory: {path}")
 
         env = os.environ.copy()
-        env_vars_list = (
-            self.tool_cfg.get("install", {}).get(repo_name, {}).get("env_vars")
-        )
+        env_vars_list = install_cfg.get("env_vars")
         if env_vars_list:
             typer.echo("Setting environment variables for installation:")
             typer.echo(env_vars_list)
             env.update({item["name"]: str(item["value"]) for item in env_vars_list})
 
+        # Install the base package
         if self.run(["uv", "pip", "install", "-e", str(path)], env=env):
             self.ok(f"Installed {repo_name}")
+        
+        # Install optional dependency groups if specified
+        groups = install_cfg.get("groups")
+        if groups:
+            if not isinstance(groups, list):
+                self.warn(f"'groups' for {repo_name} should be a list, got {type(groups).__name__}")
+            else:
+                for group in groups:
+                    self.info(f"Installing optional dependency group: {group}")
+                    group_path = f"{path}[{group}]"
+                    if self.run(["uv", "pip", "install", "-e", group_path], env=env):
+                        self.ok(f"Installed {repo_name}[{group}]")
+                    else:
+                        self.warn(f"Failed to install {repo_name}[{group}]")
 
     def uninstall_package(self, repo_name: str) -> None:
         """

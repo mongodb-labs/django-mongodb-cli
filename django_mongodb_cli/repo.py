@@ -57,33 +57,19 @@ def remote(
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Show remotes of all repositories"
     ),
-    group: str = typer.Option(
-        None, "--group", "-g", help="Show remotes of all repositories in the specified group"
-    ),
 ):
     """
     Show the git remotes for the specified repository.
     If --all-repos is used, show remotes for all repositories.
-    If --group is used, show remotes for all repositories in the specified group.
     """
     repo = Repo()
     repo.ctx = ctx
     repo.ctx.obj["repo_name"] = repo_name
-    
-    # Handle group option
-    if group:
-        group_repos = repo.get_group_repos(group)
-        if group_repos:
-            repo.info(f"Showing remotes for repositories in group '{group}'...")
-            for name in group_repos:
-                repo.get_repo_remote(name)
-        return
-    
     repo_command(
         all_repos,
         repo_name,
         all_msg=None,
-        missing_msg="Please specify a repository name, use -g,--group for a group, or use -a,--all-repos to show remotes of all repositories.",
+        missing_msg="Please specify a repository name or use -a,--all-repos to show remotes of all repositories.",
         single_func=lambda repo_name: repo.get_repo_remote(repo_name),
         all_func=lambda repo_name: repo.get_repo_remote(repo_name),
     )
@@ -242,14 +228,10 @@ def clone(
     install: bool = typer.Option(
         False, "--install", "-i", help="Install after cloning"
     ),
-    group: str = typer.Option(
-        None, "--group", "-g", help="Clone all repositories in the specified group"
-    ),
 ):
     """
     Clone a repository.
     If --all-repos is used, clone all repositories.
-    If --group is used, clone all repositories in the specified group.
     If --install is used, install the package after cloning.
     """
 
@@ -258,21 +240,11 @@ def clone(
         if install:
             Package().install_package(name)
 
-    # Handle group option
-    if group:
-        repo_obj = Repo()
-        group_repos = repo_obj.get_group_repos(group)
-        if group_repos:
-            repo_obj.info(f"Cloning repositories in group '{group}'...")
-            for name in group_repos:
-                clone_repo(name)
-        return
-
     repo_command(
         all_repos,
         repo_name,
         all_msg="Cloning all repositories...",
-        missing_msg="Please specify a repository name, use -g,--group to clone a group, or use -a,--all-repos to clone all repositories.",
+        missing_msg="Please specify a repository name or use -a,--all-repos to clone all repositories.",
         single_func=clone_repo,
         all_func=clone_repo,
     )
@@ -546,35 +518,21 @@ def show(
 @repo.command()
 def set_default(
     repo_name: str = typer.Argument(None),
-    group: str = typer.Option(
-        None, "--group", "-g", help="Set default for all repositories in the specified group"
-    ),
 ):
     """
     Set the specified repository as the default repository.
-    If --group is used, set default for all repositories in the specified group.
     """
 
-    def set_default_func(name):
+    def set_default(name):
         Repo().set_default_repo(name)
-
-    # Handle group option
-    if group:
-        repo_obj = Repo()
-        group_repos = repo_obj.get_group_repos(group)
-        if group_repos:
-            repo_obj.info(f"Setting default for repositories in group '{group}'...")
-            for name in group_repos:
-                set_default_func(name)
-        return
 
     repo_command(
         False,
         repo_name,
         all_msg=None,
-        missing_msg="Please specify a repository name or use -g,--group to set default for a group.",
-        single_func=set_default_func,
-        all_func=set_default_func,
+        missing_msg="Please specify a repository name.",
+        single_func=set_default,
+        all_func=set_default,
     )
 
 

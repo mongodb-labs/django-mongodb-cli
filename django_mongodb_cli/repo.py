@@ -658,19 +658,60 @@ def set_default(
     group: str = typer.Option(
         None, "--group", "-g", help="Set default branch for all repositories in a group"
     ),
+    list_groups: bool = typer.Option(
+        False, "--list-groups", "-l", help="List available repository groups"
+    ),
 ):
     """
     Set the specified repository as the default repository.
     If --group is used, set default branch for all repositories in the group.
+    Use --list-groups to see available groups.
     """
+    repo_instance = Repo()
+    
+    if list_groups:
+        repo_instance.list_groups()
+        raise typer.Exit()
+    
     if group:
-        repo_instance = Repo()
         group_repos = repo_instance.get_group_repos(group)
         if not group_repos:
             typer.echo(
                 typer.style(
-                    f"Group '{group}' not found.",
+                    f"Group '{group}' not found. Use --list-groups to see available groups.",
                     fg=typer.colors.RED,
+                )
+            )
+            raise typer.Exit(1)
+        
+        # Check that all repositories in the group have been cloned
+        missing_repos = []
+        for repo_name_in_group in group_repos:
+            repo_path = repo_instance.get_repo_path(repo_name_in_group)
+            if not repo_path.exists():
+                missing_repos.append(repo_name_in_group)
+            elif not (repo_path / ".git").exists():
+                # Directory exists but is not a git repository
+                missing_repos.append(repo_name_in_group)
+        
+        if missing_repos:
+            typer.echo(
+                typer.style(
+                    f"❌ Cannot set default for group '{group}'. The following repositories have not been cloned yet:",
+                    fg=typer.colors.RED,
+                )
+            )
+            for repo_name_missing in missing_repos:
+                typer.echo(
+                    typer.style(
+                        f"  - {repo_name_missing}",
+                        fg=typer.colors.RED,
+                    )
+                )
+            typer.echo(
+                typer.style(
+                    f"\nPlease clone the missing repositories first with: dm repo clone --group {group}",
+                    fg=typer.colors.YELLOW,
                 )
             )
             raise typer.Exit(1)
@@ -700,7 +741,7 @@ def set_default(
         False,
         repo_name,
         all_msg=None,
-        missing_msg="Please specify a repository name or use --group to set default for a group.",
+        missing_msg="Please specify a repository name, use --group to set default for a group, or use --list-groups to see available groups.",
         single_func=set_default,
         all_func=set_default,
     )

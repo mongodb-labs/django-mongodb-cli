@@ -1,0 +1,65 @@
+diff --git a/libs/langchain-mongodb/tests/integration_tests/conftest.py b/libs/langchain-mongodb/tests/integration_tests/conftest.py
+index 171f823..8facecd 100644
+--- a/libs/langchain-mongodb/tests/integration_tests/conftest.py
++++ b/libs/langchain-mongodb/tests/integration_tests/conftest.py
+@@ -6,7 +6,12 @@ import pytest
+ from langchain_community.document_loaders import PyPDFLoader
+ from langchain_core.documents import Document
+ from langchain_core.embeddings import Embeddings
+-from langchain_ollama.embeddings import OllamaEmbeddings
++
++try:
++    from langchain_ollama.embeddings import OllamaEmbeddings
++except ImportError:
++    OllamaEmbeddings = None  # type: ignore
++
+ from langchain_openai import AzureOpenAIEmbeddings, OpenAIEmbeddings
+ from pymongo import MongoClient
+ 
+@@ -41,7 +46,13 @@ def embedding() -> Embeddings:
+     if os.environ.get("AZURE_OPENAI_ENDPOINT"):
+         return AzureOpenAIEmbeddings(model="text-embedding-3-small")
+ 
+-    return OllamaEmbeddings(model="all-minilm:l6-v2")
++    if OllamaEmbeddings is not None:
++        return OllamaEmbeddings(model="all-minilm:l6-v2")
++    
++    raise ImportError(
++        "No embedding model available. Please set OPENAI_API_KEY or AZURE_OPENAI_ENDPOINT, "
++        "or install langchain-ollama."
++    )
+ 
+ 
+ @pytest.fixture(scope="session")
+diff --git a/libs/langchain-mongodb/tests/utils.py b/libs/langchain-mongodb/tests/utils.py
+index 9748234..95d9550 100644
+--- a/libs/langchain-mongodb/tests/utils.py
++++ b/libs/langchain-mongodb/tests/utils.py
+@@ -18,7 +18,12 @@ from langchain_core.messages import (
+     BaseMessage,
+ )
+ from langchain_core.outputs import ChatGeneration, ChatResult
+-from langchain_ollama import ChatOllama
++
++try:
++    from langchain_ollama import ChatOllama
++except ImportError:
++    ChatOllama = None  # type: ignore
++
+ from langchain_openai import AzureChatOpenAI, ChatOpenAI
+ from pydantic import model_validator
+ from pymongo import MongoClient
+@@ -52,7 +57,12 @@ def create_llm() -> BaseChatModel:
+         return AzureChatOpenAI(model="o4-mini", timeout=60, cache=False, seed=12345)
+     if os.environ.get("OPENAI_API_KEY"):
+         return ChatOpenAI(model="gpt-4o-mini", timeout=60, cache=False, seed=12345)
+-    return ChatOllama(model="llama3:8b", cache=False, seed=12345)
++    if ChatOllama is not None:
++        return ChatOllama(model="llama3:8b", cache=False, seed=12345)
++    raise ImportError(
++        "No chat model available. Please set AZURE_OPENAI_ENDPOINT or OPENAI_API_KEY, "
++        "or install langchain-ollama."
++    )
+ 
+ 
+ class PatchedMongoDBAtlasVectorSearch(MongoDBAtlasVectorSearch):

@@ -996,18 +996,16 @@ class Test(Repo):
             return
 
         # Determine the working directory for running tests
-        # Priority: clone_dir > first entry in test_dirs
+        # Priority: clone_dir > current working directory (repo root)
         clone_dir = self.test_settings.get("clone_dir")
         test_dirs = self.test_settings.get("test_dirs", [])
 
         # Determine cwd (current working directory)
         if clone_dir and os.path.exists(clone_dir):
             cwd = clone_dir
-        elif test_dirs and os.path.exists(test_dirs[0]):
-            cwd = test_dirs[0]
         else:
-            self.err(f"No valid working directory found for {repo_name}.")
-            return
+            # Use current working directory (repository root) when clone_dir is not specified
+            cwd = os.getcwd()
 
         # Prepare environment/files
         self.copy_apps(repo_name)

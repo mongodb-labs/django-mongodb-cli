@@ -805,13 +805,14 @@ class Package(Repo):
                 self.warn(f"'extras' for {repo_name} should be a list, got {type(extras).__name__}")
             else:
                 for extra in extras:
-                    # Validate extra name contains only safe characters
-                    if not isinstance(extra, str) or not extra.replace("-", "").replace("_", "").isalnum():
+                    # Validate extra name contains only safe characters (alphanumeric, dash, underscore, dot)
+                    import re
+                    if not isinstance(extra, str) or not re.match(r'^[a-zA-Z0-9._-]+$', extra):
                         self.warn(f"Skipping invalid extra name: {extra}")
                         continue
                     
                     self.info(f"Installing optional extra: {extra}")
-                    # Install extras using the standard [extra] syntax
+                    # Install extras using the standard [extra] syntax with uv
                     extra_path = f"{path}[{extra}]"
                     if self.run(["uv", "pip", "install", "-e", extra_path], env=env):
                         self.ok(f"Installed {repo_name}[{extra}]")
@@ -819,6 +820,7 @@ class Package(Repo):
                         self.warn(f"Failed to install {repo_name}[{extra}]")
         
         # Install dependency groups if specified (PEP 735)
+        # Note: Using pip instead of uv because uv doesn't support --group yet
         groups = install_cfg.get("groups")
         if groups:
             if not isinstance(groups, list):
@@ -830,13 +832,15 @@ class Package(Repo):
                     self.warn(f"No pyproject.toml found at {path}, skipping dependency groups")
                 else:
                     for group in groups:
-                        # Validate group name contains only safe characters
-                        if not isinstance(group, str) or not group.replace("-", "").replace("_", "").isalnum():
+                        # Validate group name contains only safe characters (alphanumeric, dash, underscore, dot)
+                        import re
+                        if not isinstance(group, str) or not re.match(r'^[a-zA-Z0-9._-]+$', group):
                             self.warn(f"Skipping invalid group name: {group}")
                             continue
                         
                         self.info(f"Installing dependency group: {group}")
                         # Use pip install --group with pyproject.toml:group format
+                        # (requires pip 25.3+ for PEP 735 support)
                         group_arg = f"{pyproject_path}:{group}"
                         if self.run(["pip", "install", "--group", group_arg], env=env):
                             self.ok(f"Installed dependency group {group} for {repo_name}")

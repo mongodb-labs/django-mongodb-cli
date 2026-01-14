@@ -36,7 +36,7 @@ dm repo clone --group django --install
 dm repo remote setup --group django
 
 # Set default branch for all repos in a group
-dm repo set-default --group django
+dm repo remote set-default --group django
 ```
 
 You can also use the simplified just commands:

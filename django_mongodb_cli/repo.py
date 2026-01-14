@@ -652,8 +652,9 @@ def show(
     repo.show_commit(repo_name, commit_hash)
 
 
-@repo.command()
-def set_default(
+@repo_remote.command("set-default")
+def remote_set_default(
+    ctx: typer.Context,
     repo_name: str = typer.Argument(None),
     group: str = typer.Option(
         None, "--group", "-g", help="Set default branch for all repositories in a group"
@@ -668,6 +669,7 @@ def set_default(
     Use --list-groups to see available groups.
     """
     repo_instance = Repo()
+    repo_instance.ctx = ctx
 
     if list_groups:
         repo_instance.list_groups()

@@ -50,7 +50,7 @@ Setting Default Branches
 
 To set the default branch for all repositories in a group::
 
-    dm repo set-default --group django
+    dm repo remote set-default --group django
 
 Using with Just
 ---------------
@@ -65,7 +65,7 @@ Which internally calls::
 
     dm repo clone --group django --install
     dm repo remote setup --group django
-    dm repo set-default --group django
+    dm repo remote set-default --group django
 
 Configuring Groups
 ------------------

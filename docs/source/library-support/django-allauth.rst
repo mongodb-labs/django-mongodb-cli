@@ -6,7 +6,7 @@ Django allauth
 Test suite
 ----------
 
-Via ``dm repo test django-filter``
+Via ``dm repo test django-allauth``
 
 +---------------------------+------------+-----------+-----------+----------------+--------------+----------------------------+------------------+
 |  **PERCENTAGE PASSED**    | **TOTAL**  |  **PASS** | **FAIL**  |  **SKIPPED**   |   **ERROR**  | **EXPECTED FAILURES**      |  **WARNING**     |
@@ -14,7 +14,7 @@ Via ``dm repo test django-filter``
 |  63%                      | 1621       |     1023  | 584       |        1       |       13     |                    0       |   21             |
 +---------------------------+------------+-----------+-----------+----------------+--------------+----------------------------+------------------+
 
-- `django-filter.txt <../_static/logs/django-filter.txt>`_
+- `django-allauth.txt <../_static/logs/django-allauth.txt>`_
 
 Project examples
 ----------------

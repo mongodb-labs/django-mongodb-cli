@@ -196,8 +196,8 @@ source = "mongo_migrations"
 target = "src/django/tests/mongo_migrations"
 
 [tool.django-mongodb-cli.test.django.settings.test]
-# source = "test/settings/django.py"
-source = "test/settings/qe.py"
+source = "test/settings/django.py"
+# source = "test/settings/qe.py"
 target = "src/django/tests/mongo_settings.py"
 
 [tool.django-mongodb-cli.test.django.settings.migrations]
@@ -420,8 +420,8 @@ project_name = "mongo-python-driver"
 tasks = ["run-tests"]
 
 [tool.django-mongodb-cli.project.settings]
-# path = "settings.base"
-path = "settings.qe"
+path = "settings.base"
+# path = "settings.qe"
 
 [tool.setuptools]
 packages = ["django_mongodb_cli", "demo"]

@@ -62,7 +62,7 @@ pip-install: check-venv
     # brew install libxml2 libxmlsec1 mongo-c-driver mongo-c-driver@1 pkg-config
     # pip install lxml==5.3.2 --no-binary :all:
     pip install -U pip
-    pip install -e .
+    pip install -e '.[docs]'
     pre-commit install
 
 # ensure virtual environment is active
@@ -81,28 +81,22 @@ check-venv:
 install: pip-install
 alias i := install
 
-# ---------------------------------------- sphinx ----------------------------------------
+# ---------------------------------------- docs ----------------------------------------
 
-[group('sphinx')]
+[group('docs')]
 sphinx-build:
     sphinx-build -b html docs/source docs/_build
 alias b := sphinx-build
 
-[group('sphinx')]
-sphinx-autobuild:
-    # cd docs/_build && python -m http.server
-    sphinx-autobuild docs/source docs/_build
-alias ab := sphinx-autobuild
-
-[group('sphinx')]
+[group('docs')]
 sphinx-clean:
     rm -rvf docs/_build
 alias sc := sphinx-clean
 
-[group('sphinx')]
+[group('docs')]
 sphinx-open:
     open docs/_build/index.html
-alias so := sphinx-open
+alias do := sphinx-open
 
 # ---------------------------------------- jira ----------------------------------------
 

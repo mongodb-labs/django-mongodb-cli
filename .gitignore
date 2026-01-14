@@ -9,3 +9,4 @@ build/
 uv.lock
 secrets-export.sh
 .venv/
+docs/_build/

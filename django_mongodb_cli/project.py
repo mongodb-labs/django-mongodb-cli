@@ -6,23 +6,62 @@ import subprocess
 import importlib.resources as resources
 import os
 import sys
+import random
 from .frontend import add_frontend as _add_frontend
 from .utils import Repo
 
 project = typer.Typer(help="Manage Django projects.")
 
+# Constants for random name generation
+ADJECTIVES = [
+    "happy", "sunny", "clever", "brave", "calm", "bright", "swift",
+    "gentle", "mighty", "noble", "quiet", "wise", "bold", "keen",
+    "lively", "merry", "proud", "quick", "smart", "strong"
+]
+NOUNS = [
+    "panda", "eagle", "tiger", "dragon", "phoenix", "falcon", "wolf",
+    "bear", "lion", "hawk", "owl", "fox", "deer", "otter", "seal",
+    "whale", "shark", "raven", "cobra", "lynx"
+]
+
+
+def generate_random_project_name():
+    """Generate a random project name using adjectives and nouns."""
+    adjective = random.choice(ADJECTIVES)
+    noun = random.choice(NOUNS)
+    return f"{adjective}_{noun}"
+
 
 @project.command("add")
 def add_project(
-    name: str,
+    name: str = typer.Argument(None, help="Project name (optional if --random is used)"),
     directory: Path = Path("."),
     add_frontend: bool = typer.Option(
         False, "--add-frontend", "-f", help="Add frontend"
     ),
+    random_name: bool = typer.Option(
+        False, "--random", "-r", help="Generate a random project name. If both name and --random are provided, the name takes precedence."
+    ),
 ):
     """
     Create a new Django project using bundled templates.
+    
+    Examples:
+        dm project add myproject          # Create with explicit name
+        dm project add --random           # Create with random name
+        dm project add -r                 # Short form
     """
+    # Handle random name generation
+    if random_name:
+        if name is not None:
+            typer.echo("⚠️  Both a project name and --random flag were provided. Using the provided name.", err=True)
+        else:
+            name = generate_random_project_name()
+            typer.echo(f"🎲 Generated random project name: {name}")
+    elif name is None:
+        typer.echo("❌ Project name is required. Provide a name or use --random flag.", err=True)
+        raise typer.Exit(code=1)
+    
     project_path = directory / name
     if project_path.exists():
         typer.echo(f"❌ Project '{name}' already exists at {project_path}", err=True)

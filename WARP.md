@@ -154,7 +154,7 @@ Key patterns:
 
   Clone behavior (paths, branches, etc.) is driven by `Repo.get_map()` and `Repo.parse_git_url()` in `django_mongodb_cli/utils.py`.
 
-- Set up Git remotes and defaults via `dm repo remote` and `dm repo set-default` (these are wrapped in convenient `just git-remote` recipes for common groups like `django`, `langchain`, `mongo-arrow`).
+- Set up Git remotes and defaults via `dm repo remote` (these are wrapped in convenient `just git-remote` recipes for common groups like `django`, `langchain`, `mongo-arrow`).
 
 - Inspect and maintain repos:
 

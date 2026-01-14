@@ -70,7 +70,7 @@ just git-remote django
 This internally calls:
 ```bash
 dm repo remote setup --group django
-dm repo set-default --group django
+dm repo remote set-default --group django
 ```
 
 ## Supporting Infrastructure

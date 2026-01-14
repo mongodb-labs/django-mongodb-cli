@@ -14,14 +14,48 @@ project = typer.Typer(help="Manage Django projects.")
 
 # Constants for random name generation
 ADJECTIVES = [
-    "happy", "sunny", "clever", "brave", "calm", "bright", "swift",
-    "gentle", "mighty", "noble", "quiet", "wise", "bold", "keen",
-    "lively", "merry", "proud", "quick", "smart", "strong"
+    "happy",
+    "sunny",
+    "clever",
+    "brave",
+    "calm",
+    "bright",
+    "swift",
+    "gentle",
+    "mighty",
+    "noble",
+    "quiet",
+    "wise",
+    "bold",
+    "keen",
+    "lively",
+    "merry",
+    "proud",
+    "quick",
+    "smart",
+    "strong",
 ]
 NOUNS = [
-    "panda", "eagle", "tiger", "dragon", "phoenix", "falcon", "wolf",
-    "bear", "lion", "hawk", "owl", "fox", "deer", "otter", "seal",
-    "whale", "shark", "raven", "cobra", "lynx"
+    "panda",
+    "eagle",
+    "tiger",
+    "dragon",
+    "phoenix",
+    "falcon",
+    "wolf",
+    "bear",
+    "lion",
+    "hawk",
+    "owl",
+    "fox",
+    "deer",
+    "otter",
+    "seal",
+    "whale",
+    "shark",
+    "raven",
+    "cobra",
+    "lynx",
 ]
 
 
@@ -34,18 +68,23 @@ def generate_random_project_name():
 
 @project.command("add")
 def add_project(
-    name: str = typer.Argument(None, help="Project name (optional if --random is used)"),
+    name: str = typer.Argument(
+        None, help="Project name (optional if --random is used)"
+    ),
     directory: Path = Path("."),
     add_frontend: bool = typer.Option(
         False, "--add-frontend", "-f", help="Add frontend"
     ),
     random_name: bool = typer.Option(
-        False, "--random", "-r", help="Generate a random project name. If both name and --random are provided, the name takes precedence."
+        False,
+        "--random",
+        "-r",
+        help="Generate a random project name. If both name and --random are provided, the name takes precedence.",
     ),
 ):
     """
     Create a new Django project using bundled templates.
-    
+
     Examples:
         dm project add myproject          # Create with explicit name
         dm project add --random           # Create with random name
@@ -54,14 +93,20 @@ def add_project(
     # Handle random name generation
     if random_name:
         if name is not None:
-            typer.echo("⚠️  Both a project name and --random flag were provided. Using the provided name.", err=True)
+            typer.echo(
+                "⚠️  Both a project name and --random flag were provided. Using the provided name.",
+                err=True,
+            )
         else:
             name = generate_random_project_name()
             typer.echo(f"🎲 Generated random project name: {name}")
     elif name is None:
-        typer.echo("❌ Project name is required. Provide a name or use --random flag.", err=True)
+        typer.echo(
+            "❌ Project name is required. Provide a name or use --random flag.",
+            err=True,
+        )
         raise typer.Exit(code=1)
-    
+
     project_path = directory / name
     if project_path.exists():
         typer.echo(f"❌ Project '{name}' already exists at {project_path}", err=True)
@@ -158,6 +203,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "django-debug-toolbar",
+]
+test = [
     "pytest",
     "pytest-django",
     "ruff",

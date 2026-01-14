@@ -12,21 +12,23 @@ from .utils import Repo
 
 project = typer.Typer(help="Manage Django projects.")
 
+# Constants for random name generation
+ADJECTIVES = [
+    "happy", "sunny", "clever", "brave", "calm", "bright", "swift",
+    "gentle", "mighty", "noble", "quiet", "wise", "bold", "keen",
+    "lively", "merry", "proud", "quick", "smart", "strong"
+]
+NOUNS = [
+    "panda", "eagle", "tiger", "dragon", "phoenix", "falcon", "wolf",
+    "bear", "lion", "hawk", "owl", "fox", "deer", "otter", "seal",
+    "whale", "shark", "raven", "cobra", "lynx"
+]
+
 
 def generate_random_project_name():
     """Generate a random project name using adjectives and nouns."""
-    adjectives = [
-        "happy", "sunny", "clever", "brave", "calm", "bright", "swift",
-        "gentle", "mighty", "noble", "quiet", "wise", "bold", "keen",
-        "lively", "merry", "proud", "quick", "smart", "strong"
-    ]
-    nouns = [
-        "panda", "eagle", "tiger", "dragon", "phoenix", "falcon", "wolf",
-        "bear", "lion", "hawk", "owl", "fox", "deer", "otter", "seal",
-        "whale", "shark", "raven", "cobra", "lynx"
-    ]
-    adjective = random.choice(adjectives)
-    noun = random.choice(nouns)
+    adjective = random.choice(ADJECTIVES)
+    noun = random.choice(NOUNS)
     return f"{adjective}_{noun}"
 
 
@@ -38,11 +40,16 @@ def add_project(
         False, "--add-frontend", "-f", help="Add frontend"
     ),
     random_name: bool = typer.Option(
-        False, "--random", "-r", help="Generate a random project name"
+        False, "--random", "-r", help="Generate a random project name. If both name and --random are provided, the name takes precedence."
     ),
 ):
     """
     Create a new Django project using bundled templates.
+    
+    Examples:
+        dm project add myproject          # Create with explicit name
+        dm project add --random           # Create with random name
+        dm project add -r                 # Short form
     """
     # Handle random name generation
     if random_name:

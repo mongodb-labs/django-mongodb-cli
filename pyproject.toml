@@ -45,6 +45,7 @@ langchain = [
 
 [tool.django-mongodb-cli]
 repos = [
+  "ai-ml-pipeline-testing @ git+ssh://git@github.com/mongodb-labs/ai-ml-pipeline-testing@main",
   "django @ git+ssh://git@github.com/mongodb-forks/django@mongodb-6.0.x",
   "django-allauth @ git+ssh://git@github.com/pennersr/django-allauth@main",
   "django-debug-toolbar @ git+ssh://git@github.com/django-commons/django-debug-toolbar@main",
@@ -94,6 +95,7 @@ django = [
   "mongo-python-driver",
 ]
 langchain = [
+  "ai-ml-pipeline-testing",
   "langchain-mongodb",
   "pymongo-search-utils",
   "mongodb-community-search-setup",

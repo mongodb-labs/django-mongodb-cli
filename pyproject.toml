@@ -38,6 +38,11 @@ docs = [
   "sphinx-copybutton",
 ]
 
+[dependency-groups]
+langchain = [
+  "langchain-voyageai",
+]
+
 [tool.django-mongodb-cli]
 repos = [
   "django @ git+ssh://git@github.com/mongodb-forks/django@mongodb-6.0.x",

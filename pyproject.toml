@@ -92,6 +92,7 @@ langchain = [
   "langchain-mongodb",
   "pymongo-search-utils",
   "mongodb-community-search-setup",
+  "mongo-python-driver",
 ]
 mongo-arrow = [
   "mongo-arrow",

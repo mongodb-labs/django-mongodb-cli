@@ -505,16 +505,61 @@ def install(
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Install all repositories"
     ),
+    group: str = typer.Option(
+        None, "--group", "-g", help="Install all repositories in a group"
+    ),
+    list_groups: bool = typer.Option(
+        False, "--list-groups", "-l", help="List available repository groups"
+    ),
 ):
     """
     Install Python package found in the specified repository.
     If --all-repos is used, install packages for all repositories.
+    If --group is used, install all repositories in the specified group.
+    If --list-groups is used, list available repository groups.
     """
+    repo_instance = Repo()
+
+    if list_groups:
+        repo_instance.list_groups()
+        raise typer.Exit()
+
+    if group:
+        # Install all repos in the specified group
+        group_repos = repo_instance.get_group_repos(group)
+        if not group_repos:
+            typer.echo(
+                typer.style(
+                    f"Group '{group}' not found. Use --list-groups to see available groups.",
+                    fg=typer.colors.RED,
+                )
+            )
+            raise typer.Exit(1)
+
+        typer.echo(
+            typer.style(
+                f"Installing repositories in group '{group}': {', '.join(group_repos)}",
+                fg=typer.colors.CYAN,
+            )
+        )
+
+        package_instance = Package()
+        for repo in group_repos:
+            package_instance.install_package(repo)
+
+        typer.echo(
+            typer.style(
+                f"✅ Finished installing group '{group}'",
+                fg=typer.colors.GREEN,
+            )
+        )
+        return
+
     repo_command(
         all_repos,
         repo_name,
         all_msg="Installing all repositories...",
-        missing_msg="Please specify a repository name or use -a,--all-repos to install all repositories.",
+        missing_msg="Please specify a repository name, use --group to install a group, use --list-groups to see available groups, or use -a,--all-repos to install all repositories.",
         single_func=lambda repo_name: Package().install_package(repo_name),
         all_func=lambda repo_name: Package().install_package(repo_name),
     )

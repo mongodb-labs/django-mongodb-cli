@@ -339,7 +339,13 @@ def _django_manage_command(
 
     if frontend:
         # Ensure frontend is installed
-        subprocess.run(["dm", "frontend", "install", name])
+        result = subprocess.run(["dm", "frontend", "install", name], check=False)
+        if result.returncode != 0:
+            typer.echo(
+                f"⚠️  Frontend installation failed with exit code {result.returncode}",
+                err=True,
+            )
+            # Continue anyway - frontend might already be installed
 
         # Start frontend process in background
         frontend_proc = subprocess.Popen(["dm", "frontend", "run", name])
@@ -431,7 +437,6 @@ def migrate_project(
     Run Django migrations using django-admin instead of manage.py.
     """
     cmd = ["migrate"]
-    directory = Path(name)
     if app_label:
         cmd.append(app_label)
     if migration_name:

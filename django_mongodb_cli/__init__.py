@@ -1,4 +1,4 @@
-import os
+import sys
 import typer
 
 from .app import app
@@ -12,7 +12,7 @@ Django MongoDB CLI
 
 System executable:
 """
-    + os.sys.executable
+    + sys.executable
 )
 
 dm = typer.Typer(

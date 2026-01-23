@@ -535,20 +535,72 @@ def fetch(
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Fetch all repositories"
     ),
+    group: str = typer.Option(
+        None, "--group", "-g", help="Fetch all repositories in a group"
+    ),
+    list_groups: bool = typer.Option(
+        False, "--list-groups", "-l", help="List available repository groups"
+    ),
 ):
     """
     Fetch updates for the specified repository.
     If --all-repos is used, fetch updates for all repositories.
+    If --group is used, fetch all repositories in the specified group.
+    If --list-groups is used, list available repository groups.
     """
-    repo = Repo()
-    repo.ctx = ctx
+    repo_instance = Repo()
+    repo_instance.ctx = ctx
+
+    if list_groups:
+        repo_instance.list_groups()
+        raise typer.Exit()
+
+    if group and all_repos:
+        typer.echo(
+            typer.style(
+                "Cannot use --group and --all-repos together. Please use one or the other.",
+                fg=typer.colors.RED,
+            )
+        )
+        raise typer.Exit(1)
+
+    if group:
+        # Fetch all repos in the specified group
+        group_repos = repo_instance.get_group_repos(group)
+        if not group_repos:
+            typer.echo(
+                typer.style(
+                    f"Group '{group}' not found. Use --list-groups to see available groups.",
+                    fg=typer.colors.RED,
+                )
+            )
+            raise typer.Exit(1)
+
+        typer.echo(
+            typer.style(
+                f"Fetching repositories in group '{group}': {', '.join(group_repos)}",
+                fg=typer.colors.CYAN,
+            )
+        )
+
+        for repo in group_repos:
+            repo_instance.fetch_repo(repo)
+
+        typer.echo(
+            typer.style(
+                f"✅ Finished fetching group '{group}'",
+                fg=typer.colors.GREEN,
+            )
+        )
+        return
+
     repo_command(
         all_repos,
         repo_name,
         all_msg=None,
-        missing_msg="Please specify a repository name or use -a,--all-repos to fetch all repositories.",
-        single_func=lambda repo_name: repo.fetch_repo(repo_name),
-        all_func=lambda repo_name: repo.fetch_repo(repo_name),
+        missing_msg="Please specify a repository name, use --group to fetch a group, use --list-groups to see available groups, or use -a,--all-repos to fetch all repositories.",
+        single_func=lambda repo_name: repo_instance.fetch_repo(repo_name),
+        all_func=lambda repo_name: repo_instance.fetch_repo(repo_name),
     )
 
 

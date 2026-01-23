@@ -961,7 +961,7 @@ def sync(
     repo_command(
         all_repos,
         repo_name,
-        all_msg=None,
+        all_msg="Syncing all repositories...",
         missing_msg="Please specify a repository name, use --group to sync a group, use --list-groups to see available groups, or use -a,--all-repos to sync all repositories.",
         single_func=lambda repo_name: repo_instance.sync_repo(repo_name),
         all_func=lambda repo_name: repo_instance.sync_repo(repo_name),

@@ -706,7 +706,7 @@ class Repo:
 
             # Check if HEAD is detached
             if repo.head.is_detached:
-                self.err(f"❌ Repository is in detached HEAD state. Please checkout a branch first.")
+                self.err("❌ Repository is in detached HEAD state. Please checkout a branch first.")
                 return
 
             # Get current branch

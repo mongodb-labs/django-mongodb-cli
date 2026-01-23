@@ -893,6 +893,82 @@ def push(
 
 
 @repo.command()
+def sync(
+    ctx: typer.Context,
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(
+        False, "--all-repos", "-a", help="Sync all repositories"
+    ),
+    group: str = typer.Option(
+        None, "--group", "-g", help="Sync all repositories in a group"
+    ),
+    list_groups: bool = typer.Option(
+        False, "--list-groups", "-l", help="List available repository groups"
+    ),
+):
+    """
+    Sync repository by fetching from upstream and rebasing onto it.
+    If --all-repos is used, sync all repositories.
+    If --group is used, sync all repositories in the specified group.
+    If --list-groups is used, list available repository groups.
+    """
+    repo_instance = Repo()
+    repo_instance.ctx = ctx
+
+    if list_groups:
+        repo_instance.list_groups()
+        raise typer.Exit()
+
+    if group and all_repos:
+        typer.echo(
+            typer.style(
+                "Cannot use --group and --all-repos together. Please use one or the other.",
+                fg=typer.colors.RED,
+            )
+        )
+        raise typer.Exit(1)
+
+    if group:
+        # Sync all repos in the specified group
+        group_repos = repo_instance.get_group_repos(group)
+        if not group_repos:
+            typer.echo(
+                typer.style(
+                    f"Group '{group}' not found. Use --list-groups to see available groups.",
+                    fg=typer.colors.RED,
+                )
+            )
+            raise typer.Exit(1)
+
+        typer.echo(
+            typer.style(
+                f"Syncing repositories in group '{group}': {', '.join(group_repos)}",
+                fg=typer.colors.CYAN,
+            )
+        )
+
+        for repo in group_repos:
+            repo_instance.sync_repo(repo)
+
+        typer.echo(
+            typer.style(
+                f"✅ Finished syncing group '{group}'",
+                fg=typer.colors.GREEN,
+            )
+        )
+        return
+
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg=None,
+        missing_msg="Please specify a repository name, use --group to sync a group, use --list-groups to see available groups, or use -a,--all-repos to sync all repositories.",
+        single_func=lambda repo_name: repo_instance.sync_repo(repo_name),
+        all_func=lambda repo_name: repo_instance.sync_repo(repo_name),
+    )
+
+
+@repo.command()
 def test(
     ctx: typer.Context,
     repo_name: str = typer.Argument(None),

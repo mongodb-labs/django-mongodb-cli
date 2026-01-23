@@ -688,6 +688,42 @@ class Repo:
         except Exception as e:
             self.err(f"❌ Failed to push {repo_name}: {e}")
 
+    def sync_repo(self, repo_name: str) -> None:
+        """
+        Sync repository by fetching from upstream and rebasing onto it.
+        """
+        self.info(f"Syncing repository: {repo_name}")
+        _, repo = self.ensure_repo(repo_name)
+        if not repo:
+            return
+
+        try:
+            # Check if upstream remote exists
+            if "upstream" not in [remote.name for remote in repo.remotes]:
+                self.err(f"❌ No 'upstream' remote found for {repo_name}.")
+                self.info("Add an upstream remote with: dm repo remote add upstream <url>")
+                return
+
+            # Get current branch
+            current_branch = repo.active_branch.name
+            self.info(f"Current branch: {current_branch}")
+
+            # Fetch from upstream
+            self.info("Fetching from upstream...")
+            upstream_remote = repo.remotes.upstream
+            fetched = upstream_remote.fetch()
+            self.ok(f"Fetched {len(fetched)} objects from upstream.")
+
+            # Rebase current branch onto upstream's tracking branch
+            self.info(f"Rebasing {current_branch} onto upstream/{current_branch}...")
+            repo.git.rebase(f"upstream/{current_branch}")
+            self.ok(f"✅ Successfully synced {repo_name}.")
+
+        except GitCommandError as e:
+            self.err(f"❌ Failed to sync {repo_name}: {e}")
+        except Exception as e:
+            self.err(f"❌ Failed to sync {repo_name}: {e}")
+
     def remote_add(self, remote_name: str, remote_url: str) -> None:
         """
         Add a new remote to the specified repository.

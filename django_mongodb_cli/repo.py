@@ -56,6 +56,7 @@ def main(
 @repo_remote.callback(invoke_without_command=True)
 def remote(
     ctx: typer.Context,
+    repo_name: str = typer.Argument(None, help="Repository name"),
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Show remotes of all repositories"
     ),
@@ -65,11 +66,15 @@ def remote(
     list_groups: bool = typer.Option(
         False, "--list-groups", "-l", help="List available repository groups"
     ),
+    set_default: bool = typer.Option(
+        False, "--set-default", help="Set the default repository. Works with a single repo name or --group"
+    ),
 ):
     """
     Show the git remotes for repositories.
     Use --all-repos to show remotes for all repositories.
     Use --group to show remotes for all repositories in a group.
+    Use --set-default with a repo name or --group to set the default repository.
     If remotes are not configured for a group, they will be set up automatically.
     """
     repo_manager = Repo()
@@ -83,6 +88,83 @@ def remote(
     if list_groups:
         repo_manager.list_groups()
         raise typer.Exit()
+
+    # Handle --set-default
+    if set_default:
+        if group:
+            # Set default for all repos in the specified group
+            group_repos = repo_manager.get_group_repos(group)
+            if not group_repos:
+                typer.echo(
+                    typer.style(
+                        f"Group '{group}' not found. Use --list-groups to see available groups.",
+                        fg=typer.colors.RED,
+                    )
+                )
+                raise typer.Exit(1)
+
+            # Check that all repositories in the group have been cloned
+            missing_repos = []
+            for repo_name_in_group in group_repos:
+                repo_path = repo_manager.get_repo_path(repo_name_in_group)
+                if not repo_path.exists():
+                    missing_repos.append(repo_name_in_group)
+                elif not (repo_path / ".git").exists():
+                    # Directory exists but is not a git repository
+                    missing_repos.append(repo_name_in_group)
+
+            if missing_repos:
+                typer.echo(
+                    typer.style(
+                        f"❌ Cannot set default for group '{group}'. The following repositories have not been cloned yet:",
+                        fg=typer.colors.RED,
+                    )
+                )
+                for repo_name_missing in missing_repos:
+                    typer.echo(
+                        typer.style(
+                            f"  - {repo_name_missing}",
+                            fg=typer.colors.RED,
+                        )
+                    )
+                typer.echo(
+                    typer.style(
+                        f"\nPlease clone the missing repositories first with: dm repo clone --group {group}",
+                        fg=typer.colors.YELLOW,
+                    )
+                )
+                raise typer.Exit(1)
+
+            typer.echo(
+                typer.style(
+                    f"Setting default branch for repositories in group '{group}'",
+                    fg=typer.colors.CYAN,
+                )
+            )
+
+            for repo in group_repos:
+                repo_manager.set_default_repo(repo)
+
+            typer.echo(
+                typer.style(
+                    f"✅ Finished setting default branch for group '{group}'",
+                    fg=typer.colors.GREEN,
+                )
+            )
+            return
+        elif repo_name:
+            # Set default for single repo
+            repo_manager.set_default_repo(repo_name)
+            return
+        else:
+            # No repo name or group provided with --set-default
+            typer.echo(
+                typer.style(
+                    "Please specify a repository name or use --group to set default for a group, or use --list-groups to see available groups.",
+                    fg=typer.colors.YELLOW,
+                )
+            )
+            raise typer.Exit()
 
     # If no subcommand, show remotes based on options
     if group:
@@ -99,13 +181,13 @@ def remote(
 
         # Check that all repositories in the group have been cloned
         missing_repos = []
-        for repo_name in group_repos:
-            repo_path = repo_manager.get_repo_path(repo_name)
+        for repo_name_check in group_repos:
+            repo_path = repo_manager.get_repo_path(repo_name_check)
             if not repo_path.exists():
-                missing_repos.append(repo_name)
+                missing_repos.append(repo_name_check)
             elif not (repo_path / ".git").exists():
                 # Directory exists but is not a git repository
-                missing_repos.append(repo_name)
+                missing_repos.append(repo_name_check)
 
         if missing_repos:
             typer.echo(
@@ -114,10 +196,10 @@ def remote(
                     fg=typer.colors.RED,
                 )
             )
-            for repo_name in missing_repos:
+            for repo_name_missing in missing_repos:
                 typer.echo(
                     typer.style(
-                        f"  - {repo_name}",
+                        f"  - {repo_name_missing}",
                         fg=typer.colors.RED,
                     )
                 )
@@ -137,18 +219,21 @@ def remote(
             )
         )
 
-        for repo_name in group_repos:
+        for repo_name_setup in group_repos:
             # Setup remotes if configured for this repo in this group
-            repo_manager.setup_repo_remotes(repo_name, group)
+            repo_manager.setup_repo_remotes(repo_name_setup, group)
             # Show remotes
-            repo_manager.get_repo_remote(repo_name)
+            repo_manager.get_repo_remote(repo_name_setup)
 
     elif all_repos:
         # Show remotes for all repos
-        for repo_name in repo_manager.map:
-            repo_manager.get_repo_remote(repo_name)
+        for repo_name_all in repo_manager.map:
+            repo_manager.get_repo_remote(repo_name_all)
+    elif repo_name:
+        # Show remotes for single repo
+        repo_manager.get_repo_remote(repo_name)
     else:
-        # Show help since we removed the ability to pass repo_name directly
+        # Show help since no options provided
         typer.echo(ctx.get_help())
         raise typer.Exit()
 
@@ -663,103 +748,6 @@ def show(
     repo = Repo()
     repo.ctx = ctx
     repo.show_commit(repo_name, commit_hash)
-
-
-@repo_remote.command("set-default")
-def remote_set_default(
-    ctx: typer.Context,
-    repo_name: str = typer.Argument(None),
-    group: str = typer.Option(
-        None, "--group", "-g", help="Set default branch for all repositories in a group"
-    ),
-    list_groups: bool = typer.Option(
-        False, "--list-groups", "-l", help="List available repository groups"
-    ),
-):
-    """
-    Set the specified repository as the default repository.
-    If --group is used, set default branch for all repositories in the group.
-    Use --list-groups to see available groups.
-    """
-    repo_instance = Repo()
-    repo_instance.ctx = ctx
-
-    if list_groups:
-        repo_instance.list_groups()
-        raise typer.Exit()
-
-    if group:
-        group_repos = repo_instance.get_group_repos(group)
-        if not group_repos:
-            typer.echo(
-                typer.style(
-                    f"Group '{group}' not found. Use --list-groups to see available groups.",
-                    fg=typer.colors.RED,
-                )
-            )
-            raise typer.Exit(1)
-
-        # Check that all repositories in the group have been cloned
-        missing_repos = []
-        for repo_name_in_group in group_repos:
-            repo_path = repo_instance.get_repo_path(repo_name_in_group)
-            if not repo_path.exists():
-                missing_repos.append(repo_name_in_group)
-            elif not (repo_path / ".git").exists():
-                # Directory exists but is not a git repository
-                missing_repos.append(repo_name_in_group)
-
-        if missing_repos:
-            typer.echo(
-                typer.style(
-                    f"❌ Cannot set default for group '{group}'. The following repositories have not been cloned yet:",
-                    fg=typer.colors.RED,
-                )
-            )
-            for repo_name_missing in missing_repos:
-                typer.echo(
-                    typer.style(
-                        f"  - {repo_name_missing}",
-                        fg=typer.colors.RED,
-                    )
-                )
-            typer.echo(
-                typer.style(
-                    f"\nPlease clone the missing repositories first with: dm repo clone --group {group}",
-                    fg=typer.colors.YELLOW,
-                )
-            )
-            raise typer.Exit(1)
-
-        typer.echo(
-            typer.style(
-                f"Setting default branch for repositories in group '{group}'",
-                fg=typer.colors.CYAN,
-            )
-        )
-
-        for repo in group_repos:
-            repo_instance.set_default_repo(repo)
-
-        typer.echo(
-            typer.style(
-                f"✅ Finished setting default branch for group '{group}'",
-                fg=typer.colors.GREEN,
-            )
-        )
-        return
-
-    def set_default(name):
-        Repo().set_default_repo(name)
-
-    repo_command(
-        False,
-        repo_name,
-        all_msg=None,
-        missing_msg="Please specify a repository name, use --group to set default for a group, or use --list-groups to see available groups.",
-        single_func=set_default,
-        all_func=set_default,
-    )
 
 
 @repo.command()

@@ -41,6 +41,8 @@ docs = [
 [dependency-groups]
 langchain = [
   "langchain-voyageai",
+  "langchain-ollama",
+  "langchain-openai",
 ]
 
 [tool.django-mongodb-cli]

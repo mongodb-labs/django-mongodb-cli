@@ -704,6 +704,11 @@ class Repo:
                 self.info("Add an upstream remote with: dm repo remote add upstream <url>")
                 return
 
+            # Check if HEAD is detached
+            if repo.head.is_detached:
+                self.err(f"❌ Repository is in detached HEAD state. Please checkout a branch first.")
+                return
+
             # Get current branch
             current_branch = repo.active_branch.name
             self.info(f"Current branch: {current_branch}")
@@ -714,6 +719,14 @@ class Repo:
             fetched = upstream_remote.fetch()
             self.ok(f"Fetched {len(fetched)} objects from upstream.")
 
+            # Check if the upstream branch exists
+            try:
+                repo.git.rev_parse("--verify", f"upstream/{current_branch}")
+            except GitCommandError:
+                self.err(f"❌ Branch 'upstream/{current_branch}' does not exist.")
+                self.info(f"Available upstream branches: {', '.join([ref.name.replace('upstream/', '') for ref in upstream_remote.refs])}")
+                return
+
             # Rebase current branch onto upstream's tracking branch
             self.info(f"Rebasing {current_branch} onto upstream/{current_branch}...")
             repo.git.rebase(f"upstream/{current_branch}")
@@ -721,8 +734,8 @@ class Repo:
 
         except GitCommandError as e:
             self.err(f"❌ Failed to sync {repo_name}: {e}")
-        except Exception as e:
-            self.err(f"❌ Failed to sync {repo_name}: {e}")
+            self.info("If the rebase failed, you may need to resolve conflicts manually.")
+
 
     def remote_add(self, remote_name: str, remote_url: str) -> None:
         """

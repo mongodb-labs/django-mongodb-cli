@@ -555,6 +555,15 @@ def fetch(
         repo_instance.list_groups()
         raise typer.Exit()
 
+    if group and all_repos:
+        typer.echo(
+            typer.style(
+                "Cannot use --group and --all-repos together. Please use one or the other.",
+                fg=typer.colors.RED,
+            )
+        )
+        raise typer.Exit(1)
+
     if group:
         # Fetch all repos in the specified group
         group_repos = repo_instance.get_group_repos(group)

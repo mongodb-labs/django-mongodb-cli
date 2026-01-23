@@ -3,7 +3,7 @@ default:
 
 # ---------------------------------------- git ----------------------------------------
 # Use `dm repo clone --group <group>` to clone a group of repositories
-# Use `dm repo remote setup --group <group>` to setup remotes for a group
+# Use `dm repo remote --group <group>` to show/setup remotes for a group
 # Use `dm repo clone --list-groups` to see available groups
 
 [group('git')]
@@ -12,7 +12,7 @@ git-clone repo:
 
 [group('git')]
 git-remote repo:
-    @dm repo remote setup --group {{repo}}
+    @dm repo remote --group {{repo}}
     @dm repo remote set-default --group {{repo}}
 
 

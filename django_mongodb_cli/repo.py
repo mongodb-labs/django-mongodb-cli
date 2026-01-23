@@ -708,18 +708,45 @@ def open(
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Open all repositories"
     ),
+    group: str = typer.Option(
+        None, "--group", "-g", help="Open all repositories in a group"
+    ),
 ):
     """
     Open the specified repository in the default web browser.
     If --all-repos is used, open all repositories.
+    If --group is used, open all repositories in the specified group.
     """
     repo = Repo()
     repo.ctx = ctx
+    
+    # Handle group option
+    if group:
+        group_repos = repo.get_group_repos(group)
+        if not group_repos:
+            typer.echo(
+                typer.style(
+                    f"Group '{group}' not found. Use 'dm repo clone --list-groups' to see available groups.",
+                    fg=typer.colors.RED,
+                )
+            )
+            raise typer.Exit(1)
+        
+        typer.echo(
+            typer.style(
+                f"Opening all repositories in group '{group}'...",
+                fg=typer.colors.CYAN,
+            )
+        )
+        for repo_name_in_group in group_repos:
+            repo.open_repo(repo_name_in_group)
+        return
+    
     repo_command(
         all_repos,
         repo_name,
         all_msg="Opening all repositories...",
-        missing_msg="Please specify a repository name or use --all-repos to open all repositories.",
+        missing_msg="Please specify a repository name, use --all-repos to open all repositories, or use --group to open repositories in a group.",
         single_func=lambda repo_name: repo.open_repo(repo_name),
         all_func=lambda repo_name: repo.open_repo(repo_name),
     )

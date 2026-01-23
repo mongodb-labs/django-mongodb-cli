@@ -54,6 +54,15 @@ To set the default branch for all repositories in a group::
 
     dm repo remote set-default --group django
 
+Opening Repositories in Browser
+--------------------------------
+
+To open all repositories in a group in your default web browser::
+
+    dm repo open --group django
+
+This will open the GitHub page for each repository in the group using the ``gh browse`` command.
+
 Using with Just
 ---------------
 

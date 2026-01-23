@@ -67,7 +67,7 @@ def remote(
         False, "--list-groups", "-l", help="List available repository groups"
     ),
     set_default: bool = typer.Option(
-        False, "--set-default", help="Set the default repository. Works with a single repo name or --group"
+        False, "--set-default", help="Set the default repository. Works with a single repo name or --group."
     ),
 ):
     """

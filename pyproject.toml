@@ -429,9 +429,19 @@ tasks = ["run-tests"]
 project_name = "mongo-python-driver"
 tasks = ["run-tests"]
 
-[tool.django-mongodb-cli.project.settings]
-# path = "settings.base"
+# Multiple settings configurations for Django projects
+# Use with: dm project run myproject --settings site1
+[tool.django-mongodb-cli.project.settings.base]
+path = "settings.base"
+
+[tool.django-mongodb-cli.project.settings.qe]
 path = "settings.qe"
+
+[tool.django-mongodb-cli.project.settings.site1]
+path = "settings.site1"
+
+[tool.django-mongodb-cli.project.settings.site2]
+path = "settings.site2"
 
 [tool.setuptools]
 packages = ["django_mongodb_cli", "demo"]

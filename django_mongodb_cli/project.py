@@ -317,9 +317,18 @@ def _django_manage_command(
     *args: str,
     extra_env: dict | None = None,
     frontend: bool = False,
+    settings: str | None = None,
 ):
     """
     Internal helper to call django-admin with the right environment.
+
+    Args:
+        name: Project name
+        directory: Project directory
+        args: Arguments to pass to django-admin
+        extra_env: Extra environment variables
+        frontend: Whether to run frontend alongside
+        settings: Optional settings configuration name (e.g., 'site1', 'site2')
     """
     repo = Repo()
     project_path = directory / name
@@ -329,9 +338,15 @@ def _django_manage_command(
 
     parent_dir = project_path.parent.resolve()
     env = os.environ.copy()
-    env["DJANGO_SETTINGS_MODULE"] = (
-        f"{name}.{repo._tool_cfg.get('project', {}).get('settings', {}).get('path', 'settings.base')}"
-    )
+
+    # Get the settings path using the new method
+    try:
+        settings_path = repo.get_project_settings(settings)
+    except ValueError as e:
+        typer.echo(f"❌ {e}", err=True)
+        raise typer.Exit(code=1)
+
+    env["DJANGO_SETTINGS_MODULE"] = f"{name}.{settings_path}"
     env["PYTHONPATH"] = str(name) + os.pathsep + env.get("PYTHONPATH", "")
     typer.echo(f"🔧 Using DJANGO_SETTINGS_MODULE={env['DJANGO_SETTINGS_MODULE']}")
     if extra_env:
@@ -402,10 +417,21 @@ def run_project(
         help="Optional MongoDB connection URI. Falls back to $MONGODB_URI if not provided.",
     ),
     frontend: bool = typer.Option(False, "-f", "--frontend", help="Run frontend"),
+    settings: str = typer.Option(
+        None,
+        "--settings",
+        "-s",
+        help="Settings configuration name to use (e.g., 'site1', 'site2')",
+    ),
 ):
     """
     Run a Django project using django-admin instead of manage.py,
     with MONGODB_URI set in the environment if provided.
+
+    Examples:
+        dm project run myproject
+        dm project run myproject --settings site1
+        dm project run myproject -s site2 --frontend
     """
     typer.echo(f"🚀 Running project '{name}' on http://{host}:{port}")
     _django_manage_command(
@@ -415,6 +441,7 @@ def run_project(
         f"{host}:{port}",
         extra_env=_build_mongodb_env(mongodb_uri),
         frontend=frontend,
+        settings=settings,
     )
 
 
@@ -432,9 +459,20 @@ def migrate_project(
         None,
         help="Specify the database to migrate.",
     ),
+    settings: str = typer.Option(
+        None,
+        "--settings",
+        "-s",
+        help="Settings configuration name to use (e.g., 'site1', 'site2')",
+    ),
 ):
     """
     Run Django migrations using django-admin instead of manage.py.
+
+    Examples:
+        dm project migrate myproject
+        dm project migrate myproject --settings site1
+        dm project migrate myproject auth
     """
     cmd = ["migrate"]
     if app_label:
@@ -445,7 +483,11 @@ def migrate_project(
         cmd.append(f"--database={database}")
     typer.echo(f"📦 Applying migrations for project '{name}'")
     _django_manage_command(
-        name, directory, *cmd, extra_env=_build_mongodb_env(mongodb_uri)
+        name,
+        directory,
+        *cmd,
+        extra_env=_build_mongodb_env(mongodb_uri),
+        settings=settings,
     )
 
 
@@ -458,9 +500,20 @@ def makemigrations_project(
         None,
         help="Optional MongoDB connection URI. Falls back to $MONGODB_URI if not provided.",
     ),
+    settings: str = typer.Option(
+        None,
+        "--settings",
+        "-s",
+        help="Settings configuration name to use (e.g., 'site1', 'site2')",
+    ),
 ):
     """
     Create new Django migrations using django-admin instead of manage.py.
+
+    Examples:
+        dm project makemigrations myproject
+        dm project makemigrations myproject --settings site1
+        dm project makemigrations myproject myapp
     """
     cmd = ["makemigrations"]
     if app_label:
@@ -468,7 +521,11 @@ def makemigrations_project(
 
     typer.echo(f"🛠️ Making migrations for project '{name}'")
     _django_manage_command(
-        name, directory, *cmd, extra_env=_build_mongodb_env(mongodb_uri)
+        name,
+        directory,
+        *cmd,
+        extra_env=_build_mongodb_env(mongodb_uri),
+        settings=settings,
     )
 
 
@@ -485,6 +542,12 @@ def manage_command(
         None,
         help="Specify the database to use.",
     ),
+    settings: str = typer.Option(
+        None,
+        "--settings",
+        "-s",
+        help="Settings configuration name to use (e.g., 'site1', 'site2')",
+    ),
 ):
     """
     Run any django-admin command for a project.
@@ -493,6 +556,7 @@ def manage_command(
         dm project manage mysite shell
         dm project manage mysite createsuperuser
         dm project manage mysite --mongodb-uri mongodb+srv://user:pwd@cluster
+        dm project manage mysite --settings site1 shell
         dm project manage mysite
     """
     if args is None:
@@ -510,10 +574,10 @@ def manage_command(
 
     if command:
         typer.echo(f"⚙️  Running django-admin {command} {' '.join(args)} for '{name}'")
-        _django_manage_command(name, directory, command, *args)
+        _django_manage_command(name, directory, command, *args, settings=settings)
     else:
         typer.echo(f"ℹ️  Running django-admin with no arguments for '{name}'")
-        _django_manage_command(name, directory)
+        _django_manage_command(name, directory, settings=settings)
 
 
 @project.command("su")
@@ -536,9 +600,20 @@ def create_superuser(
         None,
         help="Optional MongoDB connection URI. Falls back to $MONGODB_URI if not provided.",
     ),
+    settings: str = typer.Option(
+        None,
+        "--settings",
+        "-s",
+        help="Settings configuration name to use (e.g., 'site1', 'site2')",
+    ),
 ):
     """
     Create a Django superuser with no interaction required, using django-admin instead of manage.py.
+
+    Examples:
+        dm project su myproject
+        dm project su myproject --settings site1
+        dm project su myproject -u myuser -p mypass
     """
     if not email:
         email = os.getenv("PROJECT_EMAIL", "admin@example.com")
@@ -556,4 +631,5 @@ def create_superuser(
         f"--username={username}",
         f"--email={email}",
         extra_env=extra_env,
+        settings=settings,
     )

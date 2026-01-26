@@ -106,6 +106,51 @@ class Repo:
     def origin_cfg(self) -> dict:
         return self.tool_cfg.get("origin", {}) or {}
 
+    def get_project_settings(self, settings_name: str | None = None) -> str:
+        """Get the settings path for a project.
+
+        Args:
+            settings_name: Optional name of the settings configuration to use.
+                          If None, uses the first available settings or falls back to 'settings.base'.
+
+        Returns:
+            The settings path (e.g., 'settings.base' or 'settings.qe').
+        """
+        project_cfg = self.tool_cfg.get("project", {})
+        settings_cfg = project_cfg.get("settings")
+
+        # Handle legacy single settings configuration with direct path
+        if isinstance(settings_cfg, dict) and "path" in settings_cfg:
+            return settings_cfg.get("path", "settings.base")
+
+        # Handle new dict-based settings configuration
+        # Format: [tool.django-mongodb-cli.project.settings.NAME]
+        if isinstance(settings_cfg, dict) and "path" not in settings_cfg:
+            if not settings_cfg:
+                return "settings.base"
+
+            if settings_name:
+                # Look for the named settings configuration
+                if settings_name in settings_cfg:
+                    setting = settings_cfg[settings_name]
+                    if isinstance(setting, dict):
+                        return setting.get("path", "settings.base")
+                # If not found, raise an error
+                available = list(settings_cfg.keys())
+                raise ValueError(
+                    f"Settings configuration '{settings_name}' not found. "
+                    f"Available settings: {', '.join(available)}"
+                )
+            else:
+                # Use the first settings configuration
+                first_key = next(iter(settings_cfg))
+                first_setting = settings_cfg[first_key]
+                if isinstance(first_setting, dict):
+                    return first_setting.get("path", "settings.base")
+
+        # Default fallback
+        return "settings.base"
+
     @staticmethod
     def parse_git_url(raw: str) -> tuple[str, str]:
         branch = "main"
@@ -701,12 +746,16 @@ class Repo:
             # Check if upstream remote exists
             if "upstream" not in [remote.name for remote in repo.remotes]:
                 self.err(f"❌ No 'upstream' remote found for {repo_name}.")
-                self.info("Add an upstream remote with: dm repo remote add upstream <url>")
+                self.info(
+                    "Add an upstream remote with: dm repo remote add upstream <url>"
+                )
                 return
 
             # Check if HEAD is detached
             if repo.head.is_detached:
-                self.err("❌ Repository is in detached HEAD state. Please checkout a branch first.")
+                self.err(
+                    "❌ Repository is in detached HEAD state. Please checkout a branch first."
+                )
                 return
 
             # Get current branch
@@ -724,7 +773,9 @@ class Repo:
                 repo.git.rev_parse("--verify", f"upstream/{current_branch}")
             except GitCommandError:
                 self.err(f"❌ Branch 'upstream/{current_branch}' does not exist.")
-                self.info(f"Available upstream branches: {', '.join([ref.name.replace('upstream/', '') for ref in upstream_remote.refs])}")
+                self.info(
+                    f"Available upstream branches: {', '.join([ref.name.replace('upstream/', '') for ref in upstream_remote.refs])}"
+                )
                 return
 
             # Rebase current branch onto upstream's tracking branch
@@ -734,8 +785,9 @@ class Repo:
 
         except GitCommandError as e:
             self.err(f"❌ Failed to sync {repo_name}: {e}")
-            self.info("If the rebase failed, you may need to resolve conflicts manually.")
-
+            self.info(
+                "If the rebase failed, you may need to resolve conflicts manually."
+            )
 
     def remote_add(self, remote_name: str, remote_url: str) -> None:
         """

@@ -430,8 +430,8 @@ project_name = "mongo-python-driver"
 tasks = ["run-tests"]
 
 [tool.django-mongodb-cli.project.settings]
-path = "settings.base"
-# path = "settings.qe"
+# path = "settings.base"
+path = "settings.qe"
 
 [tool.setuptools]
 packages = ["django_mongodb_cli", "demo"]

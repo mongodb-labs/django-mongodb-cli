@@ -67,7 +67,9 @@ def remote(
         False, "--list-groups", "-l", help="List available repository groups"
     ),
     set_default: bool = typer.Option(
-        False, "--set-default", help="Set the default repository. Works with a single repo name or --group."
+        False,
+        "--set-default",
+        help="Set the default repository. Works with a single repo name or --group.",
     ),
 ):
     """
@@ -719,7 +721,7 @@ def open(
     """
     repo = Repo()
     repo.ctx = ctx
-    
+
     # Handle group option
     if group:
         group_repos = repo.get_group_repos(group)
@@ -731,7 +733,7 @@ def open(
                 )
             )
             raise typer.Exit(1)
-        
+
         typer.echo(
             typer.style(
                 f"Opening all repositories in group '{group}'...",
@@ -741,7 +743,7 @@ def open(
         for repo_name_in_group in group_repos:
             repo.open_repo(repo_name_in_group)
         return
-    
+
     repo_command(
         all_repos,
         repo_name,
@@ -986,7 +988,7 @@ def sync(
     ),
 ):
     """
-    Sync repository by fetching from upstream and rebasing onto it.
+    Sync repository by fetching from upstream, rebasing onto it, and pushing to origin.
     If --all-repos is used, sync all repositories.
     If --group is used, sync all repositories in the specified group.
     If --list-groups is used, list available repository groups.

@@ -125,8 +125,8 @@ origin = "git+ssh://git@github.com/aclark4life/libmongocrypt"
 upstream = "git+ssh://git@github.com/mongodb/libmongocrypt"
 
 [tool.django-mongodb-cli.remotes.django.django]
-origin = "git+ssh://git@github.com/mongodb-forks/django"
-upstream = "git+ssh://git@github.com/django/django"
+origin = "git+ssh://git@github.com/aclark4life/django"
+upstream = "git+ssh://git@github.com/mongodb-forks/django"
 
 [tool.django-mongodb-cli.remotes.langchain.langchain-mongodb]
 origin = "git+ssh://git@github.com/aclark4life/langchain-mongodb"

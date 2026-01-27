@@ -735,7 +735,7 @@ class Repo:
 
     def sync_repo(self, repo_name: str) -> None:
         """
-        Sync repository by fetching from upstream and rebasing onto it.
+        Sync repository by fetching from upstream, rebasing onto it, and pushing to origin.
         """
         self.info(f"Syncing repository: {repo_name}")
         _, repo = self.ensure_repo(repo_name)
@@ -781,7 +781,12 @@ class Repo:
             # Rebase current branch onto upstream's tracking branch
             self.info(f"Rebasing {current_branch} onto upstream/{current_branch}...")
             repo.git.rebase(f"upstream/{current_branch}")
-            self.ok(f"✅ Successfully synced {repo_name}.")
+            self.ok(f"✅ Successfully rebased {repo_name}.")
+
+            # Push to origin after successful rebase
+            self.info(f"Pushing {current_branch} to origin...")
+            repo.remotes.origin.push(refspec=current_branch, force_with_lease=True)
+            self.ok(f"✅ Successfully pushed {repo_name} to origin.")
 
         except GitCommandError as e:
             self.err(f"❌ Failed to sync {repo_name}: {e}")

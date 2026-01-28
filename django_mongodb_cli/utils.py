@@ -220,8 +220,10 @@ class Repo:
         # Install pre-commit hooks if config exists
         pc_cfg = path / ".pre-commit-config.yaml"
         if pc_cfg.exists():
-            self.info("Installing pre-commit hooks...")
-            if self.run(["pre-commit", "install", "-t", "pre-commit"], cwd=path):
+            # Use prek if available, otherwise fall back to pre-commit
+            pre_commit_cmd = "prek" if shutil.which("prek") else "pre-commit"
+            self.info(f"Installing pre-commit hooks using {pre_commit_cmd}...")
+            if self.run([pre_commit_cmd, "install", "-t", "pre-commit"], cwd=path):
                 self.ok("Pre-commit hooks installed!")
         else:
             self.warn(

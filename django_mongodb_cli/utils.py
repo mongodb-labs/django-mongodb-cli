@@ -864,10 +864,32 @@ class Package(Repo):
             return
 
         install_cfg = self.tool_cfg.get("install", {}).get(repo_name, {})
+
+        # Determine install directories - support both install_dir (single) and install_dirs (list)
+        install_dirs = install_cfg.get("install_dirs")
         install_dir = install_cfg.get("install_dir")
-        if install_dir:
-            path = Path(path / install_dir).resolve()
-            self.info(f"Using custom install directory: {path}")
+
+        # Build list of paths to install
+        paths_to_install = []
+        if install_dirs:
+            if not isinstance(install_dirs, list):
+                self.warn(
+                    f"'install_dirs' for {repo_name} should be a list, got {type(install_dirs).__name__}"
+                )
+                paths_to_install = [path]
+            else:
+                for install_dir_item in install_dirs:
+                    install_path = Path(path / install_dir_item).resolve()
+                    paths_to_install.append(install_path)
+                    self.info(f"Will install from directory: {install_path}")
+        elif install_dir:
+            # Backward compatibility: support single install_dir
+            install_path = Path(path / install_dir).resolve()
+            paths_to_install = [install_path]
+            self.info(f"Using custom install directory: {install_path}")
+        else:
+            # No custom install directory specified, use repo root
+            paths_to_install = [path]
 
         env = os.environ.copy()
         env_vars_list = install_cfg.get("env_vars")
@@ -876,12 +898,12 @@ class Package(Repo):
             typer.echo(env_vars_list)
             env.update({item["name"]: str(item["value"]) for item in env_vars_list})
 
-        # Install the base package
-        if not self.run(["uv", "pip", "install", "-e", str(path)], env=env):
-            self.err(f"Failed to install {repo_name}")
-            return
-
-        self.ok(f"Installed {repo_name}")
+        # Install the base package from each directory
+        for install_path in paths_to_install:
+            if not self.run(["uv", "pip", "install", "-e", str(install_path)], env=env):
+                self.err(f"Failed to install {repo_name} from {install_path}")
+                return
+            self.ok(f"Installed {repo_name} from {install_path}")
 
         # Install optional extras if specified
         extras = install_cfg.get("extras")
@@ -891,21 +913,30 @@ class Package(Repo):
                     f"'extras' for {repo_name} should be a list, got {type(extras).__name__}"
                 )
             else:
-                for extra in extras:
-                    # Validate extra name contains only safe characters (alphanumeric, dash, underscore, dot)
-                    if not isinstance(extra, str) or not re.match(
-                        r"^[a-zA-Z0-9._-]+$", extra
-                    ):
-                        self.warn(f"Skipping invalid extra name: {extra}")
-                        continue
+                for install_path in paths_to_install:
+                    for extra in extras:
+                        # Validate extra name contains only safe characters (alphanumeric, dash, underscore, dot)
+                        if not isinstance(extra, str) or not re.match(
+                            r"^[a-zA-Z0-9._-]+$", extra
+                        ):
+                            self.warn(f"Skipping invalid extra name: {extra}")
+                            continue
 
-                    self.info(f"Installing optional extra: {extra}")
-                    # Install extras using the standard [extra] syntax with uv
-                    extra_path = f"{path}[{extra}]"
-                    if self.run(["uv", "pip", "install", "-e", extra_path], env=env):
-                        self.ok(f"Installed {repo_name}[{extra}]")
-                    else:
-                        self.warn(f"Failed to install {repo_name}[{extra}]")
+                        self.info(
+                            f"Installing optional extra: {extra} from {install_path}"
+                        )
+                        # Install extras using the standard [extra] syntax with uv
+                        extra_path = f"{install_path}[{extra}]"
+                        if self.run(
+                            ["uv", "pip", "install", "-e", extra_path], env=env
+                        ):
+                            self.ok(
+                                f"Installed {repo_name}[{extra}] from {install_path}"
+                            )
+                        else:
+                            self.warn(
+                                f"Failed to install {repo_name}[{extra}] from {install_path}"
+                            )
 
         # Install dependency groups if specified (PEP 735)
         # Note: Using pip instead of uv because uv doesn't support --group yet
@@ -916,33 +947,38 @@ class Package(Repo):
                     f"'groups' for {repo_name} should be a list, got {type(groups).__name__}"
                 )
             else:
-                # Check if pyproject.toml exists in the path
-                pyproject_path = path / "pyproject.toml"
-                if not pyproject_path.exists():
-                    self.warn(
-                        f"No pyproject.toml found at {path}, skipping dependency groups"
-                    )
-                else:
-                    for group in groups:
-                        # Validate group name contains only safe characters (alphanumeric, dash, underscore, dot)
-                        if not isinstance(group, str) or not re.match(
-                            r"^[a-zA-Z0-9._-]+$", group
-                        ):
-                            self.warn(f"Skipping invalid group name: {group}")
-                            continue
+                for install_path in paths_to_install:
+                    # Check if pyproject.toml exists in the path
+                    pyproject_path = install_path / "pyproject.toml"
+                    if not pyproject_path.exists():
+                        self.warn(
+                            f"No pyproject.toml found at {install_path}, skipping dependency groups"
+                        )
+                    else:
+                        for group in groups:
+                            # Validate group name contains only safe characters (alphanumeric, dash, underscore, dot)
+                            if not isinstance(group, str) or not re.match(
+                                r"^[a-zA-Z0-9._-]+$", group
+                            ):
+                                self.warn(f"Skipping invalid group name: {group}")
+                                continue
 
-                        self.info(f"Installing dependency group: {group}")
-                        # Use pip install --group with pyproject.toml:group format
-                        # (requires pip 25.3+ for PEP 735 support)
-                        group_arg = f"{pyproject_path}:{group}"
-                        if self.run(["pip", "install", "--group", group_arg], env=env):
-                            self.ok(
-                                f"Installed dependency group {group} for {repo_name}"
+                            self.info(
+                                f"Installing dependency group: {group} from {install_path}"
                             )
-                        else:
-                            self.warn(
-                                f"Failed to install dependency group {group} for {repo_name}"
-                            )
+                            # Use pip install --group with pyproject.toml:group format
+                            # (requires pip 25.3+ for PEP 735 support)
+                            group_arg = f"{pyproject_path}:{group}"
+                            if self.run(
+                                ["pip", "install", "--group", group_arg], env=env
+                            ):
+                                self.ok(
+                                    f"Installed dependency group {group} for {repo_name} from {install_path}"
+                                )
+                            else:
+                                self.warn(
+                                    f"Failed to install dependency group {group} for {repo_name} from {install_path}"
+                                )
 
     def uninstall_package(self, repo_name: str) -> None:
         """

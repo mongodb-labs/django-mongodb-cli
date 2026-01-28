@@ -149,10 +149,10 @@ origin = "git+ssh://git@github.com/aclark4life/mongo-arrow"
 upstream = "git+ssh://git@github.com/mongodb-labs/mongo-arrow"
 
 [tool.django-mongodb-cli.install.libmongocrypt]
-install_dir = "bindings/python"
+install_dirs = ["bindings/python"]
 
 [tool.django-mongodb-cli.install.mongo-arrow]
-install_dir = "bindings/python"
+install_dirs = ["bindings/python"]
 
 [[tool.django-mongodb-cli.install.mongo-arrow.env_vars]]
 name = "LDFLAGS"
@@ -167,7 +167,7 @@ name = "PKG_CONFIG_PATH"
 value = "/opt/homebrew/opt/mongo-c-driver@1/lib/pkgconfig"
 
 [tool.django-mongodb-cli.install.langchain-mongodb]
-install_dir = "libs/langchain-mongodb"
+install_dirs = ["libs/langchain-mongodb", "libs/langgraph-store-mongodb"]
 # Optional: Install extras and PEP 735 dependency groups from pyproject.toml
 # extras = ["community"]
 groups = ["dev"]

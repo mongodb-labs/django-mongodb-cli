@@ -17,9 +17,24 @@ Custom Install Directory
 If a package needs to be installed from a subdirectory (common with monorepos)::
 
     [tool.django-mongodb-cli.install.mongo-arrow]
-    install_dir = "bindings/python"
+    install_dirs = ["bindings/python"]
 
 This will install from ``src/mongo-arrow/bindings/python`` instead of ``src/mongo-arrow``.
+
+Multiple Install Directories
+-----------------------------
+
+For monorepos with multiple packages, you can specify multiple directories to install::
+
+    [tool.django-mongodb-cli.install.langchain-mongodb]
+    install_dirs = ["libs/langchain-mongodb", "libs/langgraph-store-mongodb"]
+
+This will run ``uv pip install -e`` for each directory:
+
+1. ``uv pip install -e src/langchain-mongodb/libs/langchain-mongodb``
+2. ``uv pip install -e src/langchain-mongodb/libs/langgraph-store-mongodb``
+
+**Note**: For backward compatibility, ``install_dir`` (singular) is still supported for single directories.
 
 Environment Variables
 ---------------------
@@ -27,12 +42,12 @@ Environment Variables
 You can set environment variables for the installation process::
 
     [tool.django-mongodb-cli.install.mongo-arrow]
-    install_dir = "bindings/python"
-    
+    install_dirs = ["bindings/python"]
+
     [[tool.django-mongodb-cli.install.mongo-arrow.env_vars]]
     name = "LDFLAGS"
     value = "-L/opt/homebrew/opt/mongo-c-driver@1/lib"
-    
+
     [[tool.django-mongodb-cli.install.mongo-arrow.env_vars]]
     name = "CPPFLAGS"
     value = "-I/opt/homebrew/opt/mongo-c-driver@1/include"
@@ -40,7 +55,7 @@ You can set environment variables for the installation process::
 Optional Extras
 ---------------
 
-You can install optional extras (also known as optional dependencies) defined in the 
+You can install optional extras (also known as optional dependencies) defined in the
 package's ``[project.optional-dependencies]`` section::
 
     [tool.django-mongodb-cli.install.some-package]
@@ -65,7 +80,7 @@ You can install dependency groups defined in the package's ``pyproject.toml`` us
 the PEP 735 standard::
 
     [tool.django-mongodb-cli.install.langchain-mongodb]
-    install_dir = "libs/langchain-mongodb"
+    install_dirs = ["libs/langchain-mongodb"]
     groups = ["dev", "test"]
 
 This will run:
@@ -90,15 +105,15 @@ Combining Extras and Groups
 You can use both ``extras`` and ``groups`` together::
 
     [tool.django-mongodb-cli.install.langchain-mongodb]
-    install_dir = "libs/langchain-mongodb"
+    install_dirs = ["libs/langchain-mongodb"]
     extras = ["community"]
     groups = ["dev", "test"]
 
 This will install:
 
-1. Base package
-2. All specified extras (using ``pip install -e path[extra]``)
-3. All specified dependency groups (using ``pip install --group``)
+1. Base package from each directory
+2. All specified extras for each directory (using ``pip install -e path[extra]``)
+3. All specified dependency groups for each directory (using ``pip install --group``)
 
 Example: langchain-mongodb
 ---------------------------
@@ -106,7 +121,7 @@ Example: langchain-mongodb
 Here's a complete example for configuring ``langchain-mongodb``::
 
     [tool.django-mongodb-cli.install.langchain-mongodb]
-    install_dir = "libs/langchain-mongodb"
+    install_dirs = ["libs/langchain-mongodb"]
     extras = ["community"]
     groups = ["dev", "test", "lint"]
 
@@ -114,7 +129,7 @@ This configuration assumes ``langchain-mongodb`` has a ``pyproject.toml`` with::
 
     [project.optional-dependencies]
     community = ["langchain-community>=0.3.0"]
-    
+
     [dependency-groups]
     dev = ["pytest", "ruff", "mypy"]
     test = ["pytest-cov", "pytest-asyncio"]

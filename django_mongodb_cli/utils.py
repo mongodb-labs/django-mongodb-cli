@@ -799,7 +799,7 @@ class Repo:
 
             # Push to origin after successful rebase
             self.info(f"Pushing {current_branch} to origin...")
-            repo.remotes.origin.push(refspec=current_branch, force_with_lease=True)
+            repo.remotes.origin.push(refspec=current_branch, force=True)
             self.ok(f"✅ Successfully pushed {repo_name} to origin.")
 
         except GitCommandError as e:

@@ -37,6 +37,9 @@ docs = [
   "furo",
   "sphinx-copybutton",
 ]
+langchain = [
+  "langchain-voyageai",
+]
 
 [dependency-groups]
 langchain = [

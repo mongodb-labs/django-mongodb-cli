@@ -73,7 +73,7 @@ repos = [
   "mongo-arrow @ git+ssh://git@github.com/mongodb-labs/mongo-arrow@main",
   "mongo-orchestration @ git+ssh://git@github.com/mongodb-labs/mongo-orchestration@master",
   "mongo-python-driver @ git+ssh://git@github.com/mongodb/mongo-python-driver@master",
-  "mongodb-community-search-setup @ git+ssh://git@github.com/mongodb-js/mongodb-community-search-setup.git",
+  "mongodb-community-search-setup @ git+ssh://git@github.com/aclark4life/mongodb-community-search-setup.git",
   "mongot @ git+ssh://git@github.com/10gen/mongot.git@master",
   "pymongo-auth-aws @ git+ssh://git@github.com/mongodb/pymongo-auth-aws@master",
   "pymongo-search-utils@ git+ssh://git@github.com/mongodb-labs/pymongo-search-utils@main",

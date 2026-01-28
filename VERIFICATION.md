@@ -10,8 +10,8 @@ The `dm repo remote --group` functionality is **fully functional**. This command
 
 The functionality is implemented in:
 - **File**: `django_mongodb_cli/repo.py`
-- **Function**: `remote` callback (lines 56-153)
-- **Command path**: `dm repo remote --group <group_name>`
+- **Function**: `remote` command
+- **Command path**: `dm repo remote [REPO_NAME]` or `dm repo remote --group <group_name>`
 
 ## Available Options
 
@@ -21,9 +21,9 @@ dm repo remote --help
 
 Output:
 ```
-Usage: dm repo remote [OPTIONS] COMMAND [ARGS]...
+Usage: dm repo remote [OPTIONS] [REPO_NAME]
 
- Manage Git repositories
+ Show the git remotes for repositories
 
 Options:
   --all-repos    -a            Show remotes of all repositories
@@ -33,6 +33,15 @@ Options:
 ```
 
 ## Usage Examples
+
+### Show Remotes for a Single Repository
+```bash
+dm repo remote django
+```
+
+This will:
+1. Automatically setup remotes if the repository belongs to a group and remotes are configured for it
+2. Display all configured remotes for the repository
 
 ### List Available Groups
 ```bash

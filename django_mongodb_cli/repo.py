@@ -8,8 +8,6 @@ repo = typer.Typer(
     help="Manage Git repositories",
     context_settings={"help_option_names": ["-h", "--help"]},
 )
-repo_remote = typer.Typer(context_settings={"help_option_names": ["-h", "--help"]})
-repo.add_typer(repo_remote, name="remote", help="Manage Git repositories")
 
 
 def repo_command(
@@ -53,12 +51,10 @@ def main(
         raise typer.Exit()
 
 
-@repo_remote.callback(invoke_without_command=True)
+@repo.command("remote")
 def remote(
     ctx: typer.Context,
-    repo_name: str = typer.Option(
-        None, "--repo", "-r", help="Repository name"
-    ),
+    repo_name: str = typer.Argument(None, help="Repository name"),
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Show remotes of all repositories"
     ),
@@ -73,21 +69,17 @@ def remote(
     Show the git remotes for repositories.
     Use --all-repos to show remotes for all repositories.
     Use --group to show remotes for all repositories in a group.
-    If remotes are not configured for a group, they will be set up automatically.
+    Remotes will be set up automatically if not already configured.
     """
     repo_manager = Repo()
     repo_manager.ctx = ctx
-
-    # If a subcommand is being invoked, just set up context and return
-    if ctx.invoked_subcommand is not None:
-        return
 
     # Handle --list-groups
     if list_groups:
         repo_manager.list_groups()
         raise typer.Exit()
 
-    # If no subcommand, show remotes based on options
+    # Show remotes based on options
     if group:
         # Show remotes for all repos in the specified group
         group_repos = repo_manager.get_group_repos(group)
@@ -152,6 +144,11 @@ def remote(
             repo_manager.get_repo_remote(repo_name_all)
     elif repo_name:
         # Show remotes for single repo
+        # First, try to setup remotes if the repo belongs to any group
+        repo_groups = repo_manager.get_repo_groups(repo_name)
+        if repo_groups:
+            # Use the first group that contains this repo
+            repo_manager.setup_repo_remotes(repo_name, repo_groups[0])
         repo_manager.get_repo_remote(repo_name)
     else:
         # Show help since no options provided

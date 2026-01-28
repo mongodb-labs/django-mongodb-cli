@@ -381,6 +381,18 @@ class Repo:
         groups = self.get_groups()
         return groups.get(group_name, [])
 
+    def get_repo_groups(self, repo_name: str) -> list:
+        """
+        Get the list of group names that contain the specified repository.
+        Returns an empty list if the repository is not in any group.
+        """
+        groups = self.get_groups()
+        repo_groups = []
+        for group_name, repos in groups.items():
+            if repo_name in repos:
+                repo_groups.append(group_name)
+        return repo_groups
+
     def list_groups(self) -> None:
         """
         List all available repository groups.

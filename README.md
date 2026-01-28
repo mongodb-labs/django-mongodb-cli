@@ -32,6 +32,9 @@ dm repo clone --list-groups
 # Clone all repositories in a group
 dm repo clone --group django --install
 
+# Show remotes for a single repository (auto-setup if not configured)
+dm repo remote django
+
 # Show remotes for all repos in a group (auto-setup if not configured)
 dm repo remote --group django
 

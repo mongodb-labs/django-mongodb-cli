@@ -32,16 +32,22 @@ To clone and install packages::
 Showing and Setting Up Remotes
 -------------------------------
 
+To show git remotes for a single repository::
+
+    dm repo remote django
+
+This will automatically setup remotes if the repository belongs to a group and remotes are configured for it.
+
 To show git remotes for all repositories in a group::
 
     dm repo remote --group django
 
-This will:
+Both commands will:
 
-1. Automatically setup remotes if not already configured
+1. Automatically setup remotes if not already configured (based on pyproject.toml configuration)
 2. Display all configured remotes for each repository
 
-The command is idempotent - running it multiple times will not re-add existing remotes.
+The commands are idempotent - running them multiple times will not re-add existing remotes.
 
 To list available groups::
 

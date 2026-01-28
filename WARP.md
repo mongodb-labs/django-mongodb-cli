@@ -49,10 +49,10 @@ Project scaffolding and management all assume you are in a workspace where you w
 - Create a new project from the bundled template:
 
   ```bash path=null start=null
-  dm project add <project_name> [--add-frontend]
+  dm project add <project_name> [--no-frontend]
   ```
 
-  This uses the `project_template` under `django_mongodb_cli/templates` via `django-admin startproject`. It also generates a per-project `pyproject.toml` preconfigured for MongoDB usage and testing.
+  This uses the `project_template` under `django_mongodb_cli/templates` via `django-admin startproject`. It also generates a per-project `pyproject.toml` preconfigured for MongoDB usage and testing. Frontend is added by default; use `--no-frontend` to skip frontend creation.
 
 - Run a project (using `django-admin` instead of `manage.py`):
 

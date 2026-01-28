@@ -73,7 +73,7 @@ def add_project(
     ),
     directory: Path = Path("."),
     add_frontend: bool = typer.Option(
-        False, "--add-frontend", "-f", help="Add frontend"
+        True, "--add-frontend/--no-frontend", "-f/-F", help="Add frontend (default: True)"
     ),
     random_name: bool = typer.Option(
         False,
@@ -84,10 +84,12 @@ def add_project(
 ):
     """
     Create a new Django project using bundled templates.
+    Frontend is added by default. Use --no-frontend to skip frontend creation.
 
     Examples:
-        dm project add myproject          # Create with explicit name
-        dm project add --random           # Create with random name
+        dm project add myproject          # Create with explicit name (includes frontend)
+        dm project add myproject --no-frontend  # Create without frontend
+        dm project add --random           # Create with random name (includes frontend)
         dm project add -r                 # Short form
     """
     # Handle random name generation
@@ -166,7 +168,7 @@ def add_project(
     # Add pyproject.toml after project creation
     _create_pyproject_toml(project_path, name)
 
-    # Conditionally create frontend if -f flag is set
+    # Create frontend by default (unless --no-frontend is specified)
     if add_frontend:
         typer.echo(f"🎨 Adding frontend to project '{name}'...")
         try:

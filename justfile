@@ -13,7 +13,7 @@ git-clone repo:
 [group('git')]
 git-remote repo:
     @dm repo remote --group {{repo}}
-    @dm repo remote --set-default --group {{repo}}
+    @dm repo set-default --group {{repo}}
 
 
 p:

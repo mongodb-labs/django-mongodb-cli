@@ -747,7 +747,7 @@ class Repo:
             if "upstream" not in [remote.name for remote in repo.remotes]:
                 self.err(f"❌ No 'upstream' remote found for {repo_name}.")
                 self.info(
-                    "Add an upstream remote with: dm repo remote add upstream <url>"
+                    "Configure an upstream remote in pyproject.toml under [tool.django-mongodb-cli.remotes.<group>.<repo>]"
                 )
                 return
 
@@ -793,57 +793,6 @@ class Repo:
             self.info(
                 "If the rebase failed, you may need to resolve conflicts manually."
             )
-
-    def remote_add(self, remote_name: str, remote_url: str) -> None:
-        """
-        Add a new remote to the specified repository.
-        """
-        if not self.ctx:
-            self.err("Context not initialized. Cannot add remote.")
-            return
-        repo_name = self.ctx.obj.get("repo_name")
-        if not repo_name:
-            self.err("Repository name not found in context.")
-            return
-        self.info(f"Adding remote '{remote_name}' to repository: {repo_name}")
-        _, repo = self.ensure_repo(repo_name)
-        if not repo:
-            return
-
-        try:
-            repo.create_remote(remote_name, remote_url)
-            self.ok(
-                f"Successfully added remote '{remote_name}' with URL '{remote_url}'."
-            )
-        except Exception:
-            self.info(f"Removing remote '{remote_name}' from repository: {repo_name}")
-            repo.delete_remote(remote_name)
-            repo.create_remote(remote_name, remote_url)
-            self.ok(
-                f"Successfully added remote '{remote_name}' with URL '{remote_url}'."
-            )
-
-    def remote_remove(self, remote_name: str) -> None:
-        """
-        Remove a remote from the specified repository.
-        """
-        if not self.ctx:
-            self.err("Context not initialized. Cannot remove remote.")
-            return
-        repo_name = self.ctx.obj.get("repo_name")
-        if not repo_name:
-            self.err("Repository name not found in context.")
-            return
-        self.info(f"Removing remote '{remote_name}' from repository: {repo_name}")
-        _, repo = self.ensure_repo(repo_name)
-        if not repo:
-            return
-
-        try:
-            repo.delete_remote(remote_name)
-            self.ok(f"✅ Successfully removed remote '{remote_name}'.")
-        except Exception as e:
-            self.err(f"❌ Failed to remove remote '{remote_name}': {e}")
 
     def set_default_repo(self, repo_name: str) -> None:
         """

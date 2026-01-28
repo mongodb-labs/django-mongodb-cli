@@ -61,9 +61,9 @@ alias d := drop
 pip-install: check-venv
     # brew install libxml2 libxmlsec1 mongo-c-driver mongo-c-driver@1 pkg-config
     # pip install lxml==5.3.2 --no-binary :all:
-    pip install -U pip
-    pip install -e '.[docs]'
-    pre-commit install
+    uv pip install -U pip
+    uv pip install -e '.[docs]'
+    prek install
 
 # ensure virtual environment is active
 [group('python')]

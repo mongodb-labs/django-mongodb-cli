@@ -853,17 +853,69 @@ def pull(
     all_repos: bool = typer.Option(
         False, "--all-repos", "-a", help="Pull all repositories"
     ),
+    group: str = typer.Option(
+        None, "--group", "-g", help="Pull all repositories in a group"
+    ),
+    list_groups: bool = typer.Option(
+        False, "--list-groups", "-l", help="List available repository groups"
+    ),
 ):
     """
     Pull updates for the specified repository.
     If --all-repos is used, pull updates for all repositories.
+    If --group is used, pull all repositories in the specified group.
+    If --list-groups is used, list available repository groups.
     """
-    repo = Repo()
-    repo.ctx = ctx
-    if not repo.map:
+    repo_instance = Repo()
+    repo_instance.ctx = ctx
+
+    if list_groups:
+        repo_instance.list_groups()
+        raise typer.Exit()
+
+    if group and all_repos:
         typer.echo(
             typer.style(
-                f"No repositories found in {os.path.join(os.getcwd(), repo.pyproject_file)}.",
+                "Cannot use --group and --all-repos together. Please use one or the other.",
+                fg=typer.colors.RED,
+            )
+        )
+        raise typer.Exit(1)
+
+    if group:
+        # Pull all repos in the specified group
+        group_repos = repo_instance.get_group_repos(group)
+        if not group_repos:
+            typer.echo(
+                typer.style(
+                    f"Group '{group}' not found. Use --list-groups to see available groups.",
+                    fg=typer.colors.RED,
+                )
+            )
+            raise typer.Exit(1)
+
+        typer.echo(
+            typer.style(
+                f"Pulling repositories in group '{group}': {', '.join(group_repos)}",
+                fg=typer.colors.CYAN,
+            )
+        )
+
+        for repo in group_repos:
+            repo_instance.pull(repo)
+
+        typer.echo(
+            typer.style(
+                f"✅ Finished pulling group '{group}'",
+                fg=typer.colors.GREEN,
+            )
+        )
+        return
+
+    if not repo_instance.map:
+        typer.echo(
+            typer.style(
+                f"No repositories found in {os.path.join(os.getcwd(), repo_instance.pyproject_file)}.",
                 fg=typer.colors.RED,
             )
         )
@@ -873,9 +925,9 @@ def pull(
         all_repos,
         repo_name,
         all_msg="Pulling all repositories...",
-        missing_msg="Please specify a repository name or use -a,--all-repos to pull all repositories.",
-        single_func=lambda repo_name: repo.pull(repo_name),
-        all_func=lambda repo_name: repo.pull(repo_name),
+        missing_msg="Please specify a repository name, use --group to pull a group, use --list-groups to see available groups, or use -a,--all-repos to pull all repositories.",
+        single_func=lambda repo_name: repo_instance.pull(repo_name),
+        all_func=lambda repo_name: repo_instance.pull(repo_name),
     )
 
 

@@ -9,6 +9,13 @@ repo = typer.Typer(
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 
+# Common help text for options
+HELP_ALL_REPOS = "Apply to all repositories"
+HELP_GROUP = "Apply to all repositories in the specified group"
+HELP_LIST_GROUPS = "List available repository groups"
+HELP_INSTALL_AFTER = "Install the package after cloning"
+HELP_UNINSTALL_BEFORE = "Uninstall the package before deleting"
+
 
 def repo_command(
     all_repos: bool,
@@ -51,18 +58,591 @@ def main(
         raise typer.Exit()
 
 
+@repo.command()
+def checkout(
+    ctx: typer.Context,
+    repo_name: str = typer.Argument(None),
+    branch_name: str = typer.Argument(None, help="Branch name"),
+    list_branches: bool = typer.Option(
+        False, "--list-branches", "-l", help="List branches of the repository"
+    ),
+    all_repos: bool = typer.Option(False, "--all-repos", "-a", help=HELP_ALL_REPOS),
+    delete_branch: bool = typer.Option(
+        False, "--delete-branch", "-d", help="Delete the specified branch"
+    ),
+    cloned_only: bool = typer.Option(
+        False, "--cloned-only", "-c", help="Show branches only for cloned repositories"
+    ),
+):
+    """
+    Checkout or create a branch in a repository.
+    If --all-repos is used, show branches for all repositories.
+    """
+    repo = Repo()
+    repo.ctx = ctx
+    repo_list = repo.map
+
+    if (all_repos and not list_branches) or (all_repos and repo_name):
+        typer.echo(
+            typer.style(
+                "Cannot use --all-repos with repo name or without --list-branches.",
+                fg=typer.colors.RED,
+            )
+        )
+        raise typer.Exit()
+
+    if delete_branch and branch_name:
+        repo.delete_branch(repo_name, branch_name)
+        raise typer.Exit()
+    if cloned_only:
+        _, fs_repos = repo._list_repos()
+        repo_list = sorted(fs_repos)
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg=None,
+        missing_msg="Please specify a repository name or use -a,--all-repos with -l,list-repos to show branches of all repositories.",
+        single_func=lambda repo_name: repo.get_repo_branch(repo_name, branch_name),
+        all_func=lambda repo_name: repo.get_repo_branch(repo_name, branch_name),
+        repo_list=repo_list,
+    )
+
+
+@repo.command()
+def clone(
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(False, "--all-repos", "-a", help=HELP_ALL_REPOS),
+    group: str = typer.Option(None, "--group", "-g", help=HELP_GROUP),
+    install: bool = typer.Option(False, "--install", "-i", help=HELP_INSTALL_AFTER),
+    list_groups: bool = typer.Option(
+        False, "--list-groups", "-l", help=HELP_LIST_GROUPS
+    ),
+):
+    """
+    Clone a repository or group of repositories.
+    If --all-repos is used, clone all repositories.
+    If --group is used, clone all repositories in the specified group.
+    If --install is used, install the package after cloning.
+    If --list-groups is used, list available repository groups.
+    """
+    repo_instance = Repo()
+
+    if list_groups:
+        repo_instance.list_groups()
+        raise typer.Exit()
+
+    if group:
+        # Clone all repos in the specified group
+        group_repos = repo_instance.get_group_repos(group)
+        if not group_repos:
+            typer.echo(
+                typer.style(
+                    f"Group '{group}' not found. Use --list-groups to see available groups.",
+                    fg=typer.colors.RED,
+                )
+            )
+            raise typer.Exit(1)
+
+        typer.echo(
+            typer.style(
+                f"Cloning repositories in group '{group}': {', '.join(group_repos)}",
+                fg=typer.colors.CYAN,
+            )
+        )
+
+        package_instance = Package() if install else None
+        for repo in group_repos:
+            repo_instance.clone_repo(repo)
+            if install:
+                package_instance.install_package(repo)
+
+        typer.echo(
+            typer.style(
+                f"✅ Finished cloning group '{group}'",
+                fg=typer.colors.GREEN,
+            )
+        )
+        return
+
+    def clone_repo(name):
+        Repo().clone_repo(name)
+        if install:
+            Package().install_package(name)
+
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Cloning all repositories...",
+        missing_msg="Please specify a repository name, use --group to clone a group, use --list-groups to see available groups, or use -a,--all-repos to clone all repositories.",
+        single_func=clone_repo,
+        all_func=clone_repo,
+    )
+
+
+@repo.command()
+def commit(
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(False, "--all-repos", "-a", help=HELP_ALL_REPOS),
+):
+    """
+    Commit changes in a repository
+    """
+
+    if all_repos:
+        typer.echo(
+            typer.style("Commit cannot be used with --all-repos.", fg=typer.colors.RED)
+        )
+
+    def do_commit(name):
+        Repo().commit_repo(name)
+
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Committing all repositories...",
+        missing_msg="Please specify a repository name.",
+        single_func=do_commit,
+        all_func=do_commit,
+    )
+
+
+@repo.command()
+def diff(
+    ctx: typer.Context,
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(False, "--all-repos", "-a", help=HELP_ALL_REPOS),
+):
+    """
+    Show the git diff for the specified repository.
+    If --all-repos is used, show diffs for all repositories.
+    """
+    repo = Repo()
+    repo.ctx = ctx
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Showing diffs for all repositories...",
+        missing_msg="Please specify a repository name or use -a,--all-repos to show diffs of all repositories.",
+        single_func=lambda repo_name: repo.get_repo_diff(repo_name),
+        all_func=lambda repo_name: repo.get_repo_diff(repo_name),
+    )
+
+
+@repo.command()
+def fetch(
+    ctx: typer.Context,
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(False, "--all-repos", "-a", help=HELP_ALL_REPOS),
+    group: str = typer.Option(None, "--group", "-g", help=HELP_GROUP),
+    list_groups: bool = typer.Option(
+        False, "--list-groups", "-l", help=HELP_LIST_GROUPS
+    ),
+):
+    """
+    Fetch updates for the specified repository.
+    If --all-repos is used, fetch updates for all repositories.
+    If --group is used, fetch all repositories in the specified group.
+    If --list-groups is used, list available repository groups.
+    """
+    repo_instance = Repo()
+    repo_instance.ctx = ctx
+
+    if list_groups:
+        repo_instance.list_groups()
+        raise typer.Exit()
+
+    if group and all_repos:
+        typer.echo(
+            typer.style(
+                "Cannot use --group and --all-repos together. Please use one or the other.",
+                fg=typer.colors.RED,
+            )
+        )
+        raise typer.Exit(1)
+
+    if group:
+        # Fetch all repos in the specified group
+        group_repos = repo_instance.get_group_repos(group)
+        if not group_repos:
+            typer.echo(
+                typer.style(
+                    f"Group '{group}' not found. Use --list-groups to see available groups.",
+                    fg=typer.colors.RED,
+                )
+            )
+            raise typer.Exit(1)
+
+        typer.echo(
+            typer.style(
+                f"Fetching repositories in group '{group}': {', '.join(group_repos)}",
+                fg=typer.colors.CYAN,
+            )
+        )
+
+        for repo in group_repos:
+            repo_instance.fetch_repo(repo)
+
+        typer.echo(
+            typer.style(
+                f"✅ Finished fetching group '{group}'",
+                fg=typer.colors.GREEN,
+            )
+        )
+        return
+
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg=None,
+        missing_msg="Please specify a repository name, use --group to fetch a group, use --list-groups to see available groups, or use -a,--all-repos to fetch all repositories.",
+        single_func=lambda repo_name: repo_instance.fetch_repo(repo_name),
+        all_func=lambda repo_name: repo_instance.fetch_repo(repo_name),
+    )
+
+
+@repo.command()
+def install(
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(False, "--all-repos", "-a", help=HELP_ALL_REPOS),
+    group: str = typer.Option(None, "--group", "-g", help=HELP_GROUP),
+    list_groups: bool = typer.Option(
+        False, "--list-groups", "-l", help=HELP_LIST_GROUPS
+    ),
+):
+    """
+    Install Python package found in the specified repository.
+    If --all-repos is used, install packages for all repositories.
+    If --group is used, install all repositories in the specified group.
+    If --list-groups is used, list available repository groups.
+    """
+    repo_instance = Repo()
+
+    if list_groups:
+        repo_instance.list_groups()
+        raise typer.Exit()
+
+    if group:
+        # Install all repos in the specified group
+        group_repos = repo_instance.get_group_repos(group)
+        if not group_repos:
+            typer.echo(
+                typer.style(
+                    f"Group '{group}' not found. Use --list-groups to see available groups.",
+                    fg=typer.colors.RED,
+                )
+            )
+            raise typer.Exit(1)
+
+        typer.echo(
+            typer.style(
+                f"Installing repositories in group '{group}': {', '.join(group_repos)}",
+                fg=typer.colors.CYAN,
+            )
+        )
+
+        package_instance = Package()
+        for repo in group_repos:
+            package_instance.install_package(repo)
+
+        typer.echo(
+            typer.style(
+                f"✅ Finished installing group '{group}'",
+                fg=typer.colors.GREEN,
+            )
+        )
+        return
+
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Installing all repositories...",
+        missing_msg="Please specify a repository name, use --group to install a group, use --list-groups to see available groups, or use -a,--all-repos to install all repositories.",
+        single_func=lambda repo_name: Package().install_package(repo_name),
+        all_func=lambda repo_name: Package().install_package(repo_name),
+    )
+
+
+@repo.command()
+def log(
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(False, "--all-repos", "-a", help=HELP_ALL_REPOS),
+    n: int = typer.Option(
+        10,
+        "-n",
+        "--lines",
+        min=1,
+        help="Number of log entries to show (per repository)",
+    ),
+):
+    """
+    Show logs for the specified repository.
+
+    By default, shows the last 10 entries. Use ``-n/--lines`` to change the
+    number of entries displayed (per repository).
+    If --all-repos is used, show logs for all repositories.
+    """
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Showing logs for all repositories...",
+        missing_msg="Please specify a repository name or use --all-repos to show logs of all repositories.",
+        single_func=lambda repo_name: Repo().get_repo_log(repo_name, n),
+        all_func=lambda repo_name: Repo().get_repo_log(repo_name, n),
+    )
+
+
+@repo.command()
+def open(
+    ctx: typer.Context,
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(False, "--all-repos", "-a", help=HELP_ALL_REPOS),
+    group: str = typer.Option(None, "--group", "-g", help=HELP_GROUP),
+):
+    """
+    Open the specified repository in the default web browser.
+    If --all-repos is used, open all repositories.
+    If --group is used, open all repositories in the specified group.
+    """
+    repo = Repo()
+    repo.ctx = ctx
+
+    # Handle group option
+    if group:
+        group_repos = repo.get_group_repos(group)
+        if not group_repos:
+            typer.echo(
+                typer.style(
+                    f"Group '{group}' not found. Use 'dm repo clone --list-groups' to see available groups.",
+                    fg=typer.colors.RED,
+                )
+            )
+            raise typer.Exit(1)
+
+        typer.echo(
+            typer.style(
+                f"Opening all repositories in group '{group}'...",
+                fg=typer.colors.CYAN,
+            )
+        )
+        for repo_name_in_group in group_repos:
+            repo.open_repo(repo_name_in_group)
+        return
+
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Opening all repositories...",
+        missing_msg="Please specify a repository name, use --all-repos to open all repositories, or use --group to open repositories in a group.",
+        single_func=lambda repo_name: repo.open_repo(repo_name),
+        all_func=lambda repo_name: repo.open_repo(repo_name),
+    )
+
+
+@repo.command()
+def patch(
+    repo_name: str = typer.Argument(None),
+):
+    """
+    Create an evergreen patch for the specified repository.
+    """
+    repo_command(
+        False,
+        repo_name,
+        all_msg="Running evergreen...",
+        missing_msg="Please specify a repository name.",
+        single_func=lambda repo_name: Test().patch_repo(repo_name),
+        all_func=lambda repo_name: Test().patch_repo(repo_name),
+    )
+
+
+@repo.command()
+def pr(
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(False, "--all-repos", "-a", help=HELP_ALL_REPOS),
+):
+    """
+    Create a pull request for the specified repository.
+    """
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Creating pull requests for all repositories...",
+        missing_msg="Please specify a repository name or use --all-repos to create pull requests for all repositories.",
+        single_func=lambda repo_name: Repo().create_pr(repo_name),
+        all_func=lambda repo_name: Repo().create_pr(repo_name),
+    )
+
+
+@repo.command()
+def pull(
+    ctx: typer.Context,
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(False, "--all-repos", "-a", help=HELP_ALL_REPOS),
+    group: str = typer.Option(None, "--group", "-g", help=HELP_GROUP),
+    list_groups: bool = typer.Option(
+        False, "--list-groups", "-l", help=HELP_LIST_GROUPS
+    ),
+):
+    """
+    Pull updates for the specified repository.
+    If --all-repos is used, pull updates for all repositories.
+    If --group is used, pull all repositories in the specified group.
+    If --list-groups is used, list available repository groups.
+    """
+    repo_instance = Repo()
+    repo_instance.ctx = ctx
+
+    if list_groups:
+        repo_instance.list_groups()
+        raise typer.Exit()
+
+    if group and all_repos:
+        typer.echo(
+            typer.style(
+                "Cannot use --group and --all-repos together. Please use one or the other.",
+                fg=typer.colors.RED,
+            )
+        )
+        raise typer.Exit(1)
+
+    if group:
+        # Pull all repos in the specified group
+        group_repos = repo_instance.get_group_repos(group)
+        if not group_repos:
+            typer.echo(
+                typer.style(
+                    f"Group '{group}' not found. Use --list-groups to see available groups.",
+                    fg=typer.colors.RED,
+                )
+            )
+            raise typer.Exit(1)
+
+        typer.echo(
+            typer.style(
+                f"Pulling repositories in group '{group}': {', '.join(group_repos)}",
+                fg=typer.colors.CYAN,
+            )
+        )
+
+        for repo in group_repos:
+            repo_instance.pull(repo)
+
+        typer.echo(
+            typer.style(
+                f"✅ Finished pulling group '{group}'",
+                fg=typer.colors.GREEN,
+            )
+        )
+        return
+
+    if not repo_instance.map:
+        typer.echo(
+            typer.style(
+                f"No repositories found in {os.path.join(os.getcwd(), repo_instance.pyproject_file)}.",
+                fg=typer.colors.RED,
+            )
+        )
+        raise typer.Exit()
+
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Pulling all repositories...",
+        missing_msg="Please specify a repository name, use --group to pull a group, use --list-groups to see available groups, or use -a,--all-repos to pull all repositories.",
+        single_func=lambda repo_name: repo_instance.pull(repo_name),
+        all_func=lambda repo_name: repo_instance.pull(repo_name),
+    )
+
+
+@repo.command()
+def push(
+    ctx: typer.Context,
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(False, "--all-repos", "-a", help=HELP_ALL_REPOS),
+    group: str = typer.Option(None, "--group", "-g", help=HELP_GROUP),
+    list_groups: bool = typer.Option(
+        False, "--list-groups", "-l", help=HELP_LIST_GROUPS
+    ),
+):
+    """
+    Push updates for the specified repository.
+    If --all-repos is used, push updates for all repositories.
+    If --group is used, push all repositories in the specified group.
+    If --list-groups is used, list available repository groups.
+    """
+    repo_instance = Repo()
+    repo_instance.ctx = ctx
+
+    if list_groups:
+        repo_instance.list_groups()
+        raise typer.Exit()
+
+    if group and all_repos:
+        typer.echo(
+            typer.style(
+                "Cannot use --group and --all-repos together. Please use one or the other.",
+                fg=typer.colors.RED,
+            )
+        )
+        raise typer.Exit(1)
+
+    if group:
+        # Push all repos in the specified group
+        group_repos = repo_instance.get_group_repos(group)
+        if not group_repos:
+            typer.echo(
+                typer.style(
+                    f"Group '{group}' not found. Use --list-groups to see available groups.",
+                    fg=typer.colors.RED,
+                )
+            )
+            raise typer.Exit(1)
+
+        typer.echo(
+            typer.style(
+                f"Pushing repositories in group '{group}': {', '.join(group_repos)}",
+                fg=typer.colors.CYAN,
+            )
+        )
+
+        for repo in group_repos:
+            repo_instance.push(repo)
+
+        typer.echo(
+            typer.style(
+                f"✅ Finished pushing group '{group}'",
+                fg=typer.colors.GREEN,
+            )
+        )
+        return
+
+    if not repo_instance.map:
+        typer.echo(
+            typer.style(
+                f"No repositories found in {os.path.join(os.getcwd(), repo_instance.pyproject_file)}.",
+                fg=typer.colors.RED,
+            )
+        )
+        raise typer.Exit()
+
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Pushing all repositories...",
+        missing_msg="Please specify a repository name, use --group to push a group, use --list-groups to see available groups, or use -a,--all-repos to push all repositories.",
+        single_func=lambda repo_name: repo_instance.push(repo_name),
+        all_func=lambda repo_name: repo_instance.push(repo_name),
+    )
+
+
 @repo.command("remote")
 def remote(
     ctx: typer.Context,
     repo_name: str = typer.Argument(None, help="Repository name"),
-    all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Show remotes of all repositories"
-    ),
-    group: str = typer.Option(
-        None, "--group", "-g", help="Show remotes for all repositories in a group"
-    ),
+    all_repos: bool = typer.Option(False, "--all-repos", "-a", help=HELP_ALL_REPOS),
+    group: str = typer.Option(None, "--group", "-g", help=HELP_GROUP),
     list_groups: bool = typer.Option(
-        False, "--list-groups", "-l", help="List available repository groups"
+        False, "--list-groups", "-l", help=HELP_LIST_GROUPS
     ),
 ):
     """
@@ -156,15 +736,118 @@ def remote(
         raise typer.Exit()
 
 
+@repo.command()
+def remove(
+    ctx: typer.Context,
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(False, "--all-repos", "-a", help=HELP_ALL_REPOS),
+    uninstall: bool = typer.Option(
+        False, "--uninstall", "-u", help=HELP_UNINSTALL_BEFORE
+    ),
+):
+    """
+    Delete the specified repository.
+    If --all-repos is used, delete all repositories.
+    If --uninstall is used, uninstall the package before deleting.
+    """
+    repo = Repo()
+    repo.ctx = ctx
+
+    def do_delete(name):
+        if uninstall:
+            Package().uninstall_package(name)
+        repo.delete_repo(name)
+
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Deleting all repositories...",
+        missing_msg="Please specify a repository name or use -a,--all-repos to delete all repositories.",
+        single_func=do_delete,
+        all_func=do_delete,
+        fg=typer.colors.RED,  # Red for delete
+    )
+
+
+@repo.command()
+def reset(
+    ctx: typer.Context,
+    repo_name: str = typer.Argument(None),
+    all_repos: bool = typer.Option(False, "--all-repos", "-a", help=HELP_ALL_REPOS),
+):
+    """
+    Reset a repository to its initial state.
+    If --all-repos is used, reset all repositories.
+    """
+
+    def reset_repo(name):
+        repo = Repo()
+        repo.ctx = ctx
+        repo.reset_repo(name)
+
+    repo_command(
+        all_repos,
+        repo_name,
+        all_msg="Resetting all repositories...",
+        missing_msg="Please specify a repository name or use -a,--all-repos to reset all repositories.",
+        single_func=reset_repo,
+        all_func=reset_repo,
+    )
+
+
+@repo.command()
+def run(
+    ctx: typer.Context,
+    repo_name: str = typer.Argument(..., help="Repository name"),
+    command: list[str] = typer.Argument(
+        ..., metavar="CMD...", help="Command (and args) to run in the repo directory"
+    ),
+):
+    """
+    Run an arbitrary command inside the repository directory.
+
+    Environment variables can be configured per-repo in ``pyproject.toml``.
+
+    Examples:
+        dm repo run mongo-python-driver just setup tests encryption
+        dm repo run mongo-python-driver "just setup tests encryption"
+    """
+    repo = Repo()
+    repo.ctx = ctx
+
+    # Allow a single shell-style string (e.g. "just setup tests encryption").
+    if len(command) == 1:
+        command = shlex.split(command[0])
+
+    path, _ = repo.ensure_repo(repo_name)
+    if not path:
+        return
+
+    # Build environment from current process plus any configured env_vars.
+    env = os.environ.copy()
+    run_cfg = repo.run_cfg(repo_name)
+    env_vars_list = run_cfg.get("env_vars")
+    if env_vars_list:
+        repo.info("Setting environment variables from pyproject.toml:")
+        for item in env_vars_list:
+            name = item.get("name")
+            value = str(item.get("value"))
+            if name is None:
+                continue
+            env[name] = value
+            typer.echo(f"  {name}={value}")
+
+    repo.info(f"Running in {path}: {' '.join(command)}")
+    repo.run(command, cwd=path, env=env)
+
+
 @repo.command("set-default")
 def set_default(
     ctx: typer.Context,
     repo_name: str = typer.Argument(None, help="Repository name"),
-    group: str = typer.Option(
-        None, "--group", "-g", help="Set default for all repositories in a group"
-    ),
+    group: str = typer.Option(None, "--group", "-g", help=HELP_GROUP),
     list_groups: bool = typer.Option(
-        False, "--list-groups", "-l", help="List available repository groups"
+        False, "--list-groups", "-l", help=HELP_LIST_GROUPS
     ),
 ):
     """
@@ -259,558 +942,6 @@ def set_default(
 
 
 @repo.command()
-def run(
-    ctx: typer.Context,
-    repo_name: str = typer.Argument(..., help="Repository name"),
-    command: list[str] = typer.Argument(
-        ..., metavar="CMD...", help="Command (and args) to run in the repo directory"
-    ),
-):
-    """
-    Run an arbitrary command inside the repository directory.
-
-    Environment variables can be configured per-repo in ``pyproject.toml``.
-
-    Examples:
-        dm repo run mongo-python-driver just setup tests encryption
-        dm repo run mongo-python-driver "just setup tests encryption"
-    """
-    repo = Repo()
-    repo.ctx = ctx
-
-    # Allow a single shell-style string (e.g. "just setup tests encryption").
-    if len(command) == 1:
-        command = shlex.split(command[0])
-
-    path, _ = repo.ensure_repo(repo_name)
-    if not path:
-        return
-
-    # Build environment from current process plus any configured env_vars.
-    env = os.environ.copy()
-    run_cfg = repo.run_cfg(repo_name)
-    env_vars_list = run_cfg.get("env_vars")
-    if env_vars_list:
-        repo.info("Setting environment variables from pyproject.toml:")
-        for item in env_vars_list:
-            name = item.get("name")
-            value = str(item.get("value"))
-            if name is None:
-                continue
-            env[name] = value
-            typer.echo(f"  {name}={value}")
-
-    repo.info(f"Running in {path}: {' '.join(command)}")
-    repo.run(command, cwd=path, env=env)
-
-
-@repo.command()
-def checkout(
-    ctx: typer.Context,
-    repo_name: str = typer.Argument(None),
-    branch_name: str = typer.Argument(None, help="Branch name"),
-    list_branches: bool = typer.Option(
-        False, "--list-branches", "-l", help="List branches of the repository"
-    ),
-    all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Show branches of all repositories"
-    ),
-    delete_branch: bool = typer.Option(
-        False, "--delete-branch", "-d", help="Delete the specified branch"
-    ),
-    cloned_only: bool = typer.Option(
-        False, "--cloned-only", "-c", help="Show branches only for cloned repositories"
-    ),
-):
-    """
-    Checkout or create a branch in a repository.
-    If --all-repos is used, show branches for all repositories.
-    """
-    repo = Repo()
-    repo.ctx = ctx
-    repo_list = repo.map
-
-    if (all_repos and not list_branches) or (all_repos and repo_name):
-        typer.echo(
-            typer.style(
-                "Cannot use --all-repos with repo name or without --list-branches.",
-                fg=typer.colors.RED,
-            )
-        )
-        raise typer.Exit()
-
-    if delete_branch and branch_name:
-        repo.delete_branch(repo_name, branch_name)
-        raise typer.Exit()
-    if cloned_only:
-        _, fs_repos = repo._list_repos()
-        repo_list = sorted(fs_repos)
-    repo_command(
-        all_repos,
-        repo_name,
-        all_msg=None,
-        missing_msg="Please specify a repository name or use -a,--all-repos with -l,list-repos to show branches of all repositories.",
-        single_func=lambda repo_name: repo.get_repo_branch(repo_name, branch_name),
-        all_func=lambda repo_name: repo.get_repo_branch(repo_name, branch_name),
-        repo_list=repo_list,
-    )
-
-
-@repo.command()
-def clone(
-    repo_name: str = typer.Argument(None),
-    all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Clone all repositories"
-    ),
-    group: str = typer.Option(
-        None, "--group", "-g", help="Clone a group of repositories"
-    ),
-    install: bool = typer.Option(
-        False, "--install", "-i", help="Install after cloning"
-    ),
-    list_groups: bool = typer.Option(
-        False, "--list-groups", "-l", help="List available repository groups"
-    ),
-):
-    """
-    Clone a repository or group of repositories.
-    If --all-repos is used, clone all repositories.
-    If --group is used, clone all repositories in the specified group.
-    If --install is used, install the package after cloning.
-    If --list-groups is used, list available repository groups.
-    """
-    repo_instance = Repo()
-
-    if list_groups:
-        repo_instance.list_groups()
-        raise typer.Exit()
-
-    if group:
-        # Clone all repos in the specified group
-        group_repos = repo_instance.get_group_repos(group)
-        if not group_repos:
-            typer.echo(
-                typer.style(
-                    f"Group '{group}' not found. Use --list-groups to see available groups.",
-                    fg=typer.colors.RED,
-                )
-            )
-            raise typer.Exit(1)
-
-        typer.echo(
-            typer.style(
-                f"Cloning repositories in group '{group}': {', '.join(group_repos)}",
-                fg=typer.colors.CYAN,
-            )
-        )
-
-        package_instance = Package() if install else None
-        for repo in group_repos:
-            repo_instance.clone_repo(repo)
-            if install:
-                package_instance.install_package(repo)
-
-        typer.echo(
-            typer.style(
-                f"✅ Finished cloning group '{group}'",
-                fg=typer.colors.GREEN,
-            )
-        )
-        return
-
-    def clone_repo(name):
-        Repo().clone_repo(name)
-        if install:
-            Package().install_package(name)
-
-    repo_command(
-        all_repos,
-        repo_name,
-        all_msg="Cloning all repositories...",
-        missing_msg="Please specify a repository name, use --group to clone a group, use --list-groups to see available groups, or use -a,--all-repos to clone all repositories.",
-        single_func=clone_repo,
-        all_func=clone_repo,
-    )
-
-
-@repo.command()
-def commit(
-    repo_name: str = typer.Argument(None),
-    all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Commit all repositories"
-    ),
-):
-    """
-    Commit changes in a repository
-    """
-
-    if all_repos:
-        typer.echo(
-            typer.style("Commit cannot be used with --all-repos.", fg=typer.colors.RED)
-        )
-
-    def do_commit(name):
-        Repo().commit_repo(name)
-
-    repo_command(
-        all_repos,
-        repo_name,
-        all_msg="Committing all repositories...",
-        missing_msg="Please specify a repository name.",
-        single_func=do_commit,
-        all_func=do_commit,
-    )
-
-
-@repo.command()
-def remove(
-    ctx: typer.Context,
-    repo_name: str = typer.Argument(None),
-    all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Delete all repositories"
-    ),
-    uninstall: bool = typer.Option(
-        False, "--uninstall", "-u", help="Uninstall after deleting"
-    ),
-):
-    """
-    Delete the specified repository.
-    If --all-repos is used, delete all repositories.
-    If --uninstall is used, uninstall the package before deleting.
-    """
-    repo = Repo()
-    repo.ctx = ctx
-
-    def do_delete(name):
-        if uninstall:
-            Package().uninstall_package(name)
-        repo.delete_repo(name)
-
-    repo_command(
-        all_repos,
-        repo_name,
-        all_msg="Deleting all repositories...",
-        missing_msg="Please specify a repository name or use -a,--all-repos to delete all repositories.",
-        single_func=do_delete,
-        all_func=do_delete,
-        fg=typer.colors.RED,  # Red for delete
-    )
-
-
-@repo.command()
-def diff(
-    ctx: typer.Context,
-    repo_name: str = typer.Argument(None),
-    all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Show diffs of all repositories"
-    ),
-):
-    """
-    Show the git diff for the specified repository.
-    If --all-repos is used, show diffs for all repositories.
-    """
-    repo = Repo()
-    repo.ctx = ctx
-    repo_command(
-        all_repos,
-        repo_name,
-        all_msg="Showing diffs for all repositories...",
-        missing_msg="Please specify a repository name or use -a,--all-repos to show diffs of all repositories.",
-        single_func=lambda repo_name: repo.get_repo_diff(repo_name),
-        all_func=lambda repo_name: repo.get_repo_diff(repo_name),
-    )
-
-
-@repo.command()
-def fetch(
-    ctx: typer.Context,
-    repo_name: str = typer.Argument(None),
-    all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Fetch all repositories"
-    ),
-    group: str = typer.Option(
-        None, "--group", "-g", help="Fetch all repositories in a group"
-    ),
-    list_groups: bool = typer.Option(
-        False, "--list-groups", "-l", help="List available repository groups"
-    ),
-):
-    """
-    Fetch updates for the specified repository.
-    If --all-repos is used, fetch updates for all repositories.
-    If --group is used, fetch all repositories in the specified group.
-    If --list-groups is used, list available repository groups.
-    """
-    repo_instance = Repo()
-    repo_instance.ctx = ctx
-
-    if list_groups:
-        repo_instance.list_groups()
-        raise typer.Exit()
-
-    if group and all_repos:
-        typer.echo(
-            typer.style(
-                "Cannot use --group and --all-repos together. Please use one or the other.",
-                fg=typer.colors.RED,
-            )
-        )
-        raise typer.Exit(1)
-
-    if group:
-        # Fetch all repos in the specified group
-        group_repos = repo_instance.get_group_repos(group)
-        if not group_repos:
-            typer.echo(
-                typer.style(
-                    f"Group '{group}' not found. Use --list-groups to see available groups.",
-                    fg=typer.colors.RED,
-                )
-            )
-            raise typer.Exit(1)
-
-        typer.echo(
-            typer.style(
-                f"Fetching repositories in group '{group}': {', '.join(group_repos)}",
-                fg=typer.colors.CYAN,
-            )
-        )
-
-        for repo in group_repos:
-            repo_instance.fetch_repo(repo)
-
-        typer.echo(
-            typer.style(
-                f"✅ Finished fetching group '{group}'",
-                fg=typer.colors.GREEN,
-            )
-        )
-        return
-
-    repo_command(
-        all_repos,
-        repo_name,
-        all_msg=None,
-        missing_msg="Please specify a repository name, use --group to fetch a group, use --list-groups to see available groups, or use -a,--all-repos to fetch all repositories.",
-        single_func=lambda repo_name: repo_instance.fetch_repo(repo_name),
-        all_func=lambda repo_name: repo_instance.fetch_repo(repo_name),
-    )
-
-
-@repo.command()
-def install(
-    repo_name: str = typer.Argument(None),
-    all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Install all repositories"
-    ),
-    group: str = typer.Option(
-        None, "--group", "-g", help="Install all repositories in a group"
-    ),
-    list_groups: bool = typer.Option(
-        False, "--list-groups", "-l", help="List available repository groups"
-    ),
-):
-    """
-    Install Python package found in the specified repository.
-    If --all-repos is used, install packages for all repositories.
-    If --group is used, install all repositories in the specified group.
-    If --list-groups is used, list available repository groups.
-    """
-    repo_instance = Repo()
-
-    if list_groups:
-        repo_instance.list_groups()
-        raise typer.Exit()
-
-    if group:
-        # Install all repos in the specified group
-        group_repos = repo_instance.get_group_repos(group)
-        if not group_repos:
-            typer.echo(
-                typer.style(
-                    f"Group '{group}' not found. Use --list-groups to see available groups.",
-                    fg=typer.colors.RED,
-                )
-            )
-            raise typer.Exit(1)
-
-        typer.echo(
-            typer.style(
-                f"Installing repositories in group '{group}': {', '.join(group_repos)}",
-                fg=typer.colors.CYAN,
-            )
-        )
-
-        package_instance = Package()
-        for repo in group_repos:
-            package_instance.install_package(repo)
-
-        typer.echo(
-            typer.style(
-                f"✅ Finished installing group '{group}'",
-                fg=typer.colors.GREEN,
-            )
-        )
-        return
-
-    repo_command(
-        all_repos,
-        repo_name,
-        all_msg="Installing all repositories...",
-        missing_msg="Please specify a repository name, use --group to install a group, use --list-groups to see available groups, or use -a,--all-repos to install all repositories.",
-        single_func=lambda repo_name: Package().install_package(repo_name),
-        all_func=lambda repo_name: Package().install_package(repo_name),
-    )
-
-
-@repo.command()
-def log(
-    repo_name: str = typer.Argument(None),
-    all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Show logs of all repositories"
-    ),
-    n: int = typer.Option(
-        10,
-        "-n",
-        "--lines",
-        min=1,
-        help="Number of log entries to show (per repository)",
-    ),
-):
-    """
-    Show logs for the specified repository.
-
-    By default, shows the last 10 entries. Use ``-n/--lines`` to change the
-    number of entries displayed (per repository).
-    If --all-repos is used, show logs for all repositories.
-    """
-    repo_command(
-        all_repos,
-        repo_name,
-        all_msg="Showing logs for all repositories...",
-        missing_msg="Please specify a repository name or use --all-repos to show logs of all repositories.",
-        single_func=lambda repo_name: Repo().get_repo_log(repo_name, n),
-        all_func=lambda repo_name: Repo().get_repo_log(repo_name, n),
-    )
-
-
-@repo.command()
-def open(
-    ctx: typer.Context,
-    repo_name: str = typer.Argument(None),
-    all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Open all repositories"
-    ),
-    group: str = typer.Option(
-        None, "--group", "-g", help="Open all repositories in a group"
-    ),
-):
-    """
-    Open the specified repository in the default web browser.
-    If --all-repos is used, open all repositories.
-    If --group is used, open all repositories in the specified group.
-    """
-    repo = Repo()
-    repo.ctx = ctx
-
-    # Handle group option
-    if group:
-        group_repos = repo.get_group_repos(group)
-        if not group_repos:
-            typer.echo(
-                typer.style(
-                    f"Group '{group}' not found. Use 'dm repo clone --list-groups' to see available groups.",
-                    fg=typer.colors.RED,
-                )
-            )
-            raise typer.Exit(1)
-
-        typer.echo(
-            typer.style(
-                f"Opening all repositories in group '{group}'...",
-                fg=typer.colors.CYAN,
-            )
-        )
-        for repo_name_in_group in group_repos:
-            repo.open_repo(repo_name_in_group)
-        return
-
-    repo_command(
-        all_repos,
-        repo_name,
-        all_msg="Opening all repositories...",
-        missing_msg="Please specify a repository name, use --all-repos to open all repositories, or use --group to open repositories in a group.",
-        single_func=lambda repo_name: repo.open_repo(repo_name),
-        all_func=lambda repo_name: repo.open_repo(repo_name),
-    )
-
-
-@repo.command()
-def patch(
-    repo_name: str = typer.Argument(None),
-):
-    """
-    Create an evergreen patch for the specified repository.
-    """
-    repo_command(
-        False,
-        repo_name,
-        all_msg="Running evergreen...",
-        missing_msg="Please specify a repository name.",
-        single_func=lambda repo_name: Test().patch_repo(repo_name),
-        all_func=lambda repo_name: Test().patch_repo(repo_name),
-    )
-
-
-@repo.command()
-def pr(
-    repo_name: str = typer.Argument(None),
-    all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Create pull requests for all repositories"
-    ),
-):
-    """
-    Create a pull request for the specified repository.
-    """
-    repo_command(
-        all_repos,
-        repo_name,
-        all_msg="Creating pull requests for all repositories...",
-        missing_msg="Please specify a repository name or use --all-repos to create pull requests for all repositories.",
-        single_func=lambda repo_name: Repo().create_pr(repo_name),
-        all_func=lambda repo_name: Repo().create_pr(repo_name),
-    )
-
-
-@repo.command()
-def reset(
-    ctx: typer.Context,
-    repo_name: str = typer.Argument(None),
-    all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Reset all repositories"
-    ),
-):
-    """
-    Reset a repository to its initial state.
-    If --all-repos is used, reset all repositories.
-    """
-
-    def reset_repo(name):
-        repo = Repo()
-        repo.ctx = ctx
-        repo.reset_repo(name)
-
-    repo_command(
-        all_repos,
-        repo_name,
-        all_msg="Resetting all repositories...",
-        missing_msg="Please specify a repository name or use -a,--all-repos to reset all repositories.",
-        single_func=reset_repo,
-        all_func=reset_repo,
-    )
-
-
-@repo.command()
 def show(
     ctx: typer.Context,
     repo_name: str = typer.Argument(..., help="Repository name"),
@@ -826,9 +957,7 @@ def show(
 def status(
     ctx: typer.Context,
     repo_name: str = typer.Argument(None),
-    all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Show status of all repos"
-    ),
+    all_repos: bool = typer.Option(False, "--all-repos", "-a", help=HELP_ALL_REPOS),
 ):
     """
     Show the status of a repository.
@@ -847,187 +976,13 @@ def status(
 
 
 @repo.command()
-def pull(
-    ctx: typer.Context,
-    repo_name: str = typer.Argument(None),
-    all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Pull all repositories"
-    ),
-    group: str = typer.Option(
-        None, "--group", "-g", help="Pull all repositories in a group"
-    ),
-    list_groups: bool = typer.Option(
-        False, "--list-groups", "-l", help="List available repository groups"
-    ),
-):
-    """
-    Pull updates for the specified repository.
-    If --all-repos is used, pull updates for all repositories.
-    If --group is used, pull all repositories in the specified group.
-    If --list-groups is used, list available repository groups.
-    """
-    repo_instance = Repo()
-    repo_instance.ctx = ctx
-
-    if list_groups:
-        repo_instance.list_groups()
-        raise typer.Exit()
-
-    if group and all_repos:
-        typer.echo(
-            typer.style(
-                "Cannot use --group and --all-repos together. Please use one or the other.",
-                fg=typer.colors.RED,
-            )
-        )
-        raise typer.Exit(1)
-
-    if group:
-        # Pull all repos in the specified group
-        group_repos = repo_instance.get_group_repos(group)
-        if not group_repos:
-            typer.echo(
-                typer.style(
-                    f"Group '{group}' not found. Use --list-groups to see available groups.",
-                    fg=typer.colors.RED,
-                )
-            )
-            raise typer.Exit(1)
-
-        typer.echo(
-            typer.style(
-                f"Pulling repositories in group '{group}': {', '.join(group_repos)}",
-                fg=typer.colors.CYAN,
-            )
-        )
-
-        for repo in group_repos:
-            repo_instance.pull(repo)
-
-        typer.echo(
-            typer.style(
-                f"✅ Finished pulling group '{group}'",
-                fg=typer.colors.GREEN,
-            )
-        )
-        return
-
-    if not repo_instance.map:
-        typer.echo(
-            typer.style(
-                f"No repositories found in {os.path.join(os.getcwd(), repo_instance.pyproject_file)}.",
-                fg=typer.colors.RED,
-            )
-        )
-        raise typer.Exit()
-
-    repo_command(
-        all_repos,
-        repo_name,
-        all_msg="Pulling all repositories...",
-        missing_msg="Please specify a repository name, use --group to pull a group, use --list-groups to see available groups, or use -a,--all-repos to pull all repositories.",
-        single_func=lambda repo_name: repo_instance.pull(repo_name),
-        all_func=lambda repo_name: repo_instance.pull(repo_name),
-    )
-
-
-@repo.command()
-def push(
-    ctx: typer.Context,
-    repo_name: str = typer.Argument(None),
-    all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Push all repositories"
-    ),
-    group: str = typer.Option(
-        None, "--group", "-g", help="Push all repositories in a group"
-    ),
-    list_groups: bool = typer.Option(
-        False, "--list-groups", "-l", help="List available repository groups"
-    ),
-):
-    """
-    Push updates for the specified repository.
-    If --all-repos is used, push updates for all repositories.
-    If --group is used, push all repositories in the specified group.
-    If --list-groups is used, list available repository groups.
-    """
-    repo_instance = Repo()
-    repo_instance.ctx = ctx
-
-    if list_groups:
-        repo_instance.list_groups()
-        raise typer.Exit()
-
-    if group and all_repos:
-        typer.echo(
-            typer.style(
-                "Cannot use --group and --all-repos together. Please use one or the other.",
-                fg=typer.colors.RED,
-            )
-        )
-        raise typer.Exit(1)
-
-    if group:
-        # Push all repos in the specified group
-        group_repos = repo_instance.get_group_repos(group)
-        if not group_repos:
-            typer.echo(
-                typer.style(
-                    f"Group '{group}' not found. Use --list-groups to see available groups.",
-                    fg=typer.colors.RED,
-                )
-            )
-            raise typer.Exit(1)
-
-        typer.echo(
-            typer.style(
-                f"Pushing repositories in group '{group}': {', '.join(group_repos)}",
-                fg=typer.colors.CYAN,
-            )
-        )
-
-        for repo in group_repos:
-            repo_instance.push(repo)
-
-        typer.echo(
-            typer.style(
-                f"✅ Finished pushing group '{group}'",
-                fg=typer.colors.GREEN,
-            )
-        )
-        return
-
-    if not repo_instance.map:
-        typer.echo(
-            typer.style(
-                f"No repositories found in {os.path.join(os.getcwd(), repo_instance.pyproject_file)}.",
-                fg=typer.colors.RED,
-            )
-        )
-        raise typer.Exit()
-
-    repo_command(
-        all_repos,
-        repo_name,
-        all_msg="Pushing all repositories...",
-        missing_msg="Please specify a repository name, use --group to push a group, use --list-groups to see available groups, or use -a,--all-repos to push all repositories.",
-        single_func=lambda repo_name: repo_instance.push(repo_name),
-        all_func=lambda repo_name: repo_instance.push(repo_name),
-    )
-
-
-@repo.command()
 def sync(
     ctx: typer.Context,
     repo_name: str = typer.Argument(None),
-    all_repos: bool = typer.Option(
-        False, "--all-repos", "-a", help="Sync all repositories"
-    ),
-    group: str = typer.Option(
-        None, "--group", "-g", help="Sync all repositories in a group"
-    ),
+    all_repos: bool = typer.Option(False, "--all-repos", "-a", help=HELP_ALL_REPOS),
+    group: str = typer.Option(None, "--group", "-g", help=HELP_GROUP),
     list_groups: bool = typer.Option(
-        False, "--list-groups", "-l", help="List available repository groups"
+        False, "--list-groups", "-l", help=HELP_LIST_GROUPS
     ),
 ):
     """

@@ -5,7 +5,7 @@ import shlex
 from .utils import Package, Repo, Test
 
 repo = typer.Typer(
-    help="Manage Git repositories",
+    help="Manage Git repositories.",
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 
@@ -266,14 +266,14 @@ def run(
         ..., metavar="CMD...", help="Command (and args) to run in the repo directory"
     ),
 ):
-    """Run an arbitrary command inside the repository directory.
+    """
+    Run an arbitrary command inside the repository directory.
+
+    Environment variables can be configured per-repo in ``pyproject.toml``.
 
     Examples:
-      dm repo run mongo-python-driver just setup tests encryption
-      dm repo run mongo-python-driver "just setup tests encryption"
-
-    Environment variables can be configured per-repo under
-    ``[tool.django-mongodb-cli.run.<repo_name>.env_vars]`` in ``pyproject.toml``.
+        dm repo run mongo-python-driver just setup tests encryption
+        dm repo run mongo-python-driver "just setup tests encryption"
     """
     repo = Repo()
     repo.ctx = ctx

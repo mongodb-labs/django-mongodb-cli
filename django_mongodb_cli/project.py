@@ -7,7 +7,6 @@ import importlib.resources as resources
 import os
 import sys
 import random
-from .frontend import add_frontend as _add_frontend
 from .utils import Repo
 
 project = typer.Typer(help="Manage Django projects.")
@@ -73,7 +72,10 @@ def add_project(
     ),
     directory: Path = Path("."),
     add_frontend: bool = typer.Option(
-        True, "--add-frontend/--no-frontend", "-f/-F", help="Add frontend (default: True)"
+        True,
+        "--add-frontend/--no-frontend",
+        "-f/-F",
+        help="Add frontend (default: True)",
     ),
     random_name: bool = typer.Option(
         False,
@@ -172,15 +174,12 @@ def add_project(
     if add_frontend:
         typer.echo(f"🎨 Adding frontend to project '{name}'...")
         try:
-            # Call the frontend create command
-            _add_frontend(name, project_path)
+            # Call the internal frontend create helper
+            _add_frontend(name, directory)
         except Exception as e:
             typer.echo(
                 f"⚠️  Project created successfully, but frontend creation failed: {e}",
                 err=True,
-            )
-            typer.echo(
-                "You can manually add the frontend later using: frontend create frontend <project_name>"
             )
 
 
@@ -273,6 +272,8 @@ def remove_project(name: str, directory: Path = Path(".")):
 def install_project(name: str, directory: Path = Path(".")):
     """Install a generated Django project by running ``pip install .`` in its directory.
 
+    If a frontend directory exists, also installs npm dependencies.
+
     Example:
         dm project install qe
     """
@@ -312,6 +313,23 @@ def install_project(name: str, directory: Path = Path(".")):
 
     typer.echo(f"✅ Successfully installed project '{name}'")
 
+    # Check if frontend exists and install npm dependencies
+    frontend_path = project_path / "frontend"
+    if frontend_path.exists() and (frontend_path / "package.json").exists():
+        typer.echo("🎨 Frontend detected, installing npm dependencies...")
+        try:
+            _install_npm(name, directory=directory)
+        except typer.Exit:
+            typer.echo(
+                "⚠️  Frontend npm installation failed, but project installation succeeded.",
+                err=True,
+            )
+        except Exception as e:
+            typer.echo(
+                f"⚠️  Unexpected error during frontend installation: {e}",
+                err=True,
+            )
+
 
 def _django_manage_command(
     name: str,
@@ -326,7 +344,7 @@ def _django_manage_command(
 
     Args:
         name: Project name
-        directory: Project directory
+        directory: Parent directory containing the project
         args: Arguments to pass to django-admin
         extra_env: Extra environment variables
         frontend: Whether to run frontend alongside
@@ -356,16 +374,23 @@ def _django_manage_command(
 
     if frontend:
         # Ensure frontend is installed
-        result = subprocess.run(["dm", "frontend", "install", name], check=False)
-        if result.returncode != 0:
+        try:
+            _install_npm(name, directory=parent_dir)
+        except typer.Exit:
             typer.echo(
-                f"⚠️  Frontend installation failed with exit code {result.returncode}",
+                "⚠️  Frontend installation failed",
                 err=True,
             )
             # Continue anyway - frontend might already be installed
 
         # Start frontend process in background
-        frontend_proc = subprocess.Popen(["dm", "frontend", "run", name])
+        frontend_path = project_path / "frontend"
+        frontend_proc = subprocess.Popen(
+            ["npm", "run", "watch"],
+            cwd=frontend_path,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
 
         # Handle CTRL-C to kill both processes
         def signal_handler(signum, frame):
@@ -418,7 +443,6 @@ def run_project(
         None,
         help="Optional MongoDB connection URI. Falls back to $MONGODB_URI if not provided.",
     ),
-    frontend: bool = typer.Option(False, "-f", "--frontend", help="Run frontend"),
     settings: str = typer.Option(
         None,
         "--settings",
@@ -427,22 +451,30 @@ def run_project(
     ),
 ):
     """
-    Run a Django project using django-admin instead of manage.py,
-    with MONGODB_URI set in the environment if provided.
+    Run a Django project using ``django-admin`` instead of ``manage.py``,
+    with ``MONGODB_URI`` set in the environment if provided.
+
+    If a frontend directory exists, it will be run automatically alongside the Django server.
 
     Examples:
         dm project run myproject
         dm project run myproject --settings site1
-        dm project run myproject -s site2 --frontend
+        dm project run myproject -s site2
     """
+    project_path = directory / name
+
+    # Check if frontend exists
+    frontend_path = project_path / "frontend"
+    has_frontend = frontend_path.exists() and (frontend_path / "package.json").exists()
+
     typer.echo(f"🚀 Running project '{name}' on http://{host}:{port}")
     _django_manage_command(
         name,
-        directory / name,
+        directory,
         "runserver",
         f"{host}:{port}",
         extra_env=_build_mongodb_env(mongodb_uri),
-        frontend=frontend,
+        frontend=has_frontend,
         settings=settings,
     )
 
@@ -635,3 +667,154 @@ def create_superuser(
         extra_env=extra_env,
         settings=settings,
     )
+
+
+# Internal helper functions for frontend management
+
+
+def _add_frontend(
+    project_name: str,
+    directory: Path = Path("."),
+):
+    """
+    Internal helper to create a frontend app inside an existing project.
+    """
+    project_path = directory / project_name
+    name = "frontend"
+    if not project_path.exists() or not project_path.is_dir():
+        typer.echo(f"❌ Project '{project_name}' not found at {project_path}", err=True)
+        raise typer.Exit(code=1)
+    # Destination for new app
+    app_path = project_path / name
+    if app_path.exists():
+        typer.echo(
+            f"❌ App '{name}' already exists in project '{project_name}'", err=True
+        )
+        raise typer.Exit(code=1)
+    typer.echo(f"📦 Creating app '{name}' in project '{project_name}'")
+    # Locate the Django app template directory in package resources
+    with resources.path(
+        "django_mongodb_cli.templates", "frontend_template"
+    ) as template_path:
+        cmd = [
+            "django-admin",
+            "startapp",
+            "--template",
+            str(template_path),
+            name,
+            str(project_path),
+        ]
+        subprocess.run(cmd, check=True)
+
+
+def _remove_frontend(project_name: str, directory: Path = Path(".")):
+    """
+    Internal helper to remove a frontend app from a project.
+    """
+    name = "frontend"
+    target = directory / project_name / name
+    if target.exists() and target.is_dir():
+        shutil.rmtree(target)
+        typer.echo(f"🗑️ Removed app '{name}' from project '{project_name}'")
+    else:
+        typer.echo(f"❌ App '{name}' does not exist in '{project_name}'", err=True)
+
+
+def _install_npm(
+    project_name: str,
+    frontend_dir: str = "frontend",
+    directory: Path = Path("."),
+    clean: bool = False,
+):
+    """
+    Internal helper to install npm dependencies in the frontend directory.
+    """
+    project_path = directory / project_name
+    if not project_path.exists():
+        typer.echo(
+            f"❌ Project '{project_name}' does not exist at {project_path}", err=True
+        )
+        raise typer.Exit(code=1)
+
+    frontend_path = project_path / frontend_dir
+    if not frontend_path.exists():
+        typer.echo(
+            f"❌ Frontend directory '{frontend_dir}' not found at {frontend_path}",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    package_json = frontend_path / "package.json"
+    if not package_json.exists():
+        typer.echo(f"❌ package.json not found in {frontend_path}", err=True)
+        raise typer.Exit(code=1)
+
+    if clean:
+        typer.echo(f"🧹 Cleaning node_modules and package-lock.json in {frontend_path}")
+        node_modules = frontend_path / "node_modules"
+        package_lock = frontend_path / "package-lock.json"
+
+        if node_modules.exists():
+            shutil.rmtree(node_modules)
+            typer.echo("  ✓ Removed node_modules")
+
+        if package_lock.exists():
+            package_lock.unlink()
+            typer.echo("  ✓ Removed package-lock.json")
+
+    typer.echo(f"📦 Installing npm dependencies in {frontend_path}")
+
+    try:
+        subprocess.run(["npm", "install"], cwd=frontend_path, check=True)
+        typer.echo("✅ Dependencies installed successfully")
+    except subprocess.CalledProcessError as e:
+        typer.echo(f"❌ npm install failed with exit code {e.returncode}", err=True)
+        raise typer.Exit(code=e.returncode)
+    except FileNotFoundError:
+        typer.echo(
+            "❌ npm not found. Please ensure Node.js and npm are installed.", err=True
+        )
+        raise typer.Exit(code=1)
+
+
+def _run_npm(
+    project_name: str,
+    frontend_dir: str = "frontend",
+    directory: Path = Path("."),
+    script: str = "watch",
+):
+    """
+    Internal helper to run npm script in the frontend directory.
+    """
+    project_path = directory / project_name
+    if not project_path.exists():
+        typer.echo(
+            f"❌ Project '{project_name}' does not exist at {project_path}", err=True
+        )
+        raise typer.Exit(code=1)
+
+    frontend_path = project_path / frontend_dir
+    if not frontend_path.exists():
+        typer.echo(
+            f"❌ Frontend directory '{frontend_dir}' not found at {frontend_path}",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    package_json = frontend_path / "package.json"
+    if not package_json.exists():
+        typer.echo(f"❌ package.json not found in {frontend_path}", err=True)
+        raise typer.Exit(code=1)
+
+    typer.echo(f"🚀 Running 'npm run {script}' in {frontend_path}")
+
+    try:
+        subprocess.run(["npm", "run", script], cwd=frontend_path, check=True)
+    except subprocess.CalledProcessError as e:
+        typer.echo(f"❌ npm command failed with exit code {e.returncode}", err=True)
+        raise typer.Exit(code=e.returncode)
+    except FileNotFoundError:
+        typer.echo(
+            "❌ npm not found. Please ensure Node.js and npm are installed.", err=True
+        )
+        raise typer.Exit(code=1)

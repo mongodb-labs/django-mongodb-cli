@@ -83,6 +83,12 @@ def add_project(
         "-r",
         help="Generate a random project name. If both name and --random are provided, the name takes precedence.",
     ),
+    settings: str = typer.Option(
+        None,
+        "--settings",
+        "-s",
+        help="Settings configuration name to use (e.g., 'qe', 'site1'). Defaults to 'base'.",
+    ),
 ):
     """
     Create a new Django project using bundled templates.
@@ -93,6 +99,8 @@ def add_project(
         dm project add myproject --no-frontend  # Create without frontend
         dm project add --random           # Create with random name (includes frontend)
         dm project add -r                 # Short form
+        dm project add -r --settings=qe   # Random name with qe settings
+        dm project add myproject --settings=qe  # Explicit name with qe settings
     """
     # Handle random name generation
     if random_name:
@@ -110,6 +118,14 @@ def add_project(
             err=True,
         )
         raise typer.Exit(code=1)
+
+    # Determine settings path
+    if settings:
+        # Construct settings path from the provided name
+        settings_path = f"settings.{settings}"
+        typer.echo(f"🔧 Using settings configuration: {settings_path}")
+    else:
+        settings_path = "settings.base"
 
     project_path = directory / name
     if project_path.exists():
@@ -168,7 +184,7 @@ def add_project(
             raise typer.Exit(code=result.returncode)
 
     # Add pyproject.toml after project creation
-    _create_pyproject_toml(project_path, name)
+    _create_pyproject_toml(project_path, name, settings_path)
 
     # Create frontend by default (unless --no-frontend is specified)
     if add_frontend:
@@ -183,7 +199,9 @@ def add_project(
             )
 
 
-def _create_pyproject_toml(project_path: Path, project_name: str):
+def _create_pyproject_toml(
+    project_path: Path, project_name: str, settings_path: str = "settings.base"
+):
     """Create a pyproject.toml file for the Django project."""
     pyproject_content = f"""[build-system]
 requires = ["setuptools", "wheel"]
@@ -216,7 +234,7 @@ encryption = [
 ]
 
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "{project_name}.settings.base"
+DJANGO_SETTINGS_MODULE = "{project_name}.{settings_path}"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
 
 [tool.setuptools]
@@ -226,7 +244,9 @@ packages = ["{project_name}"]
     pyproject_path = project_path / "pyproject.toml"
     try:
         pyproject_path.write_text(pyproject_content)
-        typer.echo(f"✅ Created pyproject.toml for '{project_name}'")
+        typer.echo(
+            f"✅ Created pyproject.toml for '{project_name}' with settings: {settings_path}"
+        )
     except Exception as e:
         typer.echo(f"⚠️  Failed to create pyproject.toml: {e}", err=True)
 

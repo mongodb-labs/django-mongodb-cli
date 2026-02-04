@@ -577,6 +577,30 @@ class Repo:
         # Show origin
         self.get_repo_origin(repo_name)
 
+        # Show modified files (unstaged changes)
+        unstaged = repo.index.diff(None)
+        if unstaged:
+            self.warn("\nChanges not staged for commit:")
+            for diff in unstaged:
+                self.warn(f"  modified: {diff.a_path}")
+
+        # Show staged changes (changes to be committed)
+        staged = repo.index.diff("HEAD")
+        if staged:
+            self.ok("\nChanges to be committed:")
+            for diff in staged:
+                self.ok(f"  staged: {diff.a_path}")
+
+        # Show untracked files
+        if repo.untracked_files:
+            self._msg("\nUntracked files:", typer.colors.MAGENTA)
+            for f in repo.untracked_files:
+                self._msg(f"  {f}", typer.colors.MAGENTA)
+
+        # Show clean status if no changes
+        if not unstaged and not staged and not repo.untracked_files:
+            self.ok("\nNothing to commit, working tree clean.")
+
     def get_repo_diff(self, repo_name: str) -> None:
         """
         Get the diff of a repository.

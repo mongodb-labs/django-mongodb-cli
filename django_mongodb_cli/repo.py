@@ -958,20 +958,70 @@ def status(
     ctx: typer.Context,
     repo_name: str = typer.Argument(None),
     all_repos: bool = typer.Option(False, "--all-repos", "-a", help=HELP_ALL_REPOS),
+    group: str = typer.Option(None, "--group", "-g", help=HELP_GROUP),
+    list_groups: bool = typer.Option(
+        False, "--list-groups", "-l", help=HELP_LIST_GROUPS
+    ),
 ):
     """
     Show the status of a repository.
     If --all-repos is used, show the status for all repositories.
+    If --group is used, show status for all repositories in the specified group.
+    If --list-groups is used, list available repository groups.
     """
-    repo = Repo()
-    repo.ctx = ctx
+    repo_instance = Repo()
+    repo_instance.ctx = ctx
+
+    if list_groups:
+        repo_instance.list_groups()
+        raise typer.Exit()
+
+    if group and all_repos:
+        typer.echo(
+            typer.style(
+                "Cannot use --group and --all-repos together. Please use one or the other.",
+                fg=typer.colors.RED,
+            )
+        )
+        raise typer.Exit(1)
+
+    if group:
+        # Show status for all repos in the specified group
+        group_repos = repo_instance.get_group_repos(group)
+        if not group_repos:
+            typer.echo(
+                typer.style(
+                    f"Group '{group}' not found. Use --list-groups to see available groups.",
+                    fg=typer.colors.RED,
+                )
+            )
+            raise typer.Exit(1)
+
+        typer.echo(
+            typer.style(
+                f"Status for repositories in group '{group}': {', '.join(group_repos)}",
+                fg=typer.colors.CYAN,
+            )
+        )
+
+        for repo in group_repos:
+            repo_instance.get_repo_status(repo)
+
+        typer.echo(
+            typer.style(
+                f"✅ Finished showing status for group '{group}'",
+                fg=typer.colors.GREEN,
+            )
+        )
+        return
+
     repo_command(
         all_repos,
         repo_name,
         all_msg=None,
-        missing_msg="Please specify a repository name or use -a,--all-repos to show all repositories.",
-        single_func=lambda repo_name: repo.get_repo_status(repo_name),
-        all_func=lambda repo_name: repo.get_repo_status(repo_name),
+        missing_msg="Please specify a repository name, use --group to show status for a group, use --list-groups to see available groups, or use -a,--all-repos to show all repositories.",
+        single_func=lambda repo_name: repo_instance.get_repo_status(repo_name),
+        all_func=lambda repo_name: repo_instance.get_repo_status(repo_name),
     )
 
 

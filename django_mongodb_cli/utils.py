@@ -2,6 +2,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import toml
@@ -25,6 +26,7 @@ class Repo:
         self.map = self.get_map()
         self.user = None
         self.reset = False
+        self.ctx = None
 
     # -----------------------------
     # Core utilities / helpers
@@ -77,7 +79,7 @@ class Repo:
     ) -> tuple[Path | None, GitRepo | None]:
         path = self.get_repo_path(repo_name)
         if must_exist and not path.exists():
-            if not self.ctx.obj.get("quiet", True):
+            if self.ctx and not self.ctx.obj.get("quiet", True):
                 self.err(f"Repository '{repo_name}' not found at path: {path}")
             return None, None
         repo = self.get_repo(str(path)) if path.exists() else None
@@ -103,6 +105,51 @@ class Repo:
 
     def origin_cfg(self) -> dict:
         return self.tool_cfg.get("origin", {}) or {}
+
+    def get_project_settings(self, settings_name: str | None = None) -> str:
+        """Get the settings path for a project.
+
+        Args:
+            settings_name: Optional name of the settings configuration to use.
+                          If None, uses the first available settings or falls back to 'settings.base'.
+
+        Returns:
+            The settings path (e.g., 'settings.base' or 'settings.qe').
+        """
+        project_cfg = self.tool_cfg.get("project", {})
+        settings_cfg = project_cfg.get("settings")
+
+        # Handle legacy single settings configuration with direct path
+        if isinstance(settings_cfg, dict) and "path" in settings_cfg:
+            return settings_cfg.get("path", "settings.base")
+
+        # Handle new dict-based settings configuration
+        # Format: [tool.django-mongodb-cli.project.settings.NAME]
+        if isinstance(settings_cfg, dict) and "path" not in settings_cfg:
+            if not settings_cfg:
+                return "settings.base"
+
+            if settings_name:
+                # Look for the named settings configuration
+                if settings_name in settings_cfg:
+                    setting = settings_cfg[settings_name]
+                    if isinstance(setting, dict):
+                        return setting.get("path", "settings.base")
+                # If not found, raise an error
+                available = list(settings_cfg.keys())
+                raise ValueError(
+                    f"Settings configuration '{settings_name}' not found. "
+                    f"Available settings: {', '.join(available)}"
+                )
+            else:
+                # Use the first settings configuration
+                first_key = next(iter(settings_cfg))
+                first_setting = settings_cfg[first_key]
+                if isinstance(first_setting, dict):
+                    return first_setting.get("path", "settings.base")
+
+        # Default fallback
+        return "settings.base"
 
     @staticmethod
     def parse_git_url(raw: str) -> tuple[str, str]:
@@ -173,8 +220,10 @@ class Repo:
         # Install pre-commit hooks if config exists
         pc_cfg = path / ".pre-commit-config.yaml"
         if pc_cfg.exists():
-            self.info("Installing pre-commit hooks...")
-            if self.run(["pre-commit", "install", "-t", "pre-commit"], cwd=path):
+            # Use prek if available, otherwise fall back to pre-commit
+            pre_commit_cmd = "prek" if shutil.which("prek") else "pre-commit"
+            self.info(f"Installing pre-commit hooks using {pre_commit_cmd}...")
+            if self.run([pre_commit_cmd, "install", "-t", "pre-commit"], cwd=path):
                 self.ok("Pre-commit hooks installed!")
         else:
             self.warn(
@@ -297,7 +346,7 @@ class Repo:
         if not repo:
             return
 
-        quiet = self.ctx.obj.get("quiet", True)
+        quiet = self.ctx.obj.get("quiet", True) if self.ctx else True
         self.info(f"Remotes for {repo_name}:")
         for remote in repo.remotes:
             try:
@@ -334,6 +383,18 @@ class Repo:
         groups = self.get_groups()
         return groups.get(group_name, [])
 
+    def get_repo_groups(self, repo_name: str) -> list:
+        """
+        Get the list of group names that contain the specified repository.
+        Returns an empty list if the repository is not in any group.
+        """
+        groups = self.get_groups()
+        repo_groups = []
+        for group_name, repos in groups.items():
+            if repo_name in repos:
+                repo_groups.append(group_name)
+        return repo_groups
+
     def list_groups(self) -> None:
         """
         List all available repository groups.
@@ -342,7 +403,7 @@ class Repo:
         if not groups:
             self.warn("No repository groups configured.")
             return
-        
+
         self.info("Available repository groups:")
         for group_name, repos in groups.items():
             repo_list = ", ".join(repos)
@@ -362,15 +423,17 @@ class Repo:
         """
         remotes_cfg = self.get_group_remotes(group_name)
         repo_remotes = remotes_cfg.get(repo_name, {})
-        
+
         if not repo_remotes:
-            self.warn(f"No remote configuration found for {repo_name} in group {group_name}")
+            self.warn(
+                f"No remote configuration found for {repo_name} in group {group_name}"
+            )
             return
-        
+
         _, repo = self.ensure_repo(repo_name)
         if not repo:
             return
-        
+
         self.info(f"Setting up remotes for {repo_name}:")
         # Create a mapping from remote names to remote objects for easy lookup
         existing_remotes = {r.name: r for r in repo.remotes}
@@ -378,18 +441,22 @@ class Repo:
             try:
                 # Parse the URL to remove git+ prefix if present
                 url, parsed_branch = self.parse_git_url(remote_url)
-                
+
                 # Check if remote already exists
                 if remote_name in existing_remotes:
                     existing_remote = existing_remotes[remote_name]
                     current_url = existing_remote.url
-                    
+
                     # Update if URL is different
                     if current_url != url:
                         existing_remote.set_url(url)
-                        self.ok(f"  Updated remote '{remote_name}': {url} (was: {current_url})")
+                        self.ok(
+                            f"  Updated remote '{remote_name}': {url} (was: {current_url})"
+                        )
                     else:
-                        self.info(f"  Remote '{remote_name}' already configured with correct URL")
+                        self.info(
+                            f"  Remote '{remote_name}' already configured with correct URL"
+                        )
                 else:
                     # Add new remote
                     repo.create_remote(remote_name, url)
@@ -510,6 +577,30 @@ class Repo:
         # Show origin
         self.get_repo_origin(repo_name)
 
+        # Show modified files (unstaged changes)
+        unstaged = repo.index.diff(None)
+        if unstaged:
+            self.warn("\nChanges not staged for commit:")
+            for diff in unstaged:
+                self.warn(f"  modified: {diff.a_path}")
+
+        # Show staged changes (changes to be committed)
+        staged = repo.index.diff("HEAD")
+        if staged:
+            self.ok("\nChanges to be committed:")
+            for diff in staged:
+                self.ok(f"  staged: {diff.a_path}")
+
+        # Show untracked files
+        if repo.untracked_files:
+            self._msg("\nUntracked files:", typer.colors.MAGENTA)
+            for f in repo.untracked_files:
+                self._msg(f"  {f}", typer.colors.MAGENTA)
+
+        # Show clean status if no changes
+        if not unstaged and not staged and not repo.untracked_files:
+            self.ok("\nNothing to commit, working tree clean.")
+
     def get_repo_diff(self, repo_name: str) -> None:
         """
         Get the diff of a repository.
@@ -627,7 +718,7 @@ class Repo:
 
     def reset_repo(self, repo_name: str) -> None:
         _, repo = self.ensure_repo(repo_name)
-        quiet = self.ctx.obj.get("quiet", True)
+        quiet = self.ctx.obj.get("quiet", True) if self.ctx else True
         if not quiet:
             self.info(f"Resetting repository: {repo_name}")
         if not repo:
@@ -680,48 +771,66 @@ class Repo:
         except Exception as e:
             self.err(f"❌ Failed to push {repo_name}: {e}")
 
-    def remote_add(self, remote_name: str, remote_url: str) -> None:
+    def sync_repo(self, repo_name: str) -> None:
         """
-        Add a new remote to the specified repository.
+        Sync repository by fetching from upstream, rebasing onto it, and pushing to origin.
         """
-        self.info(
-            f"Adding remote '{remote_name}' to repository: {self.ctx.obj.get('repo_name')}"
-        )
-        _, repo = self.ensure_repo(self.ctx.obj.get("repo_name"))
+        self.info(f"Syncing repository: {repo_name}")
+        _, repo = self.ensure_repo(repo_name)
         if not repo:
             return
 
         try:
-            repo.create_remote(remote_name, remote_url)
-            self.ok(
-                f"Successfully added remote '{remote_name}' with URL '{remote_url}'."
-            )
-        except Exception:
+            # Check if upstream remote exists
+            if "upstream" not in [remote.name for remote in repo.remotes]:
+                self.err(f"❌ No 'upstream' remote found for {repo_name}.")
+                self.info(
+                    "Configure an upstream remote in pyproject.toml under [tool.django-mongodb-cli.remotes.<group>.<repo>]"
+                )
+                return
+
+            # Check if HEAD is detached
+            if repo.head.is_detached:
+                self.err(
+                    "❌ Repository is in detached HEAD state. Please checkout a branch first."
+                )
+                return
+
+            # Get current branch
+            current_branch = repo.active_branch.name
+            self.info(f"Current branch: {current_branch}")
+
+            # Fetch from upstream
+            self.info("Fetching from upstream...")
+            upstream_remote = repo.remotes.upstream
+            fetched = upstream_remote.fetch()
+            self.ok(f"Fetched {len(fetched)} objects from upstream.")
+
+            # Check if the upstream branch exists
+            try:
+                repo.git.rev_parse("--verify", f"upstream/{current_branch}")
+            except GitCommandError:
+                self.err(f"❌ Branch 'upstream/{current_branch}' does not exist.")
+                self.info(
+                    f"Available upstream branches: {', '.join([ref.name.replace('upstream/', '') for ref in upstream_remote.refs])}"
+                )
+                return
+
+            # Rebase current branch onto upstream's tracking branch
+            self.info(f"Rebasing {current_branch} onto upstream/{current_branch}...")
+            repo.git.rebase(f"upstream/{current_branch}")
+            self.ok(f"✅ Successfully rebased {repo_name}.")
+
+            # Push to origin after successful rebase
+            self.info(f"Pushing {current_branch} to origin...")
+            repo.remotes.origin.push(refspec=current_branch, force=True)
+            self.ok(f"✅ Successfully pushed {repo_name} to origin.")
+
+        except GitCommandError as e:
+            self.err(f"❌ Failed to sync {repo_name}: {e}")
             self.info(
-                f"Removing remote '{remote_name}' from repository: {self.ctx.obj.get('repo_name')}"
+                "If the rebase failed, you may need to resolve conflicts manually."
             )
-            repo.delete_remote(remote_name)
-            repo.create_remote(remote_name, remote_url)
-            self.ok(
-                f"Successfully added remote '{remote_name}' with URL '{remote_url}'."
-            )
-
-    def remote_remove(self, remote_name: str) -> None:
-        """
-        Remove a remote from the specified repository.
-        """
-        self.info(
-            f"Removing remote '{remote_name}' from repository: {self.ctx.obj.get('repo_name')}"
-        )
-        _, repo = self.ensure_repo(self.ctx.obj.get("repo_name"))
-        if not repo:
-            return
-
-        try:
-            repo.delete_remote(remote_name)
-            self.ok(f"✅ Successfully removed remote '{remote_name}'.")
-        except Exception as e:
-            self.err(f"❌ Failed to remove remote '{remote_name}': {e}")
 
     def set_default_repo(self, repo_name: str) -> None:
         """
@@ -779,10 +888,32 @@ class Package(Repo):
             return
 
         install_cfg = self.tool_cfg.get("install", {}).get(repo_name, {})
+
+        # Determine install directories - support both install_dir (single) and install_dirs (list)
+        install_dirs = install_cfg.get("install_dirs")
         install_dir = install_cfg.get("install_dir")
-        if install_dir:
-            path = Path(path / install_dir).resolve()
-            self.info(f"Using custom install directory: {path}")
+
+        # Build list of paths to install
+        paths_to_install = []
+        if install_dirs:
+            if not isinstance(install_dirs, list):
+                self.warn(
+                    f"'install_dirs' for {repo_name} should be a list, got {type(install_dirs).__name__}"
+                )
+                paths_to_install = [path]
+            else:
+                for install_dir_item in install_dirs:
+                    install_path = Path(path / install_dir_item).resolve()
+                    paths_to_install.append(install_path)
+                    self.info(f"Will install from directory: {install_path}")
+        elif install_dir:
+            # Backward compatibility: support single install_dir
+            install_path = Path(path / install_dir).resolve()
+            paths_to_install = [install_path]
+            self.info(f"Using custom install directory: {install_path}")
+        else:
+            # No custom install directory specified, use repo root
+            paths_to_install = [path]
 
         env = os.environ.copy()
         env_vars_list = install_cfg.get("env_vars")
@@ -791,61 +922,87 @@ class Package(Repo):
             typer.echo(env_vars_list)
             env.update({item["name"]: str(item["value"]) for item in env_vars_list})
 
-        # Install the base package
-        if not self.run(["uv", "pip", "install", "-e", str(path)], env=env):
-            self.err(f"Failed to install {repo_name}")
-            return
-        
-        self.ok(f"Installed {repo_name}")
-        
+        # Install the base package from each directory
+        for install_path in paths_to_install:
+            if not self.run(["uv", "pip", "install", "-e", str(install_path)], env=env):
+                self.err(f"Failed to install {repo_name} from {install_path}")
+                return
+            self.ok(f"Installed {repo_name} from {install_path}")
+
         # Install optional extras if specified
         extras = install_cfg.get("extras")
         if extras:
             if not isinstance(extras, list):
-                self.warn(f"'extras' for {repo_name} should be a list, got {type(extras).__name__}")
+                self.warn(
+                    f"'extras' for {repo_name} should be a list, got {type(extras).__name__}"
+                )
             else:
-                for extra in extras:
-                    # Validate extra name contains only safe characters (alphanumeric, dash, underscore, dot)
-                    import re
-                    if not isinstance(extra, str) or not re.match(r'^[a-zA-Z0-9._-]+$', extra):
-                        self.warn(f"Skipping invalid extra name: {extra}")
-                        continue
-                    
-                    self.info(f"Installing optional extra: {extra}")
-                    # Install extras using the standard [extra] syntax with uv
-                    extra_path = f"{path}[{extra}]"
-                    if self.run(["uv", "pip", "install", "-e", extra_path], env=env):
-                        self.ok(f"Installed {repo_name}[{extra}]")
-                    else:
-                        self.warn(f"Failed to install {repo_name}[{extra}]")
-        
+                for install_path in paths_to_install:
+                    for extra in extras:
+                        # Validate extra name contains only safe characters (alphanumeric, dash, underscore, dot)
+                        if not isinstance(extra, str) or not re.match(
+                            r"^[a-zA-Z0-9._-]+$", extra
+                        ):
+                            self.warn(f"Skipping invalid extra name: {extra}")
+                            continue
+
+                        self.info(
+                            f"Installing optional extra: {extra} from {install_path}"
+                        )
+                        # Install extras using the standard [extra] syntax with uv
+                        extra_path = f"{install_path}[{extra}]"
+                        if self.run(
+                            ["uv", "pip", "install", "-e", extra_path], env=env
+                        ):
+                            self.ok(
+                                f"Installed {repo_name}[{extra}] from {install_path}"
+                            )
+                        else:
+                            self.warn(
+                                f"Failed to install {repo_name}[{extra}] from {install_path}"
+                            )
+
         # Install dependency groups if specified (PEP 735)
         # Note: Using pip instead of uv because uv doesn't support --group yet
         groups = install_cfg.get("groups")
         if groups:
             if not isinstance(groups, list):
-                self.warn(f"'groups' for {repo_name} should be a list, got {type(groups).__name__}")
+                self.warn(
+                    f"'groups' for {repo_name} should be a list, got {type(groups).__name__}"
+                )
             else:
-                # Check if pyproject.toml exists in the path
-                pyproject_path = path / "pyproject.toml"
-                if not pyproject_path.exists():
-                    self.warn(f"No pyproject.toml found at {path}, skipping dependency groups")
-                else:
-                    for group in groups:
-                        # Validate group name contains only safe characters (alphanumeric, dash, underscore, dot)
-                        import re
-                        if not isinstance(group, str) or not re.match(r'^[a-zA-Z0-9._-]+$', group):
-                            self.warn(f"Skipping invalid group name: {group}")
-                            continue
-                        
-                        self.info(f"Installing dependency group: {group}")
-                        # Use pip install --group with pyproject.toml:group format
-                        # (requires pip 25.3+ for PEP 735 support)
-                        group_arg = f"{pyproject_path}:{group}"
-                        if self.run(["pip", "install", "--group", group_arg], env=env):
-                            self.ok(f"Installed dependency group {group} for {repo_name}")
-                        else:
-                            self.warn(f"Failed to install dependency group {group} for {repo_name}")
+                for install_path in paths_to_install:
+                    # Check if pyproject.toml exists in the path
+                    pyproject_path = install_path / "pyproject.toml"
+                    if not pyproject_path.exists():
+                        self.warn(
+                            f"No pyproject.toml found at {install_path}, skipping dependency groups"
+                        )
+                    else:
+                        for group in groups:
+                            # Validate group name contains only safe characters (alphanumeric, dash, underscore, dot)
+                            if not isinstance(group, str) or not re.match(
+                                r"^[a-zA-Z0-9._-]+$", group
+                            ):
+                                self.warn(f"Skipping invalid group name: {group}")
+                                continue
+
+                            self.info(
+                                f"Installing dependency group: {group} from {install_path}"
+                            )
+                            # Use pip install --group with pyproject.toml:group format
+                            # (requires pip 25.3+ for PEP 735 support)
+                            group_arg = f"{pyproject_path}:{group}"
+                            if self.run(
+                                ["pip", "install", "--group", group_arg], env=env
+                            ):
+                                self.ok(
+                                    f"Installed dependency group {group} for {repo_name} from {install_path}"
+                                )
+                            else:
+                                self.warn(
+                                    f"Failed to install dependency group {group} for {repo_name} from {install_path}"
+                                )
 
     def uninstall_package(self, repo_name: str) -> None:
         """
@@ -856,7 +1013,7 @@ class Package(Repo):
         if not path:
             return
 
-        if self.run([os.sys.executable, "-m", "pip", "uninstall", "-y", repo_name]):
+        if self.run([sys.executable, "-m", "pip", "uninstall", "-y", repo_name]):
             self.ok(f"✅ Successfully uninstalled package from {repo_name}.")
 
 
@@ -947,13 +1104,17 @@ class Test(Repo):
             self.err(f"No test directories configured for {repo_name}.")
             return
 
-        self.info(f"Listing tests for repository `{repo_name}` in {len(test_dirs)} directory(ies):")
+        self.info(
+            f"Listing tests for repository `{repo_name}` in {len(test_dirs)} directory(ies):"
+        )
 
         try:
             found_any = False
             for test_dir in test_dirs:
                 if not os.path.exists(test_dir):
-                    self.warn(f"Test directory '{test_dir}' does not exist for {repo_name}.")
+                    self.warn(
+                        f"Test directory '{test_dir}' does not exist for {repo_name}."
+                    )
                     continue
 
                 self.ok(f"\n📁 {test_dir}")
@@ -969,7 +1130,7 @@ class Test(Repo):
                     test_files = [
                         f for f in files if f.endswith(".py") and not f.startswith("__")
                     ]
-                    quiet = self.ctx.obj.get("quiet", True)
+                    quiet = self.ctx.obj.get("quiet", True) if self.ctx else True
 
                     if not quiet or test_files:
                         self.ok(f"\n  📂 {display_path}")
@@ -1034,13 +1195,13 @@ class Test(Repo):
             test_command.extend(["--keepdb"])
         if self.keyword:
             test_command.extend(["-k", self.keyword])
-        
+
         # Prepare environment variables
         env = os.environ.copy()
         env_vars_list = self.tool_cfg.get("test", {}).get(repo_name, {}).get("env_vars")
         if env_vars_list:
             env.update({item["name"]: str(item["value"]) for item in env_vars_list})
-        
+
         if self.modules:
             test_command.extend(self.modules)
         elif test_command and test_command[0] == "pytest" and test_dirs:
@@ -1053,7 +1214,9 @@ class Test(Repo):
                 self.info(f"Running tests in {cwd} with command: {' '.join(test_cmd)}")
                 result = subprocess.run(test_cmd, cwd=cwd, env=env)
                 if result.returncode != 0:
-                    self.warn(f"Tests in {test_dir} failed with return code {result.returncode}")
+                    self.warn(
+                        f"Tests in {test_dir} failed with return code {result.returncode}"
+                    )
             return  # Early return since we already ran the tests
 
         self.info(f"Running tests in {cwd} with command: {' '.join(test_command)}")

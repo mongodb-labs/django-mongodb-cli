@@ -29,21 +29,29 @@ To clone and install packages::
 
     dm repo clone --group django --install
 
-Setting Up Remotes
--------------------
+Showing and Setting Up Remotes
+-------------------------------
 
-After cloning, you can setup git remotes for all repositories in a group::
+To show git remotes for a single repository::
 
-    dm repo remote setup --group django
+    dm repo remote django
 
-This will:
+This will automatically setup remotes if the repository belongs to a group and remotes are configured for it.
 
-1. Add configured remotes (origin and upstream) for each repository
-2. Fetch from all remotes
+To show git remotes for all repositories in a group::
+
+    dm repo remote --group django
+
+Both commands will:
+
+1. Automatically setup remotes if not already configured (based on pyproject.toml configuration)
+2. Display all configured remotes for each repository
+
+The commands are idempotent - running them multiple times will not re-add existing remotes.
 
 To list available groups::
 
-    dm repo remote setup --list-groups
+    dm repo remote --list-groups
 
 Setting Default Branches
 -------------------------
@@ -51,6 +59,15 @@ Setting Default Branches
 To set the default branch for all repositories in a group::
 
     dm repo set-default --group django
+
+Opening Repositories in Browser
+--------------------------------
+
+To open all repositories in a group in your default web browser::
+
+    dm repo open --group django
+
+This will open the GitHub page for each repository in the group using the ``gh browse`` command.
 
 Using with Just
 ---------------
@@ -64,7 +81,7 @@ You can now run::
 Which internally calls::
 
     dm repo clone --group django --install
-    dm repo remote setup --group django
+    dm repo remote --group django
     dm repo set-default --group django
 
 Configuring Groups

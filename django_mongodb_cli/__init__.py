@@ -1,8 +1,7 @@
-import os
+import sys
 import typer
 
 from .app import app
-from .frontend import frontend
 from .project import project
 from .repo import repo
 
@@ -12,7 +11,7 @@ Django MongoDB CLI
 
 System executable:
 """
-    + os.sys.executable
+    + sys.executable
 )
 
 dm = typer.Typer(
@@ -29,6 +28,5 @@ def main(ctx: typer.Context):
 
 
 dm.add_typer(app, name="app")
-dm.add_typer(frontend, name="frontend")
 dm.add_typer(project, name="project")
 dm.add_typer(repo, name="repo")

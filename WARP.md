@@ -38,8 +38,7 @@ The entry point for this project is the `dm` command, exposed by the `project.sc
 
 High-level subcommands:
 - `dm app ...` — manage Django apps inside a project (`django_mongodb_cli/app.py`).
-- `dm frontend ...` — manage a Django "frontend" app and its Node/npm tooling (`django_mongodb_cli/frontend.py`).
-- `dm project ...` — scaffold and manage Django projects (`django_mongodb_cli/project.py`).
+- `dm project ...` — scaffold and manage Django projects, including frontend management (`django_mongodb_cli/project.py`).
 - `dm repo ...` — manage and test external Git repos configured in `[tool.django-mongodb-cli]` (`django_mongodb_cli/repo.py`, `django_mongodb_cli/utils.py`).
 
 #### Project lifecycle
@@ -49,10 +48,10 @@ Project scaffolding and management all assume you are in a workspace where you w
 - Create a new project from the bundled template:
 
   ```bash path=null start=null
-  dm project add <project_name> [--add-frontend]
+  dm project add <project_name> [--no-frontend]
   ```
 
-  This uses the `project_template` under `django_mongodb_cli/templates` via `django-admin startproject`. It also generates a per-project `pyproject.toml` preconfigured for MongoDB usage and testing.
+  This uses the `project_template` under `django_mongodb_cli/templates` via `django-admin startproject`. It also generates a per-project `pyproject.toml` preconfigured for MongoDB usage and testing. Frontend is added by default; use `--no-frontend` to skip frontend creation.
 
 - Run a project (using `django-admin` instead of `manage.py`):
 
@@ -61,7 +60,7 @@ Project scaffolding and management all assume you are in a workspace where you w
   ```
 
   - Uses `DJANGO_SETTINGS_MODULE=<project_name>.<settings_path>` where `settings_path` comes from `[tool.django-mongodb-cli.project.settings.path]` in the root `pyproject.toml` (defaults to a `settings.base`-style module if not overridden).
-  - If `--frontend` is passed, it will ensure the frontend is installed (`dm frontend install ...`) and run the chosen npm script alongside the Django server.
+  - If `--frontend` is passed, it will ensure the frontend is installed and run the chosen npm script alongside the Django server.
   - `--mongodb-uri` (or the `MONGODB_URI` environment variable) is passed through to Django via `_build_mongodb_env`.
 
 - Migrations at the project level:
@@ -105,32 +104,38 @@ App commands assume an existing Django project directory under the specified `pr
   dm app migrate <project_name> [app_label] [migration_name] [--directory PATH]
   ```
 
-#### Frontend helpers
+#### Frontend management
 
-Frontend helpers assume a `frontend` app inside the Django project (or another directory if overridden).
+Frontend functionality is integrated into the main `dm project` commands:
 
-- Scaffold the frontend app from the bundled template:
+- **Create a project with frontend** (frontend is added by default):
 
   ```bash path=null start=null
-  dm frontend create <project_name> [--directory PATH]
+  dm project add <project_name> [--directory PATH]
   ```
 
-- Remove the frontend app:
+  To skip frontend creation, use `--no-frontend`:
 
   ```bash path=null start=null
-  dm frontend remove <project_name> [--directory PATH]
+  dm project add <project_name> --no-frontend
   ```
 
-- Install npm dependencies in the frontend directory:
+- **Install project dependencies** (automatically installs both pip and npm dependencies if frontend exists):
 
   ```bash path=null start=null
-  dm frontend install <project_name> [--frontend-dir frontend] [--directory PATH] [--clean]
+  dm project install <project_name> [--directory PATH]
   ```
 
-- Run an npm script in the frontend directory (defaults to `watch`):
+- **Run the project** (automatically runs frontend alongside Django server if it exists):
 
   ```bash path=null start=null
-  dm frontend run <project_name> [--frontend-dir frontend] [--directory PATH] [--script SCRIPT]
+  dm project run <project_name> [--mongodb-uri URI]
+  ```
+
+- **Remove a project** (removes entire project directory including frontend):
+
+  ```bash path=null start=null
+  dm project remove <project_name> [--directory PATH]
   ```
 
 ### Managing external repos (`dm repo`)
@@ -154,7 +159,7 @@ Key patterns:
 
   Clone behavior (paths, branches, etc.) is driven by `Repo.get_map()` and `Repo.parse_git_url()` in `django_mongodb_cli/utils.py`.
 
-- Set up Git remotes and defaults via `dm repo remote` and `dm repo set-default` (these are wrapped in convenient `just git-remote` recipes for common groups like `django`, `langchain`, `mongo-arrow`).
+- Set up Git remotes and defaults via `dm repo remote` (these are wrapped in convenient `just git-remote` recipes for common groups like `django`, `langchain`, `mongo-arrow`).
 
 - Inspect and maintain repos:
 
@@ -312,9 +317,13 @@ This separation lets the CLI stay thin while keeping the operational logic (Git,
   - Uses `django-admin startapp --template` with `django_mongodb_cli.templates.app_template` to generate new apps.
   - Provides `makemigrations` and `migrate` wrappers that set `DJANGO_SETTINGS_MODULE` and `PYTHONPATH` appropriately before calling `django-admin`.
 
-- `django_mongodb_cli/frontend.py` specializes app scaffolding for a `frontend` app that also has Node/npm dependencies:
-  - `create` scaffolds the app from `templates/frontend_template`.
-  - `install` and `run` operate on `package.json` and invoke `npm` commands in the configured frontend directory.
+- `django_mongodb_cli/project.py` also includes integrated frontend management:
+  - `add` command has `--add-frontend/--no-frontend` flag to optionally create a frontend app (default: True).
+  - `install` command automatically detects and installs npm dependencies if a frontend directory exists.
+  - `run` command automatically detects and runs the frontend alongside the Django server if it exists.
+  - Internal helper functions (`_add_frontend`, `_remove_frontend`, `_install_npm`, `_run_npm`) handle frontend operations.
+  - Frontend scaffolding uses `templates/frontend_template`.
+  - Frontend operations work with `package.json` and invoke `npm` commands in the frontend directory.
 
 The template directories under `django_mongodb_cli/templates/` (project, app, frontend) are the main extension points for changing the default structure of generated projects/apps.
 

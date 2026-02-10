@@ -6,23 +6,127 @@ import subprocess
 import importlib.resources as resources
 import os
 import sys
-from .frontend import add_frontend as _add_frontend
+import random
 from .utils import Repo
 
 project = typer.Typer(help="Manage Django projects.")
 
+# Constants for random name generation
+ADJECTIVES = [
+    "happy",
+    "sunny",
+    "clever",
+    "brave",
+    "calm",
+    "bright",
+    "swift",
+    "gentle",
+    "mighty",
+    "noble",
+    "quiet",
+    "wise",
+    "bold",
+    "keen",
+    "lively",
+    "merry",
+    "proud",
+    "quick",
+    "smart",
+    "strong",
+]
+NOUNS = [
+    "panda",
+    "eagle",
+    "tiger",
+    "dragon",
+    "phoenix",
+    "falcon",
+    "wolf",
+    "bear",
+    "lion",
+    "hawk",
+    "owl",
+    "fox",
+    "deer",
+    "otter",
+    "seal",
+    "whale",
+    "shark",
+    "raven",
+    "cobra",
+    "lynx",
+]
+
+
+def generate_random_project_name():
+    """Generate a random project name using adjectives and nouns."""
+    adjective = random.choice(ADJECTIVES)
+    noun = random.choice(NOUNS)
+    return f"{adjective}_{noun}"
+
 
 @project.command("add")
 def add_project(
-    name: str,
+    name: str = typer.Argument(
+        None, help="Project name (optional if --random is used)"
+    ),
     directory: Path = Path("."),
     add_frontend: bool = typer.Option(
-        False, "--add-frontend", "-f", help="Add frontend"
+        True,
+        "--add-frontend/--no-frontend",
+        "-f/-F",
+        help="Add frontend (default: True)",
+    ),
+    random_name: bool = typer.Option(
+        False,
+        "--random",
+        "-r",
+        help="Generate a random project name. If both name and --random are provided, the name takes precedence.",
+    ),
+    settings: str = typer.Option(
+        None,
+        "--settings",
+        "-s",
+        help="Settings configuration name to use (e.g., 'qe', 'site1'). Defaults to 'base'.",
     ),
 ):
     """
     Create a new Django project using bundled templates.
+    Frontend is added by default. Use --no-frontend to skip frontend creation.
+
+    Examples:
+        dm project add myproject          # Create with explicit name (includes frontend)
+        dm project add myproject --no-frontend  # Create without frontend
+        dm project add --random           # Create with random name (includes frontend)
+        dm project add -r                 # Short form
+        dm project add -r --settings=qe   # Random name with qe settings
+        dm project add myproject --settings=qe  # Explicit name with qe settings
     """
+    # Handle random name generation
+    if random_name:
+        if name is not None:
+            typer.echo(
+                "⚠️  Both a project name and --random flag were provided. Using the provided name.",
+                err=True,
+            )
+        else:
+            name = generate_random_project_name()
+            typer.echo(f"🎲 Generated random project name: {name}")
+    elif name is None:
+        typer.echo(
+            "❌ Project name is required. Provide a name or use --random flag.",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    # Determine settings path
+    if settings:
+        # Construct settings path from the provided name
+        settings_path = f"settings.{settings}"
+        typer.echo(f"🔧 Using settings configuration: {settings_path}")
+    else:
+        settings_path = "settings.base"
+
     project_path = directory / name
     if project_path.exists():
         typer.echo(f"❌ Project '{name}' already exists at {project_path}", err=True)
@@ -80,25 +184,24 @@ def add_project(
             raise typer.Exit(code=result.returncode)
 
     # Add pyproject.toml after project creation
-    _create_pyproject_toml(project_path, name)
+    _create_pyproject_toml(project_path, name, settings_path)
 
-    # Conditionally create frontend if -f flag is set
+    # Create frontend by default (unless --no-frontend is specified)
     if add_frontend:
         typer.echo(f"🎨 Adding frontend to project '{name}'...")
         try:
-            # Call the frontend create command
-            _add_frontend(name, project_path)
+            # Call the internal frontend create helper
+            _add_frontend(name, directory)
         except Exception as e:
             typer.echo(
                 f"⚠️  Project created successfully, but frontend creation failed: {e}",
                 err=True,
             )
-            typer.echo(
-                "You can manually add the frontend later using: frontend create frontend <project_name>"
-            )
 
 
-def _create_pyproject_toml(project_path: Path, project_name: str):
+def _create_pyproject_toml(
+    project_path: Path, project_name: str, settings_path: str = "settings.base"
+):
     """Create a pyproject.toml file for the Django project."""
     pyproject_content = f"""[build-system]
 requires = ["setuptools", "wheel"]
@@ -119,6 +222,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "django-debug-toolbar",
+]
+test = [
     "pytest",
     "pytest-django",
     "ruff",
@@ -128,7 +234,7 @@ encryption = [
 ]
 
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "{project_name}.settings.base"
+DJANGO_SETTINGS_MODULE = "{project_name}.{settings_path}"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
 
 [tool.setuptools]
@@ -138,7 +244,9 @@ packages = ["{project_name}"]
     pyproject_path = project_path / "pyproject.toml"
     try:
         pyproject_path.write_text(pyproject_content)
-        typer.echo(f"✅ Created pyproject.toml for '{project_name}'")
+        typer.echo(
+            f"✅ Created pyproject.toml for '{project_name}' with settings: {settings_path}"
+        )
     except Exception as e:
         typer.echo(f"⚠️  Failed to create pyproject.toml: {e}", err=True)
 
@@ -184,6 +292,8 @@ def remove_project(name: str, directory: Path = Path(".")):
 def install_project(name: str, directory: Path = Path(".")):
     """Install a generated Django project by running ``pip install .`` in its directory.
 
+    If a frontend directory exists, also installs npm dependencies.
+
     Example:
         dm project install qe
     """
@@ -223,6 +333,23 @@ def install_project(name: str, directory: Path = Path(".")):
 
     typer.echo(f"✅ Successfully installed project '{name}'")
 
+    # Check if frontend exists and install npm dependencies
+    frontend_path = project_path / "frontend"
+    if frontend_path.exists() and (frontend_path / "package.json").exists():
+        typer.echo("🎨 Frontend detected, installing npm dependencies...")
+        try:
+            _install_npm(name, directory=directory)
+        except typer.Exit:
+            typer.echo(
+                "⚠️  Frontend npm installation failed, but project installation succeeded.",
+                err=True,
+            )
+        except Exception as e:
+            typer.echo(
+                f"⚠️  Unexpected error during frontend installation: {e}",
+                err=True,
+            )
+
 
 def _django_manage_command(
     name: str,
@@ -230,9 +357,18 @@ def _django_manage_command(
     *args: str,
     extra_env: dict | None = None,
     frontend: bool = False,
+    settings: str | None = None,
 ):
     """
     Internal helper to call django-admin with the right environment.
+
+    Args:
+        name: Project name
+        directory: Parent directory containing the project
+        args: Arguments to pass to django-admin
+        extra_env: Extra environment variables
+        frontend: Whether to run frontend alongside
+        settings: Optional settings configuration name (e.g., 'site1', 'site2')
     """
     repo = Repo()
     project_path = directory / name
@@ -242,9 +378,15 @@ def _django_manage_command(
 
     parent_dir = project_path.parent.resolve()
     env = os.environ.copy()
-    env["DJANGO_SETTINGS_MODULE"] = (
-        f"{name}.{repo._tool_cfg.get('project', {}).get('settings', {}).get('path', 'settings.base')}"
-    )
+
+    # Get the settings path using the new method
+    try:
+        settings_path = repo.get_project_settings(settings)
+    except ValueError as e:
+        typer.echo(f"❌ {e}", err=True)
+        raise typer.Exit(code=1)
+
+    env["DJANGO_SETTINGS_MODULE"] = f"{name}.{settings_path}"
     env["PYTHONPATH"] = str(name) + os.pathsep + env.get("PYTHONPATH", "")
     typer.echo(f"🔧 Using DJANGO_SETTINGS_MODULE={env['DJANGO_SETTINGS_MODULE']}")
     if extra_env:
@@ -252,10 +394,23 @@ def _django_manage_command(
 
     if frontend:
         # Ensure frontend is installed
-        subprocess.run(["dm", "frontend", "install", name])
+        try:
+            _install_npm(name, directory=parent_dir)
+        except typer.Exit:
+            typer.echo(
+                "⚠️  Frontend installation failed",
+                err=True,
+            )
+            # Continue anyway - frontend might already be installed
 
         # Start frontend process in background
-        frontend_proc = subprocess.Popen(["dm", "frontend", "run", name])
+        frontend_path = project_path / "frontend"
+        frontend_proc = subprocess.Popen(
+            ["npm", "run", "watch"],
+            cwd=frontend_path,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
 
         # Handle CTRL-C to kill both processes
         def signal_handler(signum, frame):
@@ -308,20 +463,39 @@ def run_project(
         None,
         help="Optional MongoDB connection URI. Falls back to $MONGODB_URI if not provided.",
     ),
-    frontend: bool = typer.Option(False, "-f", "--frontend", help="Run frontend"),
+    settings: str = typer.Option(
+        None,
+        "--settings",
+        "-s",
+        help="Settings configuration name to use (e.g., 'site1', 'site2')",
+    ),
 ):
     """
-    Run a Django project using django-admin instead of manage.py,
-    with MONGODB_URI set in the environment if provided.
+    Run a Django project using ``django-admin`` instead of ``manage.py``,
+    with ``MONGODB_URI`` set in the environment if provided.
+
+    If a frontend directory exists, it will be run automatically alongside the Django server.
+
+    Examples:
+        dm project run myproject
+        dm project run myproject --settings site1
+        dm project run myproject -s site2
     """
+    project_path = directory / name
+
+    # Check if frontend exists
+    frontend_path = project_path / "frontend"
+    has_frontend = frontend_path.exists() and (frontend_path / "package.json").exists()
+
     typer.echo(f"🚀 Running project '{name}' on http://{host}:{port}")
     _django_manage_command(
         name,
-        directory / name,
+        directory,
         "runserver",
         f"{host}:{port}",
         extra_env=_build_mongodb_env(mongodb_uri),
-        frontend=frontend,
+        frontend=has_frontend,
+        settings=settings,
     )
 
 
@@ -339,12 +513,22 @@ def migrate_project(
         None,
         help="Specify the database to migrate.",
     ),
+    settings: str = typer.Option(
+        None,
+        "--settings",
+        "-s",
+        help="Settings configuration name to use (e.g., 'site1', 'site2')",
+    ),
 ):
     """
     Run Django migrations using django-admin instead of manage.py.
+
+    Examples:
+        dm project migrate myproject
+        dm project migrate myproject --settings site1
+        dm project migrate myproject auth
     """
     cmd = ["migrate"]
-    directory = Path(name)
     if app_label:
         cmd.append(app_label)
     if migration_name:
@@ -353,7 +537,11 @@ def migrate_project(
         cmd.append(f"--database={database}")
     typer.echo(f"📦 Applying migrations for project '{name}'")
     _django_manage_command(
-        name, directory, *cmd, extra_env=_build_mongodb_env(mongodb_uri)
+        name,
+        directory,
+        *cmd,
+        extra_env=_build_mongodb_env(mongodb_uri),
+        settings=settings,
     )
 
 
@@ -366,9 +554,20 @@ def makemigrations_project(
         None,
         help="Optional MongoDB connection URI. Falls back to $MONGODB_URI if not provided.",
     ),
+    settings: str = typer.Option(
+        None,
+        "--settings",
+        "-s",
+        help="Settings configuration name to use (e.g., 'site1', 'site2')",
+    ),
 ):
     """
     Create new Django migrations using django-admin instead of manage.py.
+
+    Examples:
+        dm project makemigrations myproject
+        dm project makemigrations myproject --settings site1
+        dm project makemigrations myproject myapp
     """
     cmd = ["makemigrations"]
     if app_label:
@@ -376,7 +575,11 @@ def makemigrations_project(
 
     typer.echo(f"🛠️ Making migrations for project '{name}'")
     _django_manage_command(
-        name, directory, *cmd, extra_env=_build_mongodb_env(mongodb_uri)
+        name,
+        directory,
+        *cmd,
+        extra_env=_build_mongodb_env(mongodb_uri),
+        settings=settings,
     )
 
 
@@ -393,6 +596,12 @@ def manage_command(
         None,
         help="Specify the database to use.",
     ),
+    settings: str = typer.Option(
+        None,
+        "--settings",
+        "-s",
+        help="Settings configuration name to use (e.g., 'site1', 'site2')",
+    ),
 ):
     """
     Run any django-admin command for a project.
@@ -401,6 +610,7 @@ def manage_command(
         dm project manage mysite shell
         dm project manage mysite createsuperuser
         dm project manage mysite --mongodb-uri mongodb+srv://user:pwd@cluster
+        dm project manage mysite --settings site1 shell
         dm project manage mysite
     """
     if args is None:
@@ -418,10 +628,10 @@ def manage_command(
 
     if command:
         typer.echo(f"⚙️  Running django-admin {command} {' '.join(args)} for '{name}'")
-        _django_manage_command(name, directory, command, *args)
+        _django_manage_command(name, directory, command, *args, settings=settings)
     else:
         typer.echo(f"ℹ️  Running django-admin with no arguments for '{name}'")
-        _django_manage_command(name, directory)
+        _django_manage_command(name, directory, settings=settings)
 
 
 @project.command("su")
@@ -444,9 +654,20 @@ def create_superuser(
         None,
         help="Optional MongoDB connection URI. Falls back to $MONGODB_URI if not provided.",
     ),
+    settings: str = typer.Option(
+        None,
+        "--settings",
+        "-s",
+        help="Settings configuration name to use (e.g., 'site1', 'site2')",
+    ),
 ):
     """
     Create a Django superuser with no interaction required, using django-admin instead of manage.py.
+
+    Examples:
+        dm project su myproject
+        dm project su myproject --settings site1
+        dm project su myproject -u myuser -p mypass
     """
     if not email:
         email = os.getenv("PROJECT_EMAIL", "admin@example.com")
@@ -464,4 +685,156 @@ def create_superuser(
         f"--username={username}",
         f"--email={email}",
         extra_env=extra_env,
+        settings=settings,
     )
+
+
+# Internal helper functions for frontend management
+
+
+def _add_frontend(
+    project_name: str,
+    directory: Path = Path("."),
+):
+    """
+    Internal helper to create a frontend app inside an existing project.
+    """
+    project_path = directory / project_name
+    name = "frontend"
+    if not project_path.exists() or not project_path.is_dir():
+        typer.echo(f"❌ Project '{project_name}' not found at {project_path}", err=True)
+        raise typer.Exit(code=1)
+    # Destination for new app
+    app_path = project_path / name
+    if app_path.exists():
+        typer.echo(
+            f"❌ App '{name}' already exists in project '{project_name}'", err=True
+        )
+        raise typer.Exit(code=1)
+    typer.echo(f"📦 Creating app '{name}' in project '{project_name}'")
+    # Locate the Django app template directory in package resources
+    with resources.path(
+        "django_mongodb_cli.templates", "frontend_template"
+    ) as template_path:
+        cmd = [
+            "django-admin",
+            "startapp",
+            "--template",
+            str(template_path),
+            name,
+            str(project_path),
+        ]
+        subprocess.run(cmd, check=True)
+
+
+def _remove_frontend(project_name: str, directory: Path = Path(".")):
+    """
+    Internal helper to remove a frontend app from a project.
+    """
+    name = "frontend"
+    target = directory / project_name / name
+    if target.exists() and target.is_dir():
+        shutil.rmtree(target)
+        typer.echo(f"🗑️ Removed app '{name}' from project '{project_name}'")
+    else:
+        typer.echo(f"❌ App '{name}' does not exist in '{project_name}'", err=True)
+
+
+def _install_npm(
+    project_name: str,
+    frontend_dir: str = "frontend",
+    directory: Path = Path("."),
+    clean: bool = False,
+):
+    """
+    Internal helper to install npm dependencies in the frontend directory.
+    """
+    project_path = directory / project_name
+    if not project_path.exists():
+        typer.echo(
+            f"❌ Project '{project_name}' does not exist at {project_path}", err=True
+        )
+        raise typer.Exit(code=1)
+
+    frontend_path = project_path / frontend_dir
+    if not frontend_path.exists():
+        typer.echo(
+            f"❌ Frontend directory '{frontend_dir}' not found at {frontend_path}",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    package_json = frontend_path / "package.json"
+    if not package_json.exists():
+        typer.echo(f"❌ package.json not found in {frontend_path}", err=True)
+        raise typer.Exit(code=1)
+
+    if clean:
+        typer.echo(f"🧹 Cleaning node_modules and package-lock.json in {frontend_path}")
+        node_modules = frontend_path / "node_modules"
+        package_lock = frontend_path / "package-lock.json"
+
+        if node_modules.exists():
+            shutil.rmtree(node_modules)
+            typer.echo("  ✓ Removed node_modules")
+
+        if package_lock.exists():
+            package_lock.unlink()
+            typer.echo("  ✓ Removed package-lock.json")
+
+    typer.echo(f"📦 Installing npm dependencies in {frontend_path}")
+
+    try:
+        subprocess.run(["npm", "install"], cwd=frontend_path, check=True)
+        typer.echo("✅ Dependencies installed successfully")
+    except subprocess.CalledProcessError as e:
+        typer.echo(f"❌ npm install failed with exit code {e.returncode}", err=True)
+        raise typer.Exit(code=e.returncode)
+    except FileNotFoundError:
+        typer.echo(
+            "❌ npm not found. Please ensure Node.js and npm are installed.", err=True
+        )
+        raise typer.Exit(code=1)
+
+
+def _run_npm(
+    project_name: str,
+    frontend_dir: str = "frontend",
+    directory: Path = Path("."),
+    script: str = "watch",
+):
+    """
+    Internal helper to run npm script in the frontend directory.
+    """
+    project_path = directory / project_name
+    if not project_path.exists():
+        typer.echo(
+            f"❌ Project '{project_name}' does not exist at {project_path}", err=True
+        )
+        raise typer.Exit(code=1)
+
+    frontend_path = project_path / frontend_dir
+    if not frontend_path.exists():
+        typer.echo(
+            f"❌ Frontend directory '{frontend_dir}' not found at {frontend_path}",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    package_json = frontend_path / "package.json"
+    if not package_json.exists():
+        typer.echo(f"❌ package.json not found in {frontend_path}", err=True)
+        raise typer.Exit(code=1)
+
+    typer.echo(f"🚀 Running 'npm run {script}' in {frontend_path}")
+
+    try:
+        subprocess.run(["npm", "run", script], cwd=frontend_path, check=True)
+    except subprocess.CalledProcessError as e:
+        typer.echo(f"❌ npm command failed with exit code {e.returncode}", err=True)
+        raise typer.Exit(code=e.returncode)
+    except FileNotFoundError:
+        typer.echo(
+            "❌ npm not found. Please ensure Node.js and npm are installed.", err=True
+        )
+        raise typer.Exit(code=1)

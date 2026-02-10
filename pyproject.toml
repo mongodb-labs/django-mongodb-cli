@@ -1,6 +1,7 @@
 [project]
 name = "django-mongodb-cli"
 version = "0.1.0"
+requires-python = ">=3.13"
 dependencies = [
   "GitPython",
   "toml",
@@ -37,9 +38,20 @@ docs = [
   "furo",
   "sphinx-copybutton",
 ]
+langchain = [
+  "langchain-voyageai",
+]
+
+[dependency-groups]
+langchain = [
+  "langchain-voyageai",
+  "langchain-ollama",
+  "langchain-openai",
+]
 
 [tool.django-mongodb-cli]
 repos = [
+  "ai-ml-pipeline-testing @ git+ssh://git@github.com/mongodb-labs/ai-ml-pipeline-testing@main",
   "django @ git+ssh://git@github.com/mongodb-forks/django@mongodb-6.0.x",
   "django-allauth @ git+ssh://git@github.com/pennersr/django-allauth@main",
   "django-debug-toolbar @ git+ssh://git@github.com/django-commons/django-debug-toolbar@main",
@@ -65,7 +77,7 @@ repos = [
   "mongo-arrow @ git+ssh://git@github.com/mongodb-labs/mongo-arrow@main",
   "mongo-orchestration @ git+ssh://git@github.com/mongodb-labs/mongo-orchestration@master",
   "mongo-python-driver @ git+ssh://git@github.com/mongodb/mongo-python-driver@master",
-  "mongodb-community-search-setup @ git+ssh://git@github.com/mongodb-js/mongodb-community-search-setup.git",
+  "mongodb-community-search-setup @ git+ssh://git@github.com/aclark4life/mongodb-community-search-setup.git",
   "mongot @ git+ssh://git@github.com/10gen/mongot.git@master",
   "pymongo-auth-aws @ git+ssh://git@github.com/mongodb/pymongo-auth-aws@master",
   "pymongo-search-utils@ git+ssh://git@github.com/mongodb-labs/pymongo-search-utils@main",
@@ -89,12 +101,18 @@ django = [
   "mongo-python-driver",
 ]
 langchain = [
+  "ai-ml-pipeline-testing",
   "langchain-mongodb",
   "pymongo-search-utils",
   "mongodb-community-search-setup",
+  "mongo-python-driver",
 ]
 mongo-arrow = [
   "mongo-arrow",
+]
+
+pymongo = [
+  "mongo-python-driver",
 ]
 
 # Git remote configuration for repository groups
@@ -110,6 +128,14 @@ upstream = "git+ssh://git@github.com/mongodb-labs/django-mongodb-extensions"
 origin = "git+ssh://git@github.com/aclark4life/mongo-python-driver"
 upstream = "git+ssh://git@github.com/mongodb/mongo-python-driver"
 
+[tool.django-mongodb-cli.remotes.django.libmongocrypt]
+origin = "git+ssh://git@github.com/aclark4life/libmongocrypt"
+upstream = "git+ssh://git@github.com/mongodb/libmongocrypt"
+
+[tool.django-mongodb-cli.remotes.django.django]
+origin = "git+ssh://git@github.com/aclark4life/django"
+upstream = "git+ssh://git@github.com/mongodb-forks/django"
+
 [tool.django-mongodb-cli.remotes.langchain.langchain-mongodb]
 origin = "git+ssh://git@github.com/aclark4life/langchain-mongodb"
 upstream = "git+ssh://git@github.com/langchain-ai/langchain-mongodb"
@@ -118,15 +144,23 @@ upstream = "git+ssh://git@github.com/langchain-ai/langchain-mongodb"
 origin = "git+ssh://git@github.com/aclark4life/pymongo-search-utils"
 upstream = "git+ssh://git@github.com/mongodb-labs/pymongo-search-utils"
 
+[tool.django-mongodb-cli.remotes.langchain.mongo-python-driver]
+origin = "git+ssh://git@github.com/aclark4life/mongo-python-driver"
+upstream = "git+ssh://git@github.com/mongodb/mongo-python-driver"
+
 [tool.django-mongodb-cli.remotes.mongo-arrow.mongo-arrow]
 origin = "git+ssh://git@github.com/aclark4life/mongo-arrow"
 upstream = "git+ssh://git@github.com/mongodb-labs/mongo-arrow"
 
+[tool.django-mongodb-cli.remotes.pymongo.mongo-python-driver]
+origin = "git+ssh://git@github.com/aclark4life/mongo-python-driver"
+upstream = "git+ssh://git@github.com/mongodb/mongo-python-driver"
+
 [tool.django-mongodb-cli.install.libmongocrypt]
-install_dir = "bindings/python"
+install_dirs = ["bindings/python"]
 
 [tool.django-mongodb-cli.install.mongo-arrow]
-install_dir = "bindings/python"
+install_dirs = ["bindings/python"]
 
 [[tool.django-mongodb-cli.install.mongo-arrow.env_vars]]
 name = "LDFLAGS"
@@ -141,7 +175,7 @@ name = "PKG_CONFIG_PATH"
 value = "/opt/homebrew/opt/mongo-c-driver@1/lib/pkgconfig"
 
 [tool.django-mongodb-cli.install.langchain-mongodb]
-install_dir = "libs/langchain-mongodb"
+install_dirs = ["libs/langchain-mongodb", "libs/langgraph-store-mongodb"]
 # Optional: Install extras and PEP 735 dependency groups from pyproject.toml
 # extras = ["community"]
 groups = ["dev"]
@@ -196,8 +230,8 @@ source = "mongo_migrations"
 target = "src/django/tests/mongo_migrations"
 
 [tool.django-mongodb-cli.test.django.settings.test]
-# source = "test/settings/django.py"
-source = "test/settings/qe.py"
+source = "test/settings/django.py"
+# source = "test/settings/qe.py"
 target = "src/django/tests/mongo_settings.py"
 
 [tool.django-mongodb-cli.test.django.settings.migrations]
@@ -419,9 +453,19 @@ tasks = ["run-tests"]
 project_name = "mongo-python-driver"
 tasks = ["run-tests"]
 
-[tool.django-mongodb-cli.project.settings]
-# path = "settings.base"
+# Multiple settings configurations for Django projects
+# Use with: dm project run myproject --settings site1
+[tool.django-mongodb-cli.project.settings.base]
+path = "settings.base"
+
+[tool.django-mongodb-cli.project.settings.qe]
 path = "settings.qe"
+
+[tool.django-mongodb-cli.project.settings.site1]
+path = "settings.site1"
+
+[tool.django-mongodb-cli.project.settings.site2]
+path = "settings.site2"
 
 [tool.setuptools]
 packages = ["django_mongodb_cli", "demo"]
